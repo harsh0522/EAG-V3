@@ -12,6 +12,10 @@ A privacy-first, fully local clipboard manager built as a Chrome Extension. All 
 
 ---
 
+## 🎥 Demo Video
+
+[▶️ Watch Keeper Demo](https://www.youtube.com/watch?v=Xn106D1aYPU)
+
 ## Features
 
 ### v1.0.0
