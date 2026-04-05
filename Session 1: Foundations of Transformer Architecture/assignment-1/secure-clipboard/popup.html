@@ -2,213 +2,237 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Secure Clipboard Vault</title>
   <link rel="stylesheet" href="popup.css">
 </head>
 <body>
 
-<!-- ── SETUP SCREEN ─────────────────────────────────────────────────────────── -->
-<div id="setup-screen" class="screen hidden">
-  <div class="auth-card">
-    <div class="auth-logo">🔐</div>
-    <h1 class="auth-title">Create Vault</h1>
-    <p class="auth-sub">Set up your secure clipboard</p>
+<!-- ══════════════════════════════════════════════════════════════
+     AUTH SCREEN — shown when no active session
+═══════════════════════════════════════════════════════════════ -->
+<div id="auth-screen" class="screen hidden">
 
-    <div class="field">
-      <label>Username</label>
-      <input id="su-username" type="text" placeholder="Choose a username" autocomplete="off">
+  <!-- Sign-in form -->
+  <div id="login-view">
+    <div class="auth-header">
+      <div class="auth-logo">🔐</div>
+      <h1 class="auth-title">Secure Clipboard Vault</h1>
+      <p class="auth-sub">Your private clipboard history</p>
     </div>
-    <div class="field">
-      <label>Password</label>
-      <input id="su-password" type="password" placeholder="Create a password">
+    <div class="auth-card">
+      <div class="field-group">
+        <label class="field-label" for="login-user">Username</label>
+        <input id="login-user" class="input" type="text" placeholder="Enter username" autocomplete="username">
+      </div>
+      <div class="field-group">
+        <label class="field-label" for="login-pass">Password</label>
+        <input id="login-pass" class="input" type="password" placeholder="Enter password" autocomplete="current-password">
+      </div>
+      <div id="login-error" class="err hidden">Incorrect username or password.</div>
+      <button id="login-btn" class="btn primary full">Sign In</button>
+      <button id="go-register" class="btn ghost full mt-8">Create Account</button>
+      <button id="go-forgot" class="btn ghost full">Forgot password?</button>
     </div>
-    <div class="field">
-      <label>Confirm Password</label>
-      <input id="su-confirm" type="password" placeholder="Repeat password">
-    </div>
-    <div class="field">
-      <label>Security Question</label>
-      <select id="su-question">
-        <option value="">Select a question…</option>
-        <option>What was your first pet's name?</option>
-        <option>What city were you born in?</option>
-        <option>What is your mother's maiden name?</option>
-        <option>What was the name of your first school?</option>
-        <option>What is your favourite movie?</option>
-        <option>What street did you grow up on?</option>
-      </select>
-    </div>
-    <div class="field">
-      <label>Security Answer</label>
-      <input id="su-answer" type="text" placeholder="Your answer" autocomplete="off">
-    </div>
-
-    <div id="su-error" class="err hidden"></div>
-    <button id="su-btn" class="btn primary full">Create Account</button>
   </div>
-</div>
 
-<!-- ── LOGIN SCREEN ──────────────────────────────────────────────────────────── -->
-<div id="login-screen" class="screen hidden">
-  <div class="auth-card">
-    <div class="auth-logo">🔐</div>
-    <h1 class="auth-title">Secure Clipboard</h1>
-    <p class="auth-sub">Sign in to your vault</p>
-
-    <div class="field">
-      <label>Username</label>
-      <input id="li-username" type="text" placeholder="Username" autocomplete="off">
+  <!-- Register form -->
+  <div id="register-view" class="hidden">
+    <div class="auth-header">
+      <div class="auth-logo">🔐</div>
+      <h1 class="auth-title">Create Account</h1>
     </div>
-    <div class="field">
-      <label>Password</label>
-      <input id="li-password" type="password" placeholder="Password">
+    <div class="auth-card">
+      <div class="field-group">
+        <label class="field-label" for="reg-user">Username</label>
+        <input id="reg-user" class="input" type="text" placeholder="Choose a username">
+      </div>
+      <div class="field-group">
+        <label class="field-label" for="reg-pass">Password</label>
+        <input id="reg-pass" class="input" type="password" placeholder="Choose a password">
+      </div>
+      <div class="field-group">
+        <label class="field-label" for="reg-q">Security Question</label>
+        <input id="reg-q" class="input" type="text" placeholder="e.g. Pet's name?">
+      </div>
+      <div class="field-group">
+        <label class="field-label" for="reg-a">Answer</label>
+        <input id="reg-a" class="input" type="text" placeholder="Your answer">
+      </div>
+      <div id="reg-error" class="err hidden"></div>
+      <button id="register-btn" class="btn primary full">Create Account</button>
+      <button id="go-login" class="btn ghost full mt-8">Back to Sign In</button>
     </div>
-
-    <div id="li-error" class="err hidden"></div>
-    <button id="li-btn" class="btn primary full">Login</button>
-    <button id="li-forgot" class="btn ghost full">Forgot Password?</button>
   </div>
-</div>
 
-<!-- ── RESET PASSWORD SCREEN ─────────────────────────────────────────────────── -->
-<div id="reset-screen" class="screen hidden">
-  <div class="auth-card">
-    <div class="auth-logo">🔑</div>
-    <h1 class="auth-title">Reset Password</h1>
-
-    <!-- Step 1: find account -->
-    <div id="rs-step1">
-      <div class="field">
-        <label>Username</label>
-        <input id="rs-username" type="text" placeholder="Your username" autocomplete="off">
-      </div>
-      <div id="rs-err1" class="err hidden"></div>
-      <button id="rs-find-btn" class="btn primary full">Find Account</button>
+  <!-- Forgot-password form -->
+  <div id="forgot-view" class="hidden">
+    <div class="auth-header">
+      <div class="auth-logo">🔐</div>
+      <h1 class="auth-title">Reset Password</h1>
     </div>
-
-    <!-- Step 2: answer + new password -->
-    <div id="rs-step2" class="hidden">
-      <div class="security-q" id="rs-question-text"></div>
-      <div class="field">
-        <label>Your Answer</label>
-        <input id="rs-answer" type="text" placeholder="Answer" autocomplete="off">
+    <div class="auth-card">
+      <div class="field-group">
+        <label class="field-label" for="forgot-user">Username</label>
+        <input id="forgot-user" class="input" type="text" placeholder="Your username">
       </div>
-      <div class="field">
-        <label>New Password</label>
-        <input id="rs-new-pwd" type="password" placeholder="New password">
+      <div id="forgot-q-wrap" class="hidden">
+        <p id="forgot-q-text" class="field-label mb-4"></p>
+        <div class="field-group">
+          <label class="field-label" for="forgot-a">Answer</label>
+          <input id="forgot-a" class="input" type="text" placeholder="Your answer">
+        </div>
+        <div class="field-group">
+          <label class="field-label" for="forgot-newpass">New Password</label>
+          <input id="forgot-newpass" class="input" type="password" placeholder="New password">
+        </div>
       </div>
-      <div class="field">
-        <label>Confirm Password</label>
-        <input id="rs-confirm-pwd" type="password" placeholder="Confirm new password">
-      </div>
-      <div id="rs-err2" class="err hidden"></div>
-      <button id="rs-submit-btn" class="btn primary full">Reset Password</button>
+      <div id="forgot-error" class="err hidden"></div>
+      <div id="forgot-success" class="success-msg hidden">Password reset! You can now sign in.</div>
+      <button id="forgot-submit" class="btn primary full">Verify &amp; Reset</button>
+      <button id="forgot-back" class="btn ghost full mt-8">Back to Sign In</button>
     </div>
-
-    <button id="rs-back" class="btn ghost full" style="margin-top:8px">← Back to Login</button>
   </div>
-</div>
 
-<!-- ── DASHBOARD ─────────────────────────────────────────────────────────────── -->
+</div><!-- /auth-screen -->
+
+
+<!-- ══════════════════════════════════════════════════════════════
+     DASHBOARD SCREEN — shown after successful auth
+═══════════════════════════════════════════════════════════════ -->
 <div id="dashboard-screen" class="screen hidden">
 
   <!-- Top bar -->
   <div class="topbar">
     <span class="topbar-title">🔐 Vault</span>
     <div class="topbar-actions">
-      <button id="open-window-btn" class="icon-btn" title="Open in resizable window">⤢</button>
-      <button id="dark-toggle" class="icon-btn" title="Toggle dark mode">🌙</button>
-      <button id="chpwd-open" class="icon-btn" title="Change password">⚙️</button>
-      <button id="logout-btn" class="icon-btn" title="Logout">🚪</button>
+      <button id="theme-toggle" class="icon-btn" title="Toggle dark mode">🌙</button>
+      <button id="new-note-btn" class="icon-btn" title="New note">📝</button>
+      <button id="expand-btn" class="icon-btn" title="Open in new window">⤢</button>
+      <button id="settings-btn" class="icon-btn" title="Settings">⚙️</button>
+      <button id="logout-btn" class="icon-btn" title="Sign out">🚪</button>
     </div>
   </div>
 
-  <!-- Search + filter -->
+  <!-- Search + time filter controls -->
   <div class="controls">
-    <input id="search" type="text" placeholder="🔍  Search…" class="search-input">
-    <select id="time-filter" class="filter-select">
-      <option value="all">All time</option>
-      <option value="24h">Last 24 h</option>
-      <option value="2d">Last 2 days</option>
-      <option value="7d">Last 7 days</option>
-      <option value="30d">Last 30 days</option>
-      <option value="1y">Last year</option>
+    <input id="search-input" class="input search-input" type="search" placeholder="🔍 Search…">
+    <select id="time-filter" class="select">
+      <option value="Infinity">All time</option>
+      <option value="86400000">Last 24 h</option>
+      <option value="172800000">Last 2 days</option>
+      <option value="604800000" selected>Last 7 days</option>
+      <option value="2592000000">Last 30 days</option>
+      <option value="31536000000">Last year</option>
     </select>
   </div>
 
-  <!-- Paste zone -->
-  <div class="paste-zone-wrap">
-    <textarea
-      id="paste-zone"
-      class="paste-zone"
-      placeholder="📋  Right-click → Paste  or  ⌘V / Ctrl+V  —  works for screenshots &amp; images too"
-      rows="2"
-      spellcheck="false"
-    ></textarea>
+  <!-- Tab bar (Feature 4) -->
+  <div class="tab-bar">
+    <button class="tab-btn active" data-tab="recent">🕐 Recent</button>
+    <button class="tab-btn" data-tab="images">🖼 Images</button>
+    <button class="tab-btn" data-tab="texts">📝 Texts</button>
+    <button class="tab-btn" data-tab="passwords">🔐 Passwords</button>
+    <button class="tab-btn" data-tab="favourites">⭐ Favs</button>
   </div>
 
-  <!-- Stats row -->
-  <div class="stats-row">
+  <!-- Paste zone (drag-and-drop / paste images) -->
+  <div id="paste-zone-wrap">
+    <div id="paste-zone" class="paste-zone">
+      <span class="paste-zone-label">📋 Paste image or screenshot here (⌘V / Ctrl+V)</span>
+    </div>
+  </div>
+
+  <!-- Item count badge -->
+  <div class="item-count-bar">
     <span id="item-count" class="item-count">0 items</span>
-    <div class="stats-actions">
-      <button id="add-note-btn" class="add-note-btn" title="Add a new note">＋ New note</button>
-      <button id="clear-all" class="danger-link">Clear all</button>
-    </div>
   </div>
 
-  <!-- Inline note composer (hidden until + is clicked) -->
-  <div id="note-composer" class="note-composer hidden">
-    <textarea
-      id="note-text"
-      class="note-textarea"
-      placeholder="Type your note here…"
-      rows="4"
-      spellcheck="true"
-      autofocus
-    ></textarea>
-    <div class="note-composer-actions">
-      <span id="note-char-count" class="char-count">0 chars</span>
-      <div class="note-btns">
-        <button id="note-cancel" class="btn ghost">Cancel</button>
-        <button id="note-save"   class="btn primary">Save note</button>
-      </div>
-    </div>
+  <!-- Scrollable list of clipboard cards -->
+  <div id="item-list" class="item-list"></div>
+
+  <!-- Empty state -->
+  <div id="empty-state" class="empty-state hidden">
+    <div class="empty-icon">📋</div>
+    <p class="empty-text">Nothing here yet.</p>
+    <p class="empty-sub">Copy something or switch tabs.</p>
   </div>
 
-  <!-- Clipboard list -->
-  <div id="clip-list" class="clip-list">
-    <div id="empty-state" class="empty-state">
-      <div class="empty-icon">📋</div>
-      <p>No items yet.<br>Copy something to get started!</p>
+</div><!-- /dashboard-screen -->
+
+
+<!-- ══════════════════════════════════════════════════════════════
+     MODALS
+═══════════════════════════════════════════════════════════════ -->
+
+<!-- PIN modal (Feature 2) -->
+<div id="pin-modal" class="modal-overlay hidden">
+  <div class="modal">
+    <div class="modal-head">
+      <span id="pin-modal-title">🔒 Lock Card</span>
+      <button id="pin-modal-close" class="close-btn">×</button>
     </div>
+    <p id="pin-modal-hint" class="pin-hint-text">Set a 4-digit PIN to encrypt this card</p>
+    <div class="pin-inputs" id="pin-inputs">
+      <input class="pin-digit" type="password" inputmode="numeric" maxlength="1" pattern="\d*">
+      <input class="pin-digit" type="password" inputmode="numeric" maxlength="1" pattern="\d*">
+      <input class="pin-digit" type="password" inputmode="numeric" maxlength="1" pattern="\d*">
+      <input class="pin-digit" type="password" inputmode="numeric" maxlength="1" pattern="\d*">
+    </div>
+    <div id="pin-error" class="err hidden">Incorrect PIN. Try again.</div>
+    <button id="pin-confirm" class="btn primary full">Confirm</button>
   </div>
 </div>
 
-<!-- ── CHANGE PASSWORD MODAL ─────────────────────────────────────────────────── -->
-<div id="chpwd-modal" class="modal-overlay hidden">
+<!-- Change password modal -->
+<div id="change-pass-modal" class="modal-overlay hidden">
   <div class="modal">
     <div class="modal-head">
       <span>Change Password</span>
-      <button id="chpwd-close" class="close-btn">×</button>
+      <button id="change-pass-close" class="close-btn">×</button>
     </div>
-    <div class="field">
-      <label>Current Password</label>
-      <input id="cp-current" type="password" placeholder="Current password">
+    <div class="field-group">
+      <label class="field-label" for="cp-current">Current password</label>
+      <input id="cp-current" class="input" type="password" placeholder="Current password">
     </div>
-    <div class="field">
-      <label>New Password</label>
-      <input id="cp-new" type="password" placeholder="New password">
-    </div>
-    <div class="field">
-      <label>Confirm New Password</label>
-      <input id="cp-confirm" type="password" placeholder="Confirm">
+    <div class="field-group">
+      <label class="field-label" for="cp-new">New password</label>
+      <input id="cp-new" class="input" type="password" placeholder="New password">
     </div>
     <div id="cp-error" class="err hidden"></div>
-    <button id="cp-save" class="btn primary full">Update Password</button>
+    <div id="cp-success" class="success-msg hidden">Password changed!</div>
+    <button id="cp-submit" class="btn primary full">Update Password</button>
   </div>
 </div>
 
-<!-- ── TOAST ─────────────────────────────────────────────────────────────────── -->
+<!-- Settings modal -->
+<div id="settings-modal" class="modal-overlay hidden">
+  <div class="modal">
+    <div class="modal-head">
+      <span>Settings</span>
+      <button id="settings-close" class="close-btn">×</button>
+    </div>
+    <div class="settings-row">
+      <span class="settings-label">Auto-copy on click</span>
+      <label class="toggle">
+        <input type="checkbox" id="auto-copy-toggle">
+        <span class="slider"></span>
+      </label>
+    </div>
+    <div class="settings-row">
+      <span class="settings-label">Max items stored</span>
+      <select id="max-items-select" class="select small">
+        <option value="100">100</option>
+        <option value="250">250</option>
+        <option value="500" selected>500</option>
+      </select>
+    </div>
+    <button id="change-pass-btn" class="btn ghost full mt-8">Change Password</button>
+    <button id="clear-all-btn" class="btn danger full mt-8">Clear All Items</button>
+  </div>
+</div>
+
+<!-- Toast notification -->
 <div id="toast" class="toast hidden"></div>
 
 <script src="utils.js"></script>

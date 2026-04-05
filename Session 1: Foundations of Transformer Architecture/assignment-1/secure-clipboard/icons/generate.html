@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Icon Generator — Secure Clipboard Vault</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #0f1117;
+      color: #e8eaf2;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 40px 20px;
+      gap: 24px;
+    }
+    h1 { font-size: 20px; margin-bottom: 0; }
+    p  { font-size: 13px; color: #8b90a7; text-align: center; max-width: 420px; }
+    .previews {
+      display: flex;
+      gap: 24px;
+      align-items: flex-end;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .preview-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+    }
+    .size-label {
+      font-size: 11px;
+      color: #8b90a7;
+      font-weight: 600;
+    }
+    canvas { border-radius: 8px; image-rendering: pixelated; }
+    #status {
+      font-size: 13px;
+      color: #4ade80;
+      font-weight: 600;
+    }
+    .instructions {
+      background: #1a1d27;
+      border: 1px solid #2d3245;
+      border-radius: 10px;
+      padding: 16px 20px;
+      font-size: 12px;
+      color: #8b90a7;
+      max-width: 480px;
+      line-height: 1.7;
+    }
+    .instructions strong { color: #e8eaf2; }
+    .instructions ol { padding-left: 18px; }
+  </style>
+</head>
+<body>
+
+<h1>🔐 Secure Clipboard Vault — Icon Generator</h1>
+<p>Open this page in Chrome. Icons are automatically drawn and downloaded as PNG files.</p>
+
+<div id="status">Generating icons…</div>
+
+<div class="previews" id="previews"></div>
+
+<div class="instructions">
+  <strong>After downloading:</strong>
+  <ol>
+    <li>Move all 4 PNG files into the <code>icons/</code> folder next to this file.</li>
+    <li>Go to <code>chrome://extensions</code>, enable <strong>Developer Mode</strong>.</li>
+    <li>Click <strong>Load unpacked</strong> and select the <code>secure-clipboard/</code> folder.</li>
+  </ol>
+</div>
+
+<script>
+'use strict';
+
+const SIZES = [16, 32, 48, 128];
+
+/**
+ * Draw the Secure Clipboard Vault icon on a canvas of the given size.
+ *
+ * Design:
+ *  - Deep purple (#4f46e5) rounded-square background
+ *  - White clipboard body (rounded rect) with a top clip/handle bar
+ *  - Three light-blue horizontal lines representing text lines
+ *  - A small gold (#f59e0b) padlock badge at the bottom-right corner
+ */
+function drawIcon(canvas, size) {
+  const ctx = canvas.getContext('2d');
+  const s = size;
+
+  // ── Clear ──────────────────────────────────────────────────────────────────
+  ctx.clearRect(0, 0, s, s);
+
+  // ── Background: deep purple rounded square ──────────────────────────────
+  const bgRadius = s * 0.18;
+  ctx.beginPath();
+  roundRect(ctx, 0, 0, s, s, bgRadius);
+  ctx.fillStyle = '#4f46e5';
+  ctx.fill();
+
+  // Add a subtle radial gradient overlay for depth
+  const grd = ctx.createRadialGradient(s * 0.35, s * 0.3, 0, s * 0.5, s * 0.5, s * 0.7);
+  grd.addColorStop(0, 'rgba(255,255,255,0.10)');
+  grd.addColorStop(1, 'rgba(0,0,0,0.15)');
+  ctx.beginPath();
+  roundRect(ctx, 0, 0, s, s, bgRadius);
+  ctx.fillStyle = grd;
+  ctx.fill();
+
+  // ── Clipboard body ─────────────────────────────────────────────────────────
+  const cb = {
+    x: s * 0.20,
+    y: s * 0.22,
+    w: s * 0.60,
+    h: s * 0.62,
+    r: s * 0.07
+  };
+
+  // Shadow for the clipboard
+  ctx.shadowColor = 'rgba(0,0,0,0.30)';
+  ctx.shadowBlur  = s * 0.06;
+  ctx.shadowOffsetY = s * 0.02;
+
+  ctx.beginPath();
+  roundRect(ctx, cb.x, cb.y, cb.w, cb.h, cb.r);
+  ctx.fillStyle = '#ffffff';
+  ctx.fill();
+
+  ctx.shadowColor = 'transparent';
+  ctx.shadowBlur  = 0;
+  ctx.shadowOffsetY = 0;
+
+  // ── Clipboard clip (top bar / clamp) ───────────────────────────────────────
+  const clipW = cb.w * 0.42;
+  const clipH = cb.h * 0.10;
+  const clipX = cb.x + (cb.w - clipW) / 2;
+  const clipY = cb.y - clipH * 0.55;
+  const clipR = clipH * 0.5;
+
+  ctx.beginPath();
+  roundRect(ctx, clipX, clipY, clipW, clipH, clipR);
+  ctx.fillStyle = '#c7d2fe'; // light indigo
+  ctx.fill();
+
+  // Inner hole of clip
+  const holeW = clipW * 0.38;
+  const holeH = clipH * 0.55;
+  const holeX = clipX + (clipW - holeW) / 2;
+  const holeY = clipY + (clipH - holeH) / 2;
+  ctx.beginPath();
+  roundRect(ctx, holeX, holeY, holeW, holeH, holeH * 0.4);
+  ctx.fillStyle = '#4f46e5';
+  ctx.fill();
+
+  // ── Text lines on clipboard ────────────────────────────────────────────────
+  if (size >= 32) {
+    const lineColor = '#c7d2fe';
+    const lx    = cb.x + cb.w * 0.14;
+    const lw    = cb.w * 0.72;
+    const ly1   = cb.y + cb.h * 0.30;
+    const ly2   = cb.y + cb.h * 0.46;
+    const ly3   = cb.y + cb.h * 0.62;
+    const lh    = Math.max(1.5, s * 0.028);
+    const lr    = lh / 2;
+
+    [ly1, ly2, ly3].forEach((ly, idx) => {
+      // Third line is shorter (paragraph feel)
+      const lineW = idx === 2 ? lw * 0.62 : lw;
+      ctx.beginPath();
+      roundRect(ctx, lx, ly - lh / 2, lineW, lh, lr);
+      ctx.fillStyle = lineColor;
+      ctx.fill();
+    });
+  }
+
+  // ── Gold padlock badge (bottom-right) ─────────────────────────────────────
+  if (size >= 16) {
+    drawPadlock(ctx, s);
+  }
+}
+
+/**
+ * Draw a small gold padlock badge in the bottom-right quadrant.
+ */
+function drawPadlock(ctx, s) {
+  const badgeSize = s * 0.38;
+  const bx = s - badgeSize * 0.92;
+  const by = s - badgeSize * 0.92;
+  const bc = badgeSize / 2; // badge center offset from bx,by
+
+  // Badge circle background (gold)
+  ctx.beginPath();
+  ctx.arc(bx + bc, by + bc, badgeSize / 2 + s * 0.02, 0, Math.PI * 2);
+  ctx.fillStyle = '#1a1060'; // dark outline
+  ctx.fill();
+
+  ctx.beginPath();
+  ctx.arc(bx + bc, by + bc, badgeSize / 2, 0, Math.PI * 2);
+  ctx.fillStyle = '#f59e0b'; // gold
+  ctx.fill();
+
+  // Draw lock body (small rounded rect)
+  const lbW = badgeSize * 0.44;
+  const lbH = badgeSize * 0.34;
+  const lbX = bx + bc - lbW / 2;
+  const lbY = by + bc - lbH * 0.15;
+
+  ctx.beginPath();
+  roundRect(ctx, lbX, lbY, lbW, lbH, lbW * 0.18);
+  ctx.fillStyle = '#7c3aed'; // deep purple
+  ctx.fill();
+
+  // Key hole
+  if (s >= 32) {
+    const khR  = lbH * 0.18;
+    const khX  = lbX + lbW / 2;
+    const khY  = lbY + lbH * 0.4;
+    ctx.beginPath();
+    ctx.arc(khX, khY, khR, 0, Math.PI * 2);
+    ctx.fillStyle = '#f59e0b';
+    ctx.fill();
+  }
+
+  // Lock shackle (arch above the body)
+  const shW  = lbW * 0.52;
+  const shH  = badgeSize * 0.28;
+  const shX  = bx + bc - shW / 2;
+  const shY  = lbY - shH;
+  const shTh = Math.max(1.5, badgeSize * 0.095);
+
+  ctx.beginPath();
+  ctx.arc(bx + bc, lbY, shW / 2, Math.PI, 0, false);
+  ctx.lineWidth   = shTh;
+  ctx.strokeStyle = '#7c3aed';
+  ctx.stroke();
+}
+
+/**
+ * Polyfill / helper for rounded rectangle path (CanvasRenderingContext2D.roundRect
+ * is available in Chrome 99+ but we implement manually for safety).
+ */
+function roundRect(ctx, x, y, w, h, r) {
+  if (w < 2 * r) r = w / 2;
+  if (h < 2 * r) r = h / 2;
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath();
+}
+
+// ── Generate, preview and download all sizes ──────────────────────────────────
+
+const previewsEl = document.getElementById('previews');
+const statusEl   = document.getElementById('status');
+let downloaded   = 0;
+
+SIZES.forEach(size => {
+  const canvas       = document.createElement('canvas');
+  canvas.width       = size;
+  canvas.height      = size;
+  // Scale canvas for crisp preview display (show at least 64px)
+  const displaySize  = Math.max(size, 64);
+  canvas.style.width  = displaySize + 'px';
+  canvas.style.height = displaySize + 'px';
+
+  drawIcon(canvas, size);
+
+  // Preview
+  const wrapper = document.createElement('div');
+  wrapper.className = 'preview-item';
+  const label = document.createElement('div');
+  label.className = 'size-label';
+  label.textContent = `${size}×${size}`;
+  wrapper.append(canvas, label);
+  previewsEl.appendChild(wrapper);
+
+  // Auto-download after a short stagger
+  const delay = SIZES.indexOf(size) * 300;
+  setTimeout(() => {
+    canvas.toBlob(blob => {
+      const url  = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href     = url;
+      link.download = `icon${size}.png`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      downloaded++;
+      if (downloaded === SIZES.length) {
+        statusEl.textContent = `✓ All ${SIZES.length} icons downloaded! Move them to the icons/ folder.`;
+      }
+    }, 'image/png');
+  }, delay + 200);
+});
+</script>
+</body>
+</html>

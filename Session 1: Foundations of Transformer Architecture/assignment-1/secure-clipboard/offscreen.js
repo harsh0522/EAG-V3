@@ -1,38 +1,55 @@
-// Read clipboard including images and send result to background
-async function readAndSend() {
+// ─── offscreen.js ────────────────────────────────────────────────────────────
+// Runs inside offscreen.html. Reads the system clipboard (text + images) and
+// forwards the data to the background service worker.
+// ─────────────────────────────────────────────────────────────────────────────
+
+'use strict';
+
+chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
+  if (msg.type === 'READ_CLIPBOARD') {
+    readClipboard().then(() => sendResponse({ ok: true })).catch(console.warn);
+    return true;
+  }
+});
+
+async function readClipboard() {
   try {
     const items = await navigator.clipboard.read();
     for (const item of items) {
-      const imageType = item.types.find(t => t.startsWith('image/'));
-      if (imageType) {
-        const blob   = await item.getType(imageType);
-        const reader = new FileReader();
-        reader.onloadend = () => {
-          chrome.runtime.sendMessage({ type: 'CLIPBOARD_RESULT', content: reader.result, contentType: 'image' }).catch(() => {});
-        };
-        reader.readAsDataURL(blob);
-        return;
+      // ── Image ──
+      if (item.types.includes('image/png') || item.types.includes('image/jpeg')) {
+        const mimeType = item.types.find(t => t.startsWith('image/'));
+        const blob = await item.getType(mimeType);
+        const dataUrl = await blobToDataUrl(blob);
+        chrome.runtime.sendMessage({
+          type: 'CLIPBOARD_DATA',
+          payload: { type: 'image', content: dataUrl }
+        });
+        return; // only handle one item per poll
       }
+      // ── Text ──
       if (item.types.includes('text/plain')) {
         const blob = await item.getType('text/plain');
         const text = await blob.text();
         if (text.trim()) {
-          chrome.runtime.sendMessage({ type: 'CLIPBOARD_RESULT', content: text, contentType: 'text' }).catch(() => {});
+          chrome.runtime.sendMessage({
+            type: 'CLIPBOARD_DATA',
+            payload: { type: 'text', content: text }
+          });
         }
         return;
       }
     }
-  } catch (_) {
-    // Fallback: readText
-    try {
-      const text = await navigator.clipboard.readText();
-      if (text.trim()) {
-        chrome.runtime.sendMessage({ type: 'CLIPBOARD_RESULT', content: text, contentType: 'text' }).catch(() => {});
-      }
-    } catch (_2) {}
+  } catch {
+    // Clipboard permission not granted or no content — ignore silently
   }
 }
 
-chrome.runtime.onMessage.addListener(msg => {
-  if (msg.type === 'DO_READ') readAndSend();
-});
+function blobToDataUrl(blob) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload  = () => resolve(reader.result);
+    reader.onerror = reject;
+    reader.readAsDataURL(blob);
+  });
+}

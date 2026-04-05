@@ -1,8 +1,12 @@
 <!DOCTYPE html>
-<html>
-<head><meta charset="UTF-8"></head>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Offscreen – Clipboard Reader</title>
+</head>
 <body>
-<textarea id="ta" style="position:fixed;left:-9999px;top:0;opacity:0;"></textarea>
-<script src="offscreen.js"></script>
+  <!-- This document exists solely to host offscreen.js which has access to
+       the Clipboard API. It is never visible to the user. -->
+  <script src="offscreen.js"></script>
 </body>
 </html>

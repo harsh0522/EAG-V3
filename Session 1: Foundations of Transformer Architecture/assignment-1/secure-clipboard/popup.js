@@ -1,495 +1,848 @@
-// ─── State ────────────────────────────────────────────────────────────────────
-let allItems  = [];
-let darkMode  = false;
-let toastTimer = null;
+// ─── popup.js ─────────────────────────────────────────────────────────────────
+// Secure Clipboard Vault v1.1.0
+// Handles auth, dashboard rendering, tabs, PIN-lock cards, inline note editing.
+// Depends on utils.js being loaded first (getStorage, setStorage, sha256,
+// encryptText, decryptText, filterBySearch, relativeTime, truncate, escapeHtml,
+// generateId).
+// ──────────────────────────────────────────────────────────────────────────────
 
-// ─── Screen helpers ───────────────────────────────────────────────────────────
-function show(id) {
-  ['setup-screen','login-screen','reset-screen','dashboard-screen'].forEach(s => {
-    document.getElementById(s).classList.add('hidden');
+'use strict';
+
+// ── State ─────────────────────────────────────────────────────────────────────
+
+let allItems    = [];        // full list loaded from storage
+let currentTab  = 'recent'; // active tab in the tab bar
+let pinCallback = null;      // async fn(pin) to call when PIN modal confirms
+
+// ── DOM helpers ───────────────────────────────────────────────────────────────
+
+const $  = id  => document.getElementById(id);
+const $$ = sel => document.querySelectorAll(sel);
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+
+document.addEventListener('DOMContentLoaded', async () => {
+  applyTheme();
+  await checkSession();
+  bindAuthEvents();
+  bindDashboardEvents();
+  bindPinModalEvents();
+  bindSettingsEvents();
+  bindPasteZone();
+  bindTabBar();
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// THEME
+// ─────────────────────────────────────────────────────────────────────────────
+
+function applyTheme() {
+  getStorage('darkMode').then(({ darkMode }) => {
+    if (darkMode) {
+      document.body.classList.add('dark');
+      $('theme-toggle').textContent = '☀️';
+    }
   });
-  document.getElementById(id).classList.remove('hidden');
-  if (id === 'dashboard-screen') focusPasteZone();
 }
 
-// Defined early so show() can reference it; body filled in PASTE ZONE section below
-function focusPasteZone() {
-  setTimeout(() => document.getElementById('paste-zone')?.focus(), 50);
-}
+// ─────────────────────────────────────────────────────────────────────────────
+// SESSION CHECK
+// ─────────────────────────────────────────────────────────────────────────────
 
-function showErr(id, msg) {
-  const el = document.getElementById(id);
-  el.textContent = msg;
-  el.classList.remove('hidden');
-}
-function hideErr(id) { document.getElementById(id).classList.add('hidden'); }
+async function checkSession() {
+  const { accounts, session } = await getStorage(['accounts', 'session']);
 
-// ─── Toast ────────────────────────────────────────────────────────────────────
-function toast(msg, duration = 1800) {
-  const el = document.getElementById('toast');
-  el.textContent = msg;
-  el.classList.remove('hidden');
-  clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => el.classList.add('hidden'), duration);
-}
-
-// ─── Dark mode ────────────────────────────────────────────────────────────────
-function applyDark(on) {
-  darkMode = on;
-  document.body.classList.toggle('dark', on);
-  document.getElementById('dark-toggle').textContent = on ? '☀️' : '🌙';
-}
-
-// ─── Storage wrappers ─────────────────────────────────────────────────────────
-function getStorage(keys) {
-  return new Promise(r => chrome.storage.local.get(keys, r));
-}
-function setStorage(obj) {
-  return new Promise(r => chrome.storage.local.set(obj, r));
-}
-
-// ─── Init ─────────────────────────────────────────────────────────────────────
-async function init() {
-  const data = await getStorage(['authUser', 'session', 'darkMode', 'clipboardItems']);
-
-  // Apply saved theme
-  applyDark(!!data.darkMode);
-
-  if (!data.authUser) {
-    show('setup-screen');
+  if (!accounts || accounts.length === 0) {
+    // First run — show registration
+    showView('register-view');
+    showScreen('auth-screen');
     return;
   }
 
-  // Session persists until browser restart (session flag cleared on extension unload)
-  if (data.session) {
-    allItems = data.clipboardItems || [];
-    show('dashboard-screen');
-    renderDashboard();
+  if (session && session.loggedIn) {
+    await loadAndShowDashboard();
   } else {
-    show('login-screen');
+    showView('login-view');
+    showScreen('auth-screen');
   }
 }
 
-// ─── SETUP ────────────────────────────────────────────────────────────────────
-document.getElementById('su-btn').addEventListener('click', async () => {
-  hideErr('su-error');
-  const username = document.getElementById('su-username').value.trim();
-  const password = document.getElementById('su-password').value;
-  const confirm  = document.getElementById('su-confirm').value;
-  const question = document.getElementById('su-question').value;
-  const answer   = document.getElementById('su-answer').value.trim();
+// ─────────────────────────────────────────────────────────────────────────────
+// HELPERS — show/hide screens & views
+// ─────────────────────────────────────────────────────────────────────────────
 
-  if (!username)              return showErr('su-error', 'Username is required.');
-  if (password.length < 4)   return showErr('su-error', 'Password must be at least 4 characters.');
-  if (password !== confirm)   return showErr('su-error', 'Passwords do not match.');
-  if (!question)              return showErr('su-error', 'Please select a security question.');
-  if (!answer)                return showErr('su-error', 'Security answer is required.');
-
-  const [pwdHash, ansHash] = await Promise.all([hashString(password), hashString(answer.toLowerCase())]);
-
-  await setStorage({
-    authUser: { username, passwordHash: pwdHash, question, answerHash: ansHash },
-    clipboardItems: [],
-    session: true
-  });
-
-  allItems = [];
-  show('dashboard-screen');
-  renderDashboard();
-  toast('Account created! Welcome 🎉');
-});
-
-// ─── LOGIN ────────────────────────────────────────────────────────────────────
-document.getElementById('li-btn').addEventListener('click', async () => {
-  hideErr('li-error');
-  const username = document.getElementById('li-username').value.trim();
-  const password = document.getElementById('li-password').value;
-
-  if (!username || !password) return showErr('li-error', 'Please fill in all fields.');
-
-  const { authUser, clipboardItems = [] } = await getStorage(['authUser', 'clipboardItems']);
-  if (!authUser) return showErr('li-error', 'No account found. Please set up first.');
-
-  if (authUser.username !== username) return showErr('li-error', 'Incorrect username or password.');
-
-  const pwdHash = await hashString(password);
-  if (pwdHash !== authUser.passwordHash) return showErr('li-error', 'Incorrect username or password.');
-
-  await setStorage({ session: true });
-  allItems = clipboardItems;
-  show('dashboard-screen');
-  renderDashboard();
-});
-
-// Enter key on login
-document.getElementById('li-password').addEventListener('keydown', e => {
-  if (e.key === 'Enter') document.getElementById('li-btn').click();
-});
-
-// ─── FORGOT PASSWORD ──────────────────────────────────────────────────────────
-document.getElementById('li-forgot').addEventListener('click', () => {
-  document.getElementById('rs-step1').classList.remove('hidden');
-  document.getElementById('rs-step2').classList.add('hidden');
-  document.getElementById('rs-username').value = '';
-  document.getElementById('rs-answer').value = '';
-  document.getElementById('rs-new-pwd').value = '';
-  document.getElementById('rs-confirm-pwd').value = '';
-  hideErr('rs-err1'); hideErr('rs-err2');
-  show('reset-screen');
-});
-
-document.getElementById('rs-back').addEventListener('click', () => show('login-screen'));
-
-// Step 1: find account
-document.getElementById('rs-find-btn').addEventListener('click', async () => {
-  hideErr('rs-err1');
-  const username = document.getElementById('rs-username').value.trim();
-  if (!username) return showErr('rs-err1', 'Please enter your username.');
-
-  const { authUser } = await getStorage(['authUser']);
-  if (!authUser || authUser.username !== username) return showErr('rs-err1', 'Account not found.');
-
-  document.getElementById('rs-question-text').textContent = `"${authUser.question}"`;
-  document.getElementById('rs-step1').classList.add('hidden');
-  document.getElementById('rs-step2').classList.remove('hidden');
-});
-
-// Step 2: verify answer + set new password
-document.getElementById('rs-submit-btn').addEventListener('click', async () => {
-  hideErr('rs-err2');
-  const answer   = document.getElementById('rs-answer').value.trim();
-  const newPwd   = document.getElementById('rs-new-pwd').value;
-  const confirm  = document.getElementById('rs-confirm-pwd').value;
-  const username = document.getElementById('rs-username').value.trim();
-
-  if (!answer)             return showErr('rs-err2', 'Please enter your security answer.');
-  if (newPwd.length < 4)  return showErr('rs-err2', 'New password must be at least 4 characters.');
-  if (newPwd !== confirm)  return showErr('rs-err2', 'Passwords do not match.');
-
-  const { authUser } = await getStorage(['authUser']);
-  const ansHash = await hashString(answer.toLowerCase());
-
-  if (ansHash !== authUser.answerHash) return showErr('rs-err2', 'Incorrect security answer.');
-
-  const newHash = await hashString(newPwd);
-  authUser.passwordHash = newHash;
-  await setStorage({ authUser });
-
-  show('login-screen');
-  toast('Password reset! Please log in.', 2500);
-});
-
-// ─── LOGOUT ───────────────────────────────────────────────────────────────────
-document.getElementById('logout-btn').addEventListener('click', async () => {
-  await setStorage({ session: false });
-  show('login-screen');
-  document.getElementById('li-username').value = '';
-  document.getElementById('li-password').value = '';
-});
-
-// ─── DARK MODE TOGGLE ─────────────────────────────────────────────────────────
-document.getElementById('dark-toggle').addEventListener('click', async () => {
-  applyDark(!darkMode);
-  await setStorage({ darkMode });
-});
-
-// ─── CHANGE PASSWORD MODAL ────────────────────────────────────────────────────
-document.getElementById('chpwd-open').addEventListener('click', () => {
-  ['cp-current','cp-new','cp-confirm'].forEach(id => document.getElementById(id).value = '');
-  hideErr('cp-error');
-  document.getElementById('chpwd-modal').classList.remove('hidden');
-});
-document.getElementById('chpwd-close').addEventListener('click', () => {
-  document.getElementById('chpwd-modal').classList.add('hidden');
-});
-
-document.getElementById('cp-save').addEventListener('click', async () => {
-  hideErr('cp-error');
-  const current = document.getElementById('cp-current').value;
-  const newPwd  = document.getElementById('cp-new').value;
-  const confirm = document.getElementById('cp-confirm').value;
-
-  if (!current || !newPwd) return showErr('cp-error', 'Please fill in all fields.');
-  if (newPwd.length < 4)   return showErr('cp-error', 'New password must be at least 4 characters.');
-  if (newPwd !== confirm)   return showErr('cp-error', 'New passwords do not match.');
-
-  const { authUser } = await getStorage(['authUser']);
-  const curHash = await hashString(current);
-  if (curHash !== authUser.passwordHash) return showErr('cp-error', 'Current password is incorrect.');
-
-  authUser.passwordHash = await hashString(newPwd);
-  await setStorage({ authUser });
-  document.getElementById('chpwd-modal').classList.add('hidden');
-  toast('Password updated ✓');
-});
-
-// ─── PASTE ZONE ───────────────────────────────────────────────────────────────
-
-const isMac = /Mac/.test(navigator.userAgent);
-const shortcutKey = isMac ? '⌘V' : 'Ctrl+V';
-const screenshotTip = isMac ? '  •  Screenshot to clipboard: ⌘⌃⇧4' : '';
-
-// Set placeholder dynamically so it reflects the OS shortcut
-document.getElementById('paste-zone').placeholder =
-  `📋  Right-click → Paste  or  press ${shortcutKey} here${screenshotTip}`;
-
-/**
- * Single global paste handler — catches ALL paste actions in the popup:
- *   • ⌘V / Ctrl+V anywhere (when paste zone or body is focused)
- *   • Right-click → Paste on the paste zone textarea
- *
- * Skips pastes inside the search bar, modal inputs, and auth screens.
- */
-document.addEventListener('paste', async e => {
-  const target = e.target;
-
-  // Ignore pastes inside search, password fields, or modal
-  if (
-    target.id === 'search'           ||
-    target.closest('#chpwd-modal')   ||
-    target.closest('#change-pwd-modal') ||
-    (target.tagName === 'INPUT' && target.type === 'password') ||
-    document.getElementById('dashboard-screen').classList.contains('hidden')
-  ) return;
-
-  e.preventDefault();
-
-  const items = e.clipboardData?.items;
-  if (!items || items.length === 0) return;
-
-  // ── Images (screenshots, copied images) ──────────────────────────────
-  for (const item of items) {
-    if (item.type.startsWith('image/')) {
-      const blob = item.getAsFile();
-      if (!blob) continue;
-      const reader = new FileReader();
-      reader.onloadend = async () => {
-        await addItemToStorage(reader.result, 'image');
-        flashPasteZone();
-        toast('Screenshot saved ✓');
-      };
-      reader.readAsDataURL(blob);
-      return;
-    }
-  }
-
-  // ── Plain text ────────────────────────────────────────────────────────
-  for (const item of items) {
-    if (item.type === 'text/plain') {
-      item.getAsString(async text => {
-        if (!text.trim()) return;
-        await addItemToStorage(text, 'text');
-        flashPasteZone();
-        toast('Pasted & saved ✓');
-      });
-      return;
-    }
-  }
-});
-
-function flashPasteZone() {
-  const el = document.getElementById('paste-zone');
-  el.value = '';
-  el.classList.add('flash');
-  setTimeout(() => el.classList.remove('flash'), 700);
+function showScreen(id) {
+  $$('.screen').forEach(s => s.classList.add('hidden'));
+  $(id).classList.remove('hidden');
 }
 
-
-// Save directly to storage + update local list (bypasses background service worker)
-async function addItemToStorage(content, type) {
-  const { clipboardItems = [] } = await getStorage(['clipboardItems']);
-  if (clipboardItems[0]?.content === content) return; // deduplicate
-
-  const entry = {
-    id:        `${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-    content,
-    type,
-    timestamp: Date.now(),
-    pinned:    false
-  };
-
-  const updated = [entry, ...clipboardItems].slice(0, 500);
-  await setStorage({ clipboardItems: updated });
-  allItems = updated;
-  renderDashboard();
+function showView(id) {
+  $$('#auth-screen > div').forEach(v => v.classList.add('hidden'));
+  $(id).classList.remove('hidden');
 }
 
-// ─── NOTE COMPOSER ────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// AUTH — BIND EVENTS
+// ─────────────────────────────────────────────────────────────────────────────
 
-const noteComposer = document.getElementById('note-composer');
-const noteText     = document.getElementById('note-text');
-const noteCount    = document.getElementById('note-char-count');
+function bindAuthEvents() {
+  // Navigation
+  $('go-register').addEventListener('click', () => showView('register-view'));
+  $('go-login').addEventListener('click',    () => showView('login-view'));
+  $('go-forgot').addEventListener('click',   () => showView('forgot-view'));
+  $('forgot-back').addEventListener('click', () => showView('login-view'));
 
-function openComposer() {
-  noteComposer.classList.remove('hidden');
-  noteText.value = '';
-  noteCount.textContent = '0 chars';
-  noteText.focus();
+  // Login
+  $('login-btn').addEventListener('click', handleLogin);
+  $('login-pass').addEventListener('keydown', e => { if (e.key === 'Enter') handleLogin(); });
+
+  // Register
+  $('register-btn').addEventListener('click', handleRegister);
+
+  // Forgot password
+  $('forgot-submit').addEventListener('click', handleForgotPassword);
 }
 
-function closeComposer() {
-  noteComposer.classList.add('hidden');
-  noteText.value = '';
-  focusPasteZone();
-}
+// ── Login ─────────────────────────────────────────────────────────────────────
 
-document.getElementById('add-note-btn').addEventListener('click', () => {
-  const isOpen = !noteComposer.classList.contains('hidden');
-  isOpen ? closeComposer() : openComposer();
-});
+async function handleLogin() {
+  const user = $('login-user').value.trim();
+  const pass = $('login-pass').value;
+  if (!user || !pass) return;
 
-document.getElementById('note-cancel').addEventListener('click', closeComposer);
+  const { accounts = [] } = await getStorage('accounts');
+  const hash = await sha256(pass);
+  const account = accounts.find(a => a.username === user && a.passwordHash === hash);
 
-// Live char count
-noteText.addEventListener('input', () => {
-  const len = noteText.value.length;
-  noteCount.textContent = `${len.toLocaleString()} char${len !== 1 ? 's' : ''}`;
-});
-
-// Save note
-document.getElementById('note-save').addEventListener('click', saveNote);
-
-// ⌘↵ / Ctrl+↵ to save while composer is open
-noteText.addEventListener('keydown', e => {
-  if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
-    e.preventDefault();
-    saveNote();
-  }
-  // Escape to cancel
-  if (e.key === 'Escape') closeComposer();
-});
-
-async function saveNote() {
-  const text = noteText.value.trim();
-  if (!text) { noteText.focus(); return; }
-  await addItemToStorage(text, 'note');
-  closeComposer();
-  toast('Note saved ✓');
-}
-
-// ─── SEARCH + FILTER ──────────────────────────────────────────────────────────
-document.getElementById('search').addEventListener('input', renderDashboard);
-document.getElementById('time-filter').addEventListener('change', renderDashboard);
-
-// ─── CLEAR ALL ────────────────────────────────────────────────────────────────
-document.getElementById('clear-all').addEventListener('click', async () => {
-  if (!confirm('Delete all clipboard history?')) return;
-  allItems = [];
-  await setStorage({ clipboardItems: [] });
-  renderDashboard();
-  toast('Cleared all items');
-});
-
-// ─── RENDER ───────────────────────────────────────────────────────────────────
-function renderDashboard() {
-  const search     = document.getElementById('search').value;
-  const timeFilter = document.getElementById('time-filter').value;
-  const visible    = filterItems(allItems, { search, timeFilter });
-
-  document.getElementById('item-count').textContent =
-    `${visible.length} item${visible.length !== 1 ? 's' : ''}`;
-
-  const list  = document.getElementById('clip-list');
-  const empty = document.getElementById('empty-state');
-
-  // Remove existing item cards (keep #empty-state)
-  list.querySelectorAll('.clip-item').forEach(el => el.remove());
-
-  if (visible.length === 0) {
-    empty.classList.remove('hidden');
+  if (!account) {
+    $('login-error').classList.remove('hidden');
     return;
   }
-  empty.classList.add('hidden');
-
-  visible.forEach(item => list.appendChild(buildItemEl(item)));
+  $('login-error').classList.add('hidden');
+  await setStorage({ session: { loggedIn: true, username: user } });
+  await loadAndShowDashboard();
 }
+
+// ── Register ──────────────────────────────────────────────────────────────────
+
+async function handleRegister() {
+  const user = $('reg-user').value.trim();
+  const pass = $('reg-pass').value;
+  const q    = $('reg-q').value.trim();
+  const a    = $('reg-a').value.trim();
+
+  if (!user || !pass || !q || !a) {
+    showRegError('All fields are required.');
+    return;
+  }
+
+  const { accounts = [] } = await getStorage('accounts');
+  if (accounts.find(ac => ac.username === user)) {
+    showRegError('Username already exists.');
+    return;
+  }
+
+  const passwordHash = await sha256(pass);
+  const answerHash   = await sha256(a.toLowerCase());
+  accounts.push({ username: user, passwordHash, securityQuestion: q, answerHash });
+  await setStorage({ accounts, session: { loggedIn: true, username: user } });
+  await loadAndShowDashboard();
+}
+
+function showRegError(msg) {
+  const el = $('reg-error');
+  el.textContent = msg;
+  el.classList.remove('hidden');
+}
+
+// ── Forgot password ───────────────────────────────────────────────────────────
+
+async function handleForgotPassword() {
+  const user    = $('forgot-user').value.trim();
+  const answer  = $('forgot-a').value.trim();
+  const newPass = $('forgot-newpass').value;
+
+  const { accounts = [] } = await getStorage('accounts');
+  const idx = accounts.findIndex(a => a.username === user);
+  if (idx < 0) {
+    showForgotError('Username not found.');
+    return;
+  }
+
+  const account = accounts[idx];
+
+  // First step: show question
+  const qWrap = $('forgot-q-wrap');
+  if (qWrap.classList.contains('hidden')) {
+    $('forgot-q-text').textContent = `Q: ${account.securityQuestion}`;
+    qWrap.classList.remove('hidden');
+    return;
+  }
+
+  // Second step: verify answer + reset
+  if (!answer || !newPass) {
+    showForgotError('Please fill in all fields.');
+    return;
+  }
+  const answerHash = await sha256(answer.toLowerCase());
+  if (answerHash !== account.answerHash) {
+    showForgotError('Incorrect answer.');
+    return;
+  }
+  accounts[idx].passwordHash = await sha256(newPass);
+  await setStorage({ accounts });
+  $('forgot-error').classList.add('hidden');
+  $('forgot-success').classList.remove('hidden');
+}
+
+function showForgotError(msg) {
+  const el = $('forgot-error');
+  el.textContent = msg;
+  el.classList.remove('hidden');
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// DASHBOARD
+// ─────────────────────────────────────────────────────────────────────────────
+
+async function loadAndShowDashboard() {
+  const { clipboardItems = [] } = await getStorage('clipboardItems');
+  allItems = clipboardItems;
+  showScreen('dashboard-screen');
+  renderDashboard();
+
+  // Poll for new items every 2 seconds while popup is open
+  setInterval(async () => {
+    const { clipboardItems: fresh = [] } = await getStorage('clipboardItems');
+    if (fresh.length !== allItems.length) {
+      allItems = fresh;
+      renderDashboard();
+    }
+  }, 2000);
+}
+
+// ── Tab filtering (Feature 4) ─────────────────────────────────────────────────
+
+function getTabItems() {
+  const sevenDaysAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+  switch (currentTab) {
+    case 'recent':
+      return allItems.filter(i => i.timestamp >= sevenDaysAgo || i.pinned);
+    case 'images':
+      return allItems.filter(i => i.type === 'image');
+    case 'texts':
+      return allItems.filter(i => i.type === 'text' || i.type === 'note');
+    case 'passwords':
+      return allItems.filter(i => i.locked);
+    case 'favourites':
+      return allItems.filter(i => i.pinned);
+    default:
+      return allItems;
+  }
+}
+
+// ── Render ────────────────────────────────────────────────────────────────────
+
+function renderDashboard() {
+  const query      = $('search-input').value;
+  const windowMs   = parseFloat($('time-filter').value);
+
+  // 1. Filter by active tab
+  let items = getTabItems();
+
+  // 2. Apply time window filter (pinned items are immune)
+  if (isFinite(windowMs)) {
+    const cutoff = Date.now() - windowMs;
+    items = items.filter(i => i.pinned || i.timestamp >= cutoff);
+  }
+
+  // 3. Apply search filter
+  items = filterBySearch(items, query);
+
+  // Sort: pinned first, then most-recent
+  items = [
+    ...items.filter(i => i.pinned),
+    ...items.filter(i => !i.pinned)
+  ];
+
+  const list       = $('item-list');
+  const emptyState = $('empty-state');
+  list.innerHTML   = '';
+
+  $('item-count').textContent = `${items.length} item${items.length !== 1 ? 's' : ''}`;
+
+  if (items.length === 0) {
+    emptyState.classList.remove('hidden');
+    return;
+  }
+  emptyState.classList.add('hidden');
+
+  items.forEach(item => {
+    const el = buildItemEl(item);
+    list.appendChild(el);
+  });
+}
+
+// ── Build a single card element ───────────────────────────────────────────────
 
 function buildItemEl(item) {
   const el = document.createElement('div');
-  el.className = `clip-item${item.pinned ? ' pinned' : ''}`;
+  el.className = `clip-item${item.pinned ? ' pinned' : ''}${item.locked ? ' locked' : ''}`;
   el.dataset.id = item.id;
 
-  const preview = item.type === 'image'
-    ? `<img src="${item.content}" alt="clipboard image" style="max-width:100%;max-height:120px;border-radius:4px;object-fit:contain;">`
-    : escapeHtml(truncate(item.content, 150));
+  // ── Header ────────────────────────────────────────────────────────────────
+  const header = document.createElement('div');
+  header.className = 'item-header';
 
-  const badgeClass = item.type === 'note' ? 'item-badge note-badge' : 'item-badge';
+  const badge = document.createElement('span');
+  badge.className = `item-type-badge ${item.type}`;
+  badge.textContent = item.locked ? '🔒 locked' : item.type;
 
-  el.innerHTML = `
-    <div class="item-meta">
-      <span class="item-time">${formatTimestamp(item.timestamp)}</span>
-      <span class="${badgeClass}">${item.type === 'note' ? '📝 note' : item.type}</span>
-    </div>
-    <div class="item-preview">${preview}</div>
-    <div class="item-actions">
-      <button class="copy-btn">📋 Copy</button>
-      <button class="pin-btn ${item.pinned ? 'active' : ''}">${item.pinned ? '📌 Unpin' : '📌 Pin'}</button>
-      <button class="del-btn">🗑 Delete</button>
-    </div>`;
+  const timeEl = document.createElement('span');
+  timeEl.className = 'item-time';
+  timeEl.textContent = relativeTime(item.timestamp);
 
-  el.querySelector('.copy-btn').addEventListener('click', () => copyItem(item));
-  el.querySelector('.pin-btn').addEventListener('click', () => togglePin(item.id));
-  el.querySelector('.del-btn').addEventListener('click', () => deleteItem(item.id));
+  header.append(badge, timeEl);
+  el.appendChild(header);
+
+  // ── Preview ───────────────────────────────────────────────────────────────
+  if (item.locked) {
+    // Locked card shows a placeholder (Feature 2)
+    const lp = document.createElement('div');
+    lp.className = 'locked-preview item-preview';
+    lp.innerHTML = '<span>🔒</span><span>Secured — click <em>Unlock</em> to reveal</span>';
+    el.appendChild(lp);
+  } else if (item.type === 'image') {
+    const preview = document.createElement('div');
+    preview.className = 'item-preview';
+    const img = document.createElement('img');
+    img.src = item.content;
+    img.alt = 'Clipboard image';
+    preview.appendChild(img);
+    el.appendChild(preview);
+  } else {
+    const preview = document.createElement('div');
+    preview.className = 'item-preview';
+    preview.textContent = truncate(item.content, 140);
+    el.appendChild(preview);
+
+    // ── Inline edit for note cards (Feature 1) ───────────────────────────
+    if (item.type === 'note') {
+      preview.title  = 'Double-click to edit';
+      preview.style.cursor = 'text';
+      let saveTimer;
+
+      preview.addEventListener('dblclick', () => {
+        // Replace preview with a textarea
+        const textarea = document.createElement('textarea');
+        textarea.className = 'edit-textarea';
+        textarea.value = item.content;
+
+        const indicator = document.createElement('div');
+        indicator.className = 'autosave-indicator';
+
+        preview.replaceWith(textarea);
+        textarea.after(indicator);
+        textarea.focus();
+        // Move cursor to end
+        textarea.selectionStart = textarea.selectionEnd = textarea.value.length;
+
+        // Debounced auto-save
+        textarea.addEventListener('input', () => {
+          clearTimeout(saveTimer);
+          indicator.textContent = 'Saving…';
+          saveTimer = setTimeout(async () => {
+            const newContent = textarea.value;
+            item.content = newContent;
+            allItems = allItems.map(i =>
+              i.id === item.id ? { ...i, content: newContent } : i
+            );
+            await setStorage({ clipboardItems: allItems });
+            indicator.textContent = 'Saved ✓';
+            setTimeout(() => { indicator.textContent = ''; }, 1500);
+          }, 800);
+        });
+
+        // Escape cancels edit
+        textarea.addEventListener('keydown', e => {
+          if (e.key === 'Escape') {
+            clearTimeout(saveTimer);
+            renderDashboard();
+          }
+          // Ctrl/Cmd+Enter also saves immediately
+          if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+            clearTimeout(saveTimer);
+            const newContent = textarea.value;
+            item.content = newContent;
+            allItems = allItems.map(i =>
+              i.id === item.id ? { ...i, content: newContent } : i
+            );
+            setStorage({ clipboardItems: allItems }).then(() => {
+              indicator.textContent = 'Saved ✓';
+              setTimeout(() => renderDashboard(), 800);
+            });
+          }
+        });
+      });
+    }
+  }
+
+  // ── Actions row ───────────────────────────────────────────────────────────
+  const actions = document.createElement('div');
+  actions.className = 'item-actions';
+
+  // Copy / View button
+  if (!item.locked) {
+    const copyBtn = document.createElement('button');
+    copyBtn.className = 'action-btn';
+    copyBtn.textContent = item.type === 'image' ? '📋 Copy image' : '📋 Copy';
+    copyBtn.addEventListener('click', e => {
+      e.stopPropagation();
+      copyItemToClipboard(item);
+    });
+    actions.appendChild(copyBtn);
+  }
+
+  // Pin / Unpin
+  const pinBtn = document.createElement('button');
+  pinBtn.className = 'action-btn';
+  pinBtn.textContent = item.pinned ? '📌 Unpin' : '📌 Pin';
+  pinBtn.addEventListener('click', async e => {
+    e.stopPropagation();
+    allItems = allItems.map(i =>
+      i.id === item.id ? { ...i, pinned: !i.pinned } : i
+    );
+    await setStorage({ clipboardItems: allItems });
+    renderDashboard();
+    toast(item.pinned ? 'Unpinned' : 'Pinned ✓');
+  });
+  actions.appendChild(pinBtn);
+
+  // Lock / Unlock (Feature 2)
+  const lockBtn = document.createElement('button');
+  lockBtn.className = 'action-btn lock-btn';
+  lockBtn.textContent = item.locked ? '🔓 Unlock' : '🔒 Lock';
+  lockBtn.addEventListener('click', e => {
+    e.stopPropagation();
+    handleLockToggle(item, el);
+  });
+  actions.appendChild(lockBtn);
+
+  // Delete
+  const delBtn = document.createElement('button');
+  delBtn.className = 'action-btn danger';
+  delBtn.textContent = '🗑 Delete';
+  delBtn.addEventListener('click', async e => {
+    e.stopPropagation();
+    allItems = allItems.filter(i => i.id !== item.id);
+    await setStorage({ clipboardItems: allItems });
+    renderDashboard();
+    toast('Deleted');
+  });
+  actions.appendChild(delBtn);
+
+  el.appendChild(actions);
+
+  // Click on card copies to clipboard (unless auto-copy is off)
+  el.addEventListener('click', async () => {
+    const { autoCopy } = await getStorage('autoCopy');
+    if (autoCopy !== false && !item.locked) {
+      copyItemToClipboard(item);
+    }
+  });
 
   return el;
 }
 
-// ─── Item actions ─────────────────────────────────────────────────────────────
-async function copyItem(item) {
+// ── Copy helpers ──────────────────────────────────────────────────────────────
+
+async function copyItemToClipboard(item) {
   try {
     if (item.type === 'image') {
-      // For base64 images, copy as text (data URL)
-      await navigator.clipboard.writeText(item.content);
+      const resp = await fetch(item.content);
+      const blob = await resp.blob();
+      await navigator.clipboard.write([
+        new ClipboardItem({ [blob.type]: blob })
+      ]);
     } else {
       await navigator.clipboard.writeText(item.content);
     }
-    toast('Copied to clipboard ✓');
-  } catch (e) {
-    toast('Failed to copy');
+    toast('Copied ✓');
+  } catch {
+    toast('Could not copy');
   }
 }
 
-async function deleteItem(id) {
-  allItems = allItems.filter(i => i.id !== id);
-  await setStorage({ clipboardItems: allItems });
-  renderDashboard();
-}
+// ─────────────────────────────────────────────────────────────────────────────
+// LOCK / UNLOCK — Feature 2
+// ─────────────────────────────────────────────────────────────────────────────
 
-async function togglePin(id) {
-  allItems = allItems.map(i => i.id === id ? { ...i, pinned: !i.pinned } : i);
-  await setStorage({ clipboardItems: allItems });
-  renderDashboard();
-}
+function handleLockToggle(item, cardEl) {
+  if (item.locked) {
+    // ── Unlock mode ────────────────────────────────────────────────────────
+    openPinModal('unlock', async pin => {
+      try {
+        const text = await decryptText(item.encryptedContent, item.iv, pin);
 
-// ─── Live update from background ─────────────────────────────────────────────
-chrome.storage.onChanged.addListener((changes) => {
-  if (changes.clipboardItems && !document.getElementById('dashboard-screen').classList.contains('hidden')) {
-    allItems = changes.clipboardItems.newValue || [];
-    renderDashboard();
+        // Reveal decrypted content temporarily — do NOT persist it
+        const preview = cardEl.querySelector('.locked-preview');
+        if (preview) {
+          preview.innerHTML =
+            `<span style="background:var(--item-pin);padding:4px 6px;border-radius:4px;font-size:12px;word-break:break-word;">${escapeHtml(text)}</span>` +
+            `<span style="font-size:10px;color:var(--text-sub);margin-left:6px;white-space:nowrap;">(unlocked temporarily)</span>`;
+        }
+        return true; // close modal
+      } catch {
+        shakePinInputs();
+        showPinError('Incorrect PIN. Try again.');
+        return false; // keep modal open
+      }
+    });
+  } else {
+    // ── Lock mode ───────────────────────────────────────────────────────────
+    openPinModal('lock', async pin => {
+      const { encryptedContent, iv } = await encryptText(item.content, pin);
+      allItems = allItems.map(i =>
+        i.id === item.id
+          ? { ...i, content: '', encryptedContent, iv, locked: true }
+          : i
+      );
+      await setStorage({ clipboardItems: allItems });
+      renderDashboard();
+      toast('Card locked 🔒');
+      return true;
+    });
   }
-});
-
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-function escapeHtml(str) {
-  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
 
-// ─── Open in resizable window ─────────────────────────────────────────────────
-document.getElementById('open-window-btn').addEventListener('click', () => {
-  chrome.windows.create({
-    url:    chrome.runtime.getURL('popup.html?mode=window'),
-    type:   'popup',
-    width:  500,
-    height: 680
+// ─────────────────────────────────────────────────────────────────────────────
+// PIN MODAL — Feature 2
+// ─────────────────────────────────────────────────────────────────────────────
+
+function openPinModal(mode, callback) {
+  pinCallback = callback;
+
+  $('pin-modal-title').textContent = mode === 'lock' ? '🔒 Lock Card' : '🔓 Unlock Card';
+  $('pin-modal-hint').textContent  = mode === 'lock'
+    ? 'Set a 4-digit PIN to encrypt this card'
+    : 'Enter the 4-digit PIN to reveal content';
+
+  $('pin-error').classList.add('hidden');
+  $$('.pin-digit').forEach(d => { d.value = ''; });
+  $('pin-modal').classList.remove('hidden');
+  $$('.pin-digit')[0].focus();
+}
+
+function bindPinModalEvents() {
+  // Auto-advance digits
+  $$('.pin-digit').forEach((inp, i, all) => {
+    inp.addEventListener('input', () => {
+      // Keep only last digit, ensure it's numeric
+      inp.value = inp.value.replace(/\D/g, '').slice(-1);
+      if (inp.value && i < all.length - 1) all[i + 1].focus();
+      // If all 4 filled, auto-confirm
+      if (i === all.length - 1 && inp.value) {
+        // Small delay so user sees the filled state
+        setTimeout(() => confirmPin(), 80);
+      }
+    });
+    inp.addEventListener('keydown', e => {
+      if (e.key === 'Backspace' && !inp.value && i > 0) all[i - 1].focus();
+      if (e.key === 'Enter') confirmPin();
+      if (e.key === 'Escape') closePinModal();
+    });
+    // Paste support — distribute pasted digits across boxes
+    inp.addEventListener('paste', e => {
+      e.preventDefault();
+      const pasted = (e.clipboardData.getData('text') || '').replace(/\D/g, '').slice(0, 4);
+      const allDigits = $$('.pin-digit');
+      pasted.split('').forEach((ch, idx) => {
+        if (allDigits[i + idx]) allDigits[i + idx].value = ch;
+      });
+      const nextIdx = Math.min(i + pasted.length, allDigits.length - 1);
+      allDigits[nextIdx].focus();
+    });
   });
-  window.close();
-});
 
-// ─── Boot ─────────────────────────────────────────────────────────────────────
-if (new URLSearchParams(location.search).get('mode') === 'window') {
-  document.body.classList.add('window-mode');
-  // Hide the expand button when already in a window
-  document.getElementById('open-window-btn').style.display = 'none';
+  $('pin-modal-close').addEventListener('click', closePinModal);
+
+  $('pin-confirm').addEventListener('click', confirmPin);
 }
 
-init();
+async function confirmPin() {
+  const digits = $$('.pin-digit');
+  const pin = Array.from(digits).map(d => d.value).join('');
+  if (pin.length !== 4) {
+    shakePinInputs();
+    return;
+  }
+  if (pinCallback) {
+    const ok = await pinCallback(pin);
+    if (ok !== false) {
+      closePinModal();
+    }
+  }
+}
+
+function closePinModal() {
+  $('pin-modal').classList.add('hidden');
+  pinCallback = null;
+  $$('.pin-digit').forEach(d => { d.value = ''; });
+  $('pin-error').classList.add('hidden');
+}
+
+function shakePinInputs() {
+  const container = $('pin-inputs');
+  container.classList.remove('shake');
+  // Force reflow so the animation re-triggers if already shaking
+  void container.offsetWidth;
+  container.classList.add('shake');
+  container.addEventListener('animationend', () => container.classList.remove('shake'), { once: true });
+}
+
+function showPinError(msg) {
+  const el = $('pin-error');
+  el.textContent = msg;
+  el.classList.remove('hidden');
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// TAB BAR — Feature 4
+// ─────────────────────────────────────────────────────────────────────────────
+
+function bindTabBar() {
+  $$('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      $$('.tab-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      currentTab = btn.dataset.tab;
+      renderDashboard();
+    });
+  });
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// DASHBOARD EVENTS
+// ─────────────────────────────────────────────────────────────────────────────
+
+function bindDashboardEvents() {
+  // Search & filter
+  $('search-input').addEventListener('input',  () => renderDashboard());
+  $('time-filter').addEventListener('change',  () => renderDashboard());
+
+  // Theme toggle
+  $('theme-toggle').addEventListener('click', async () => {
+    const isDark = document.body.classList.toggle('dark');
+    $('theme-toggle').textContent = isDark ? '☀️' : '🌙';
+    await setStorage({ darkMode: isDark });
+  });
+
+  // New note
+  $('new-note-btn').addEventListener('click', () => createNewNote());
+
+  // Expand to window
+  $('expand-btn').addEventListener('click', () => {
+    chrome.windows.create({
+      url: chrome.runtime.getURL('popup.html'),
+      type: 'popup',
+      width: 700,
+      height: 700
+    });
+  });
+
+  // Logout
+  $('logout-btn').addEventListener('click', async () => {
+    await setStorage({ session: { loggedIn: false } });
+    showView('login-view');
+    showScreen('auth-screen');
+  });
+
+  // Settings button
+  $('settings-btn').addEventListener('click', () => {
+    $('settings-modal').classList.remove('hidden');
+  });
+}
+
+// ── New note card ─────────────────────────────────────────────────────────────
+
+async function createNewNote() {
+  const note = {
+    id:        generateId(),
+    type:      'note',
+    content:   '',
+    timestamp: Date.now(),
+    pinned:    false,
+    locked:    false
+  };
+  allItems = [note, ...allItems];
+  await setStorage({ clipboardItems: allItems });
+
+  // Switch to texts tab so the new note is visible
+  if (currentTab !== 'recent' && currentTab !== 'texts') {
+    $$('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelector('.tab-btn[data-tab="texts"]').classList.add('active');
+    currentTab = 'texts';
+  }
+
+  renderDashboard();
+
+  // Immediately enter edit mode on the new note
+  const firstCard = document.querySelector('.clip-item[data-id="' + note.id + '"]');
+  if (firstCard) {
+    const preview = firstCard.querySelector('.item-preview');
+    if (preview) {
+      // Trigger the double-click listener programmatically
+      preview.dispatchEvent(new MouseEvent('dblclick'));
+    }
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PASTE ZONE
+// ─────────────────────────────────────────────────────────────────────────────
+
+function bindPasteZone() {
+  const zone = $('paste-zone');
+
+  // Paste event (Cmd/Ctrl+V)
+  document.addEventListener('paste', async e => {
+    const items = Array.from(e.clipboardData?.items || []);
+    for (const item of items) {
+      if (item.type.startsWith('image/')) {
+        const blob    = item.getAsFile();
+        const dataUrl = await blobToDataUrl(blob);
+        await saveManualItem({ type: 'image', content: dataUrl });
+        return;
+      }
+    }
+    // If text, let the browser handle it (inputs etc.)
+  });
+
+  // Drag-and-drop
+  zone.addEventListener('dragover', e => {
+    e.preventDefault();
+    zone.classList.add('drag-over');
+  });
+  zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
+  zone.addEventListener('drop', async e => {
+    e.preventDefault();
+    zone.classList.remove('drag-over');
+    const file = e.dataTransfer.files[0];
+    if (file && file.type.startsWith('image/')) {
+      const dataUrl = await blobToDataUrl(file);
+      await saveManualItem({ type: 'image', content: dataUrl });
+    }
+  });
+}
+
+async function saveManualItem(partial) {
+  const item = {
+    id:        generateId(),
+    timestamp: Date.now(),
+    pinned:    false,
+    locked:    false,
+    ...partial
+  };
+  allItems = [item, ...allItems];
+  await setStorage({ clipboardItems: allItems });
+  renderDashboard();
+  toast('Saved ✓');
+}
+
+function blobToDataUrl(blob) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload  = () => resolve(reader.result);
+    reader.onerror = reject;
+    reader.readAsDataURL(blob);
+  });
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SETTINGS
+// ─────────────────────────────────────────────────────────────────────────────
+
+function bindSettingsEvents() {
+  // Settings modal open/close
+  $('settings-close').addEventListener('click', () => {
+    $('settings-modal').classList.add('hidden');
+  });
+
+  // Auto-copy toggle
+  $('auto-copy-toggle').addEventListener('change', async e => {
+    await setStorage({ autoCopy: e.target.checked });
+  });
+  getStorage('autoCopy').then(({ autoCopy }) => {
+    $('auto-copy-toggle').checked = autoCopy !== false;
+  });
+
+  // Max items
+  $('max-items-select').addEventListener('change', async e => {
+    await setStorage({ maxItems: parseInt(e.target.value) });
+  });
+
+  // Change password
+  $('change-pass-btn').addEventListener('click', () => {
+    $('settings-modal').classList.add('hidden');
+    $('change-pass-modal').classList.remove('hidden');
+  });
+  $('change-pass-close').addEventListener('click', () => {
+    $('change-pass-modal').classList.add('hidden');
+  });
+  $('cp-submit').addEventListener('click', handleChangePassword);
+
+  // Clear all
+  $('clear-all-btn').addEventListener('click', async () => {
+    if (!confirm('Delete ALL clipboard items? This cannot be undone.')) return;
+    allItems = [];
+    await setStorage({ clipboardItems: [] });
+    renderDashboard();
+    $('settings-modal').classList.add('hidden');
+    toast('All items cleared');
+  });
+}
+
+async function handleChangePassword() {
+  const current = $('cp-current').value;
+  const newPass  = $('cp-new').value;
+  if (!current || !newPass) return;
+
+  const { accounts = [], session } = await getStorage(['accounts', 'session']);
+  const currentHash = await sha256(current);
+  const idx = accounts.findIndex(
+    a => a.username === session.username && a.passwordHash === currentHash
+  );
+
+  if (idx < 0) {
+    const e = $('cp-error');
+    e.textContent = 'Current password is incorrect.';
+    e.classList.remove('hidden');
+    return;
+  }
+
+  accounts[idx].passwordHash = await sha256(newPass);
+  await setStorage({ accounts });
+  $('cp-error').classList.add('hidden');
+  $('cp-success').classList.remove('hidden');
+  setTimeout(() => {
+    $('cp-success').classList.add('hidden');
+    $('change-pass-modal').classList.add('hidden');
+  }, 1800);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// TOAST
+// ─────────────────────────────────────────────────────────────────────────────
+
+let toastTimer;
+function toast(msg, durationMs = 2000) {
+  const el = $('toast');
+  el.textContent = msg;
+  el.classList.remove('hidden');
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => {
+    el.classList.remove('show');
+    setTimeout(() => el.classList.add('hidden'), 220);
+  }, durationMs);
+}
