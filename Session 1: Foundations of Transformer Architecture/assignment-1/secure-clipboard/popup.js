@@ -210,6 +210,8 @@ async function loadAndShowDashboard() {
   allItems = clipboardItems;
   showScreen('dashboard-screen');
   renderDashboard();
+  // Focus paste zone so Cmd+V works immediately without clicking first
+  setTimeout(() => $('paste-zone')?.focus(), 100);
 
   // Poll for new items every 2 seconds while popup is open
   setInterval(async () => {
@@ -221,21 +223,22 @@ async function loadAndShowDashboard() {
   }, 2000);
 }
 
-// ── Tab filtering (Feature 4) ─────────────────────────────────────────────────
+// ── Tab filtering — tabs reflect user-assigned categories, not auto-detected types ───
 
 function getTabItems() {
   const sevenDaysAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
   switch (currentTab) {
     case 'recent':
+      // All items from the last 7 days, plus any pinned items
       return allItems.filter(i => i.timestamp >= sevenDaysAgo || i.pinned);
     case 'images':
-      return allItems.filter(i => i.type === 'image');
+      return allItems.filter(i => i.category === 'images');
     case 'texts':
-      return allItems.filter(i => i.type === 'text' || i.type === 'note');
+      return allItems.filter(i => i.category === 'texts');
     case 'passwords':
-      return allItems.filter(i => i.locked);
+      return allItems.filter(i => i.category === 'passwords');
     case 'favourites':
-      return allItems.filter(i => i.pinned);
+      return allItems.filter(i => i.category === 'favourites' || i.pinned);
     default:
       return allItems;
   }
@@ -295,8 +298,10 @@ function buildItemEl(item) {
   header.className = 'item-header';
 
   const badge = document.createElement('span');
+  const catLabel = item.locked ? '🔒 locked'
+    : (item.category && item.category !== 'none') ? item.category : item.type;
   badge.className = `item-type-badge ${item.type}`;
-  badge.textContent = item.locked ? '🔒 locked' : item.type;
+  badge.textContent = catLabel;
 
   const timeEl = document.createElement('span');
   timeEl.className = 'item-time';
@@ -326,8 +331,8 @@ function buildItemEl(item) {
     preview.textContent = truncate(item.content, 140);
     el.appendChild(preview);
 
-    // ── Inline edit for note cards (Feature 1) ───────────────────────────
-    if (item.type === 'note') {
+    // ── Inline edit for ALL unlocked text/note cards ─────────────────────
+    {
       preview.title  = 'Double-click to edit';
       preview.style.cursor = 'text';
       let saveTimer;
@@ -391,7 +396,7 @@ function buildItemEl(item) {
   const actions = document.createElement('div');
   actions.className = 'item-actions';
 
-  // Copy / View button
+  // Copy button
   if (!item.locked) {
     const copyBtn = document.createElement('button');
     copyBtn.className = 'action-btn';
@@ -402,6 +407,30 @@ function buildItemEl(item) {
     });
     actions.appendChild(copyBtn);
   }
+
+  // Paste button — pastes current clipboard content into this card
+  if (!item.locked) {
+    const pasteBtn = document.createElement('button');
+    pasteBtn.className = 'action-btn';
+    pasteBtn.textContent = '📋 Paste';
+    pasteBtn.title = 'Paste clipboard content into this card (right-click also works)';
+    pasteBtn.addEventListener('click', e => {
+      e.stopPropagation();
+      pasteIntoCard(item);
+    });
+    actions.appendChild(pasteBtn);
+  }
+
+  // Move to category
+  const moveBtn = document.createElement('button');
+  moveBtn.className = 'action-btn';
+  moveBtn.textContent = '📁 Move';
+  moveBtn.title = 'Move this card to a category tab';
+  moveBtn.addEventListener('click', e => {
+    e.stopPropagation();
+    showMoveMenu(item, moveBtn);
+  });
+  actions.appendChild(moveBtn);
 
   // Pin / Unpin
   const pinBtn = document.createElement('button');
@@ -442,6 +471,12 @@ function buildItemEl(item) {
   actions.appendChild(delBtn);
 
   el.appendChild(actions);
+
+  // Right-click → custom context menu (Copy / Paste / Delete)
+  el.addEventListener('contextmenu', e => {
+    e.preventDefault();
+    showCardContextMenu(item, e.clientX, e.clientY);
+  });
 
   // Click on card copies to clipboard (unless auto-copy is off)
   el.addEventListener('click', async () => {
@@ -672,16 +707,17 @@ async function createNewNote() {
     content:   '',
     timestamp: Date.now(),
     pinned:    false,
-    locked:    false
+    locked:    false,
+    category:  'none'
   };
   allItems = [note, ...allItems];
   await setStorage({ clipboardItems: allItems });
 
-  // Switch to texts tab so the new note is visible
-  if (currentTab !== 'recent' && currentTab !== 'texts') {
+  // Switch to Recent tab so the new note is always visible
+  if (currentTab !== 'recent') {
     $$('.tab-btn').forEach(b => b.classList.remove('active'));
-    document.querySelector('.tab-btn[data-tab="texts"]').classList.add('active');
-    currentTab = 'texts';
+    document.querySelector('.tab-btn[data-tab="recent"]').classList.add('active');
+    currentTab = 'recent';
   }
 
   renderDashboard();
@@ -704,18 +740,42 @@ async function createNewNote() {
 function bindPasteZone() {
   const zone = $('paste-zone');
 
-  // Paste event (Cmd/Ctrl+V)
+  // Click paste zone → focus it so next Cmd+V is caught by the document paste handler
+  zone.addEventListener('click', () => zone.focus());
+
+  // Global paste (Cmd/Ctrl+V) — captures screenshots and images anywhere in the popup
   document.addEventListener('paste', async e => {
+    const target = e.target;
+    // Let normal text inputs / textareas handle their own paste
+    if (target.matches('input:not(#search-input), textarea, [contenteditable]')) return;
+    // Also skip the PIN modal inputs
+    if (target.closest('#pin-modal') || target.closest('#change-pass-modal')) return;
+
     const items = Array.from(e.clipboardData?.items || []);
+
+    // Image first (screenshots)
     for (const item of items) {
       if (item.type.startsWith('image/')) {
+        e.preventDefault();
         const blob    = item.getAsFile();
         const dataUrl = await blobToDataUrl(blob);
         await saveManualItem({ type: 'image', content: dataUrl });
         return;
       }
     }
-    // If text, let the browser handle it (inputs etc.)
+
+    // Plain text — create a new card
+    for (const item of items) {
+      if (item.type === 'text/plain') {
+        item.getAsString(async text => {
+          if (text && text.trim()) {
+            e.preventDefault();
+            await saveManualItem({ type: 'text', content: text });
+          }
+        });
+        return;
+      }
+    }
   });
 
   // Drag-and-drop
@@ -741,6 +801,7 @@ async function saveManualItem(partial) {
     timestamp: Date.now(),
     pinned:    false,
     locked:    false,
+    category:  'none',
     ...partial
   };
   allItems = [item, ...allItems];
@@ -845,4 +906,150 @@ function toast(msg, durationMs = 2000) {
     el.classList.remove('show');
     setTimeout(() => el.classList.add('hidden'), 220);
   }, durationMs);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CARD RIGHT-CLICK CONTEXT MENU
+// ─────────────────────────────────────────────────────────────────────────────
+
+function showCardContextMenu(item, x, y) {
+  // Close any open menus first
+  document.querySelectorAll('.card-ctx-menu, .move-menu').forEach(m => m.remove());
+
+  const menu = document.createElement('div');
+  menu.className = 'card-ctx-menu';
+
+  function addOpt(label, cls, handler) {
+    const btn = document.createElement('button');
+    btn.className = 'card-ctx-opt' + (cls ? ' ' + cls : '');
+    btn.textContent = label;
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      menu.remove();
+      handler();
+    });
+    menu.appendChild(btn);
+  }
+
+  if (!item.locked) {
+    addOpt(item.type === 'image' ? '📋 Copy image' : '📋 Copy', '', () => copyItemToClipboard(item));
+    addOpt('📋 Paste into card', '', () => pasteIntoCard(item));
+    addOpt('📁 Move to…', '', () => showMoveMenu(item, menu));
+  }
+
+  addOpt(item.pinned ? '📌 Unpin' : '📌 Pin', '', async () => {
+    allItems = allItems.map(i => i.id === item.id ? { ...i, pinned: !i.pinned } : i);
+    await setStorage({ clipboardItems: allItems });
+    renderDashboard();
+    toast(item.pinned ? 'Unpinned' : 'Pinned ✓');
+  });
+
+  addOpt(item.locked ? '🔓 Unlock' : '🔒 Lock', '', () => handleLockToggle(item, document.querySelector(`.clip-item[data-id="${item.id}"]`)));
+
+  addOpt('🗑 Delete', 'danger', async () => {
+    allItems = allItems.filter(i => i.id !== item.id);
+    await setStorage({ clipboardItems: allItems });
+    renderDashboard();
+    toast('Deleted');
+  });
+
+  document.body.appendChild(menu);
+
+  // Position: keep within popup bounds
+  const mw = 170;
+  const mh = menu.children.length * 33 + 8;
+  menu.style.left = `${Math.min(x, window.innerWidth  - mw - 4)}px`;
+  menu.style.top  = `${Math.min(y, window.innerHeight - mh - 4)}px`;
+
+  setTimeout(() => {
+    document.addEventListener('click', () => menu.remove(), { once: true });
+  }, 0);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// MOVE MENU — user picks which tab/category a card belongs to
+// ─────────────────────────────────────────────────────────────────────────────
+
+function showMoveMenu(item, anchorEl) {
+  document.querySelectorAll('.move-menu').forEach(m => m.remove());
+
+  const menu = document.createElement('div');
+  menu.className = 'move-menu';
+
+  const categories = [
+    { id: 'none',       label: '🕐 Recent only' },
+    { id: 'images',     label: '🖼 Images' },
+    { id: 'texts',      label: '📝 Texts' },
+    { id: 'passwords',  label: '🔐 Passwords' },
+    { id: 'favourites', label: '⭐ Favourites' },
+  ];
+
+  categories.forEach(cat => {
+    const opt = document.createElement('button');
+    opt.className = 'move-option' + ((item.category || 'none') === cat.id ? ' active' : '');
+    opt.textContent = cat.label;
+    opt.addEventListener('click', async e => {
+      e.stopPropagation();
+      allItems = allItems.map(i => i.id === item.id ? { ...i, category: cat.id } : i);
+      await setStorage({ clipboardItems: allItems });
+      menu.remove();
+      renderDashboard();
+      toast(`Moved to ${cat.label} ✓`);
+    });
+    menu.appendChild(opt);
+  });
+
+  document.body.appendChild(menu);
+
+  const rect     = anchorEl.getBoundingClientRect();
+  const menuH    = categories.length * 34 + 8;
+  const spaceBelow = window.innerHeight - rect.bottom;
+  menu.style.top  = (spaceBelow >= menuH || spaceBelow >= 80)
+    ? `${rect.bottom + 2}px`
+    : `${rect.top - menuH - 2}px`;
+  menu.style.left = `${Math.min(rect.left, window.innerWidth - 160)}px`;
+
+  setTimeout(() => {
+    document.addEventListener('click', () => menu.remove(), { once: true });
+  }, 0);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PASTE INTO CARD — reads clipboard and updates the card's content
+// ─────────────────────────────────────────────────────────────────────────────
+
+async function pasteIntoCard(item) {
+  try {
+    const clipItems = await navigator.clipboard.read();
+    for (const clipItem of clipItems) {
+      const imgType = clipItem.types.find(t => t.startsWith('image/'));
+      if (imgType) {
+        const blob    = await clipItem.getType(imgType);
+        const dataUrl = await blobToDataUrl(blob);
+        allItems = allItems.map(i =>
+          i.id === item.id ? { ...i, type: 'image', content: dataUrl } : i
+        );
+        await setStorage({ clipboardItems: allItems });
+        renderDashboard();
+        toast('Image pasted ✓');
+        return;
+      }
+      if (clipItem.types.includes('text/plain')) {
+        const blob = await clipItem.getType('text/plain');
+        const text = await blob.text();
+        if (text.trim()) {
+          allItems = allItems.map(i =>
+            i.id === item.id ? { ...i, content: text } : i
+          );
+          await setStorage({ clipboardItems: allItems });
+          renderDashboard();
+          toast('Text pasted ✓');
+          return;
+        }
+      }
+    }
+    toast('Nothing to paste');
+  } catch {
+    toast('Use ⌘V / Ctrl+V to paste here');
+  }
 }

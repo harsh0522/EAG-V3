@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Secure Clipboard Vault</title>
+  <title>Keeper</title>
   <link rel="stylesheet" href="popup.css">
 </head>
 <body>
@@ -17,7 +17,7 @@
   <div id="login-view">
     <div class="auth-header">
       <div class="auth-logo">🔐</div>
-      <h1 class="auth-title">Secure Clipboard Vault</h1>
+      <h1 class="auth-title">Keeper</h1>
       <p class="auth-sub">Your private clipboard history</p>
     </div>
     <div class="auth-card">
@@ -104,7 +104,7 @@
 
   <!-- Top bar -->
   <div class="topbar">
-    <span class="topbar-title">🔐 Vault</span>
+    <span class="topbar-title">📋 Keeper</span>
     <div class="topbar-actions">
       <button id="theme-toggle" class="icon-btn" title="Toggle dark mode">🌙</button>
       <button id="new-note-btn" class="icon-btn" title="New note">📝</button>
@@ -127,7 +127,7 @@
     </select>
   </div>
 
-  <!-- Tab bar (Feature 4) -->
+  <!-- Tab bar — Recent shows all items; other tabs show user-assigned cards -->
   <div class="tab-bar">
     <button class="tab-btn active" data-tab="recent">🕐 Recent</button>
     <button class="tab-btn" data-tab="images">🖼 Images</button>
@@ -138,7 +138,7 @@
 
   <!-- Paste zone (drag-and-drop / paste images) -->
   <div id="paste-zone-wrap">
-    <div id="paste-zone" class="paste-zone">
+    <div id="paste-zone" class="paste-zone" tabindex="0">
       <span class="paste-zone-label">📋 Paste image or screenshot here (⌘V / Ctrl+V)</span>
     </div>
   </div>

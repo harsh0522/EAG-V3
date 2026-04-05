@@ -87,7 +87,8 @@ async function handleClipboardData({ type, content }) {
     content,
     timestamp: Date.now(),
     pinned:    false,
-    locked:    false
+    locked:    false,
+    category:  'none'
   };
 
   const updated = [newItem, ...clipboardItems].slice(0, 500); // cap at 500 items

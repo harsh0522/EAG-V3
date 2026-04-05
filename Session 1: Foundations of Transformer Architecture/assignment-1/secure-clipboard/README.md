@@ -1,6 +1,6 @@
-# Secure Clipboard Vault
+# Keeper
 
-**Version:** 1.1.0  
+**Version:** 1.2.0  
 **Type:** Chrome Extension (Manifest V3)  
 **Platform:** macOS / Windows / Linux (Chrome 109+)
 
@@ -22,7 +22,7 @@ A privacy-first, fully local clipboard manager built as a Chrome Extension. All 
 - **Time filter** — filter by last 24h, 2 days, 7 days, 30 days, 1 year, or all time
 - **Pin / Copy / Delete** — per-card actions
 - **Dark mode** — persisted preference
-- **Paste zone** — right-click → Paste or ⌘V/Ctrl+V to capture screenshots and images
+- **Paste zone** — ⌘V/Ctrl+V to capture screenshots and images
 - **Note cards** — manually add notes with "+ New note"
 - **Resizable window** — open in standalone window (⤢ button)
 - **Keyboard shortcut** — ⌘⇧V (Mac) / Ctrl+Shift+V (Windows)
@@ -30,8 +30,21 @@ A privacy-first, fully local clipboard manager built as a Chrome Extension. All 
 ### v1.1.0
 - **Secure cards (PIN lock)** — lock any card with a 4-digit PIN; content is AES-256-GCM encrypted at rest
 - **Tab directory** — navigate by category: Recent (7 days), Images, Texts, Passwords, Favourites
-- **Inline autosave** — double-click a note card to edit; changes save automatically after 800ms
-- **Extension icon** — custom clipboard+lock icon in all required sizes
+- **Inline autosave** — double-click any text card to edit; changes save automatically after 800ms
+- **Extension icon** — custom clipboard icon
+
+### v1.2.0
+- **Renamed to Keeper** — cleaner branding throughout
+- **User-controlled categories** — tabs show only cards you explicitly assign there via the 📁 Move button; the extension never auto-categorises your cards
+- **Move menu** — every card has a 📁 Move button that lets you assign it to Images, Texts, Passwords, Favourites, or back to Recent only
+- **Right-click context menu** — right-click any card to Copy, Paste into card, Move, Pin, Lock, or Delete without scrolling to the action buttons
+- **Paste into card** — click 📋 Paste on any card (or right-click → Paste into card) to replace its content with your current clipboard (text or image)
+- **All text cards editable** — double-click to edit works on every unlocked text card, not just notes
+- **Screenshot auto-capture** — Cmd+V anywhere in the popup (when no text input is focused) creates a new card from clipboard; screenshots land in Recent and can be moved from there
+- **Paste zone auto-focus** — paste zone is focused on dashboard load so ⌘V works immediately
+- **Scrolling fixed** — cards scroll correctly; full card content including images is accessible
+- **Larger image previews** — images show up to 200px tall with no cropping (`object-fit: contain`)
+- **Taller popup** — popup is 700px to fit more cards without cutting them off
 
 ---
 
@@ -45,15 +58,12 @@ secure-clipboard/
 ├── offscreen.html      # Offscreen document host
 ├── offscreen.js        # Clipboard reader (text + images via Clipboard API)
 ├── popup.html          # Full extension UI (auth + dashboard)
-├── popup.js            # Auth, dashboard, tabs, lock, note composer
+├── popup.js            # Auth, dashboard, tabs, lock, move menu, context menu
 ├── popup.css           # Light + dark theme, all component styles
 ├── utils.js            # SHA-256, AES-GCM, filtering, formatting helpers
 └── icons/
-    ├── generate.html   # Open in Chrome to generate PNG icons
-    ├── icon16.png      # Generated icon — 16×16
-    ├── icon32.png      # Generated icon — 32×32
-    ├── icon48.png      # Generated icon — 48×48
-    └── icon128.png     # Generated icon — 128×128
+    ├── icon.png        # Extension icon
+    └── generate.html  # Open in Chrome to regenerate PNG icons if needed
 ```
 
 ---
@@ -61,11 +71,10 @@ secure-clipboard/
 ## Installation
 
 1. Clone / download this folder
-2. Open **`icons/generate.html`** in Chrome → 4 PNG icons are auto-downloaded → move them to the `icons/` folder
-3. Go to `chrome://extensions`
-4. Enable **Developer Mode** (top-right toggle)
-5. Click **Load unpacked** → select the `secure-clipboard/` folder
-6. Click the extension icon in the toolbar → create your account
+2. Go to `chrome://extensions`
+3. Enable **Developer Mode** (top-right toggle)
+4. Click **Load unpacked** → select the `secure-clipboard/` folder
+5. Click the extension icon in the toolbar → create your account
 
 ---
 
@@ -76,28 +85,40 @@ secure-clipboard/
 2. Set username, password, security question & answer
 
 ### Capturing clipboard
-- **Copy anything** (text, images) → it's automatically saved as a card
-- **Screenshots** → press ⌘⌃⇧4 (Mac) to copy to clipboard → open extension → ⌘V in the paste zone
+- **Copy anything** (text, images) → it's automatically saved as a card in Recent
+- **Screenshots** → press ⌘⌃⇧4 (Mac) to copy to clipboard → open extension → ⌘V to create a card
+
+### Managing cards
+
+| Action | How |
+|--------|-----|
+| Edit content | Double-click the card text |
+| Move to a tab | Click 📁 Move on the card, pick a category |
+| Right-click menu | Copy · Paste into card · Move · Pin · Lock · Delete |
+| Paste clipboard into card | Click 📋 Paste on the card, or right-click → Paste into card |
+| Copy to clipboard | Click 📋 Copy, or click the card |
+| Pin / favourite | Click 📌 Pin (pinned cards always appear in Recent) |
 
 ### Tabs
 | Tab | Shows |
 |-----|-------|
-| 🕐 Recent | Last 7 days |
-| 🖼 Images | Image/screenshot cards |
-| 📝 Texts | Text + note cards |
-| 🔐 Passwords | PIN-locked cards |
-| ⭐ Favs | Pinned cards |
+| 🕐 Recent | All items from last 7 days + pinned items |
+| 🖼 Images | Cards you moved to Images |
+| 📝 Texts | Cards you moved to Texts |
+| 🔐 Passwords | Cards you moved to Passwords |
+| ⭐ Favs | Cards you moved to Favourites + pinned cards |
+
+> Cards start in **Recent**. Use 📁 Move to assign them to a tab — your choice, not the extension's.
 
 ### Locking a card
-1. Click **🔒 Lock** on any card
+1. Click **🔒 Lock** on any card (or right-click → Lock)
 2. Enter a 4-digit PIN → content is AES-256-GCM encrypted
-3. Card moves to the **Passwords** tab
-4. Click **🔓 Unlock** → enter PIN → content revealed temporarily (never stored decrypted)
+3. Click **🔓 Unlock** → enter PIN → content is revealed temporarily (never stored decrypted)
 
-### Editing notes
-- Double-click the text of a **note** card → edit inline
-- Changes auto-save after 800ms (no button needed)
-- Press **Escape** to cancel
+### Editing text cards
+- Double-click the text of any unlocked card → edit inline
+- Changes auto-save after 800ms
+- Press **Escape** to cancel, **⌘↵** to save immediately
 
 ---
 
@@ -108,9 +129,9 @@ secure-clipboard/
 | Vault login | SHA-256 password hash |
 | Security Q&A | SHA-256 answer hash |
 | Card PIN lock | AES-256-GCM (key derived via SHA-256 from PIN) |
-| Storage | `chrome.storage.local` — device only |
+| Storage | `chrome.storage.local` — device only, no network |
 
-> Note: `chrome.storage.local` is not encrypted at the OS level. The card PIN lock provides AES encryption so individual card content is unreadable without the PIN, even if storage is accessed directly.
+> `chrome.storage.local` is not OS-level encrypted. The card PIN lock provides AES encryption so individual card content is unreadable without the PIN, even if storage is inspected directly.
 
 ---
 
@@ -132,7 +153,7 @@ secure-clipboard/
 | Action | Mac | Windows |
 |--------|-----|---------|
 | Open extension | ⌘⇧V | Ctrl+Shift+V |
-| Save note | ⌘↵ | Ctrl+Enter |
+| Paste to capture / paste into card | ⌘V | Ctrl+V |
+| Save note (inline edit) | ⌘↵ | Ctrl+Enter |
 | Cancel edit | Esc | Esc |
-| Paste to capture | ⌘V | Ctrl+V |
 | Screenshot to clipboard | ⌘⌃⇧4 | Win+⇧S |
