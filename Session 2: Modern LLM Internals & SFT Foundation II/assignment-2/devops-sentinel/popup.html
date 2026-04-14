@@ -24,7 +24,6 @@
   <nav class="tab-nav">
     <button class="tab-btn active" data-tab="yaml">&#128196; YAML Debugger</button>
     <button class="tab-btn" data-tab="terraform">&#9782; Terraform Analyzer</button>
-    <button class="tab-btn" data-tab="news">&#128240; News Hub</button>
   </nav>
 
   <!-- ===== Main Content ===== -->
@@ -145,32 +144,6 @@ resource "aws_instance" "web" {
       </div>
     </section>
 
-    <!-- ===== Tab 3: News Hub ===== -->
-    <section id="news-tab" class="tab-content">
-      <div class="news-toolbar">
-        <div class="filter-group">
-          <button class="filter-btn active" data-filter="all">All</button>
-          <button class="filter-btn" data-filter="kubernetes">Kubernetes</button>
-          <button class="filter-btn" data-filter="ai">AI / Cloud</button>
-          <button class="filter-btn" data-filter="security">Security</button>
-        </div>
-        <button id="refreshNewsBtn" class="btn btn-primary btn-sm">
-          &#8635; Refresh
-        </button>
-      </div>
-
-      <div id="newsOutput">
-        <div class="news-placeholder">
-          <div class="news-placeholder-icon">&#127757;</div>
-          <div style="font-size:13px;font-weight:600;color:var(--text-secondary);">
-            DevOps &amp; AI Industry Updates
-          </div>
-          <div style="font-size:12px;color:var(--text-muted);max-width:300px;line-height:1.5;">
-            Click <strong style="color:var(--accent-blue);">Refresh</strong> to load the latest updates in Kubernetes, AI/Cloud integrations, and CNCF security patches.
-          </div>
-        </div>
-      </div>
-    </section>
 
   </main>
 
@@ -218,6 +191,7 @@ resource "aws_instance" "web" {
   <!-- ===== Toast ===== -->
   <div id="toast" class="toast"></div>
 
+  <script src="config.js"></script>
   <script src="popup.js"></script>
 </body>
 </html>

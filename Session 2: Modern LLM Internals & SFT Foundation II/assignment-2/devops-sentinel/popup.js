@@ -3,20 +3,47 @@
 // ===================================================================
 
 // ===== Constants =====
-const DEFAULT_API_KEY = 'AIzaSyDPVcJXiwi2VQQlXaR4qV6G07uoU6PXEgA';
-const MODEL = 'gemini-3-flash-preview';
-const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`;
+// API key is loaded at runtime from .env / config.js / chrome.storage — never hardcoded here.
+const MODEL = (window.DEVOPS_SENTINEL_CONFIG || {}).MODEL || 'gemini-3-flash-preview';
+// Try v1beta first; v1alpha fallback attempted inside callGemini if needed.
+const API_BASE = 'https://generativelanguage.googleapis.com';
+
+/**
+ * Resolves the API key at call time.
+ * appState.apiKey is always populated by loadSavedSettings() before any API call.
+ */
+function getApiKey() {
+  return appState.apiKey || '';
+}
+
+/**
+ * Reads the .env file bundled inside the extension package.
+ * The popup page can fetch its own extension files directly.
+ */
+async function readKeyFromDotEnv() {
+  try {
+    const url = (typeof chrome !== 'undefined' && chrome.runtime)
+      ? chrome.runtime.getURL('.env')
+      : '.env';
+    const resp = await fetch(url);
+    if (!resp.ok) return '';
+    const text = await resp.text();
+    const match = text.match(/^GEMINI_API_KEY\s*=\s*(.+)$/m);
+    return match ? match[1].trim() : '';
+  } catch (e) {
+    console.warn('[DevOps Sentinel] Could not fetch .env:', e);
+    return '';
+  }
+}
 
 const SYSTEM_PROMPT = `You are a Senior Staff DevOps Engineer with 15 years of experience in Infrastructure as Code and Kubernetes internals. You have deep expertise in Kubernetes API versions, Helm charts, ArgoCD, Terraform, Terragrunt, Ansible, Jenkins, GitHub Actions, Docker, containerd, Istio, and all major CNCF projects. You provide precise, expert-level analysis with actionable recommendations, catching subtle misconfigurations that junior engineers miss.`;
 
 // ===== Application State =====
 const appState = {
-  apiKey: DEFAULT_API_KEY,
+  apiKey: '',   // populated by loadSavedSettings() on DOMContentLoaded — never set here
   currentTab: 'yaml',
   yamlRawOutput: '',
   terraformRawOutput: '',
-  newsItems: [],
-  currentFilter: 'all',
 };
 
 // ===================================================================
@@ -314,17 +341,17 @@ function showError(bodyEl, message) {
 // ===================================================================
 
 async function callGemini(userMessage) {
-  const key = appState.apiKey || DEFAULT_API_KEY;
+  const key = getApiKey();
+  if (!key) {
+    throw new Error('No API key found. Open Settings (⚙) and paste your Gemini API key.');
+  }
 
   const requestBody = {
     system_instruction: {
       parts: [{ text: SYSTEM_PROMPT }]
     },
     contents: [
-      {
-        role: 'user',
-        parts: [{ text: userMessage }]
-      }
+      { role: 'user', parts: [{ text: userMessage }] }
     ],
     generationConfig: {
       temperature: 0.3,
@@ -332,22 +359,49 @@ async function callGemini(userMessage) {
     }
   };
 
-  const response = await fetch(`${API_URL}?key=${encodeURIComponent(key)}`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(requestBody),
-  });
+  // Attempt order — matches how the google-genai Python SDK authenticates:
+  //   1. v1beta + ?key= query param (standard REST docs method)
+  //   2. v1beta + x-goog-api-key header (Python SDK method)
+  //   3. v1     + ?key= query param
+  const encodedKey = encodeURIComponent(key);
+  const attempts = [
+    { url: `${API_BASE}/v1beta/models/${MODEL}:generateContent?key=${encodedKey}`, useHeader: false },
+    { url: `${API_BASE}/v1beta/models/${MODEL}:generateContent`,                   useHeader: true  },
+    { url: `${API_BASE}/v1/models/${MODEL}:generateContent?key=${encodedKey}`,     useHeader: false },
+  ];
 
-  if (!response.ok) {
+  console.log(`[DevOps Sentinel] Calling — model:${MODEL}  key:...${key.slice(-6)}`);
+
+  let firstError = '';
+  for (const { url, useHeader } of attempts) {
+    const headers = { 'Content-Type': 'application/json' };
+    if (useHeader) headers['x-goog-api-key'] = key;
+
+    let response;
+    try {
+      response = await fetch(url, { method: 'POST', headers, body: JSON.stringify(requestBody) });
+    } catch (netErr) {
+      if (!firstError) firstError = `Network error: ${netErr.message}`;
+      console.warn(`[DevOps Sentinel] fetch failed: ${netErr.message}`);
+      continue;
+    }
+
+    console.log(`[DevOps Sentinel] ${url.split('?')[0]} → ${response.status}`);
+
+    if (response.ok) {
+      const data = await response.json();
+      const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+      if (text) return text;
+      throw new Error('Gemini returned an empty response.');
+    }
+
     const errBody = await response.json().catch(() => ({}));
-    const errMsg = errBody?.error?.message || `HTTP ${response.status}: ${response.statusText}`;
-    throw new Error(errMsg);
+    const errMsg  = errBody?.error?.message || response.statusText;
+    console.warn(`[DevOps Sentinel] Error: [${response.status}] ${errMsg}`);
+    if (!firstError) firstError = `[${response.status}] ${errMsg}`;
   }
 
-  const data = await response.json();
-  const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-  if (!text) throw new Error('Empty response from Gemini API.');
-  return text;
+  throw new Error(firstError || 'All Gemini API endpoints failed.');
 }
 
 // ===================================================================
@@ -504,125 +558,6 @@ ${input}
   }
 }
 
-// ===================================================================
-// TAB: NEWS HUB
-// ===================================================================
-
-const NEWS_PROMPT = `You are a DevOps and cloud-native expert. Generate a JSON array of exactly 9 recent industry news items — 3 for each of these categories: "Kubernetes", "AI/Cloud", "Security".
-
-For each item provide:
-- "title": Clear, descriptive headline (string)
-- "date": Publication date in YYYY-MM-DD format (use realistic recent dates from 2024-2025)
-- "category": Exactly one of: "Kubernetes", "AI/Cloud", "Security"
-- "url": Real direct URL to official documentation, blog post, GitHub release, or CVE advisory
-- "summary": One clear sentence describing the update and its significance
-
-Focus areas:
-- Kubernetes: New alpha/beta features, API deprecations, recent release notes
-- AI/Cloud: LLM/AI integrations in AWS/GCP/Azure, AI-assisted DevOps tooling, Kubernetes AI operators
-- Security: CVEs for CNCF tools (Istio, ArgoCD, Helm, Trivy, etc.), supply chain security, RBAC hardening
-
-Return ONLY a raw JSON array. No markdown fences. No explanation. Start directly with [`;
-
-async function loadNews() {
-  const newsOutput = document.getElementById('newsOutput');
-  const refreshBtn = document.getElementById('refreshNewsBtn');
-
-  newsOutput.innerHTML = `
-    <div class="loading-container">
-      <div class="spinner"></div>
-      <span class="loading-text">Fetching latest DevOps &amp; AI updates&hellip;</span>
-    </div>`;
-  refreshBtn.disabled = true;
-
-  try {
-    const responseText = await callGemini(NEWS_PROMPT);
-
-    // Extract JSON array from response
-    let jsonText = responseText.trim();
-    // Remove potential markdown fences
-    jsonText = jsonText.replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/\s*```$/, '');
-    // Find the JSON array
-    const startIdx = jsonText.indexOf('[');
-    const endIdx = jsonText.lastIndexOf(']');
-    if (startIdx === -1 || endIdx === -1) throw new Error('No JSON array found in response.');
-    jsonText = jsonText.slice(startIdx, endIdx + 1);
-
-    const items = JSON.parse(jsonText);
-    if (!Array.isArray(items) || items.length === 0) throw new Error('Invalid news data received.');
-
-    appState.newsItems = items;
-    renderNews(appState.currentFilter);
-
-  } catch (err) {
-    newsOutput.innerHTML = `
-      <div class="error-output" style="margin:8px 0;">
-        <span class="error-icon">&#9888;</span>
-        <div>Failed to load news: ${escapeHtml(err.message)}</div>
-      </div>`;
-  } finally {
-    refreshBtn.disabled = false;
-  }
-}
-
-function getCategoryClass(category) {
-  const cat = (category || '').toLowerCase();
-  if (cat === 'kubernetes') return 'cat-kubernetes';
-  if (cat === 'ai/cloud' || cat === 'ai' || cat === 'cloud') return 'cat-ai';
-  if (cat === 'security') return 'cat-security';
-  return 'cat-default';
-}
-
-function renderNews(filter) {
-  appState.currentFilter = filter;
-  const newsOutput = document.getElementById('newsOutput');
-
-  if (!appState.newsItems || appState.newsItems.length === 0) return;
-
-  let items = appState.newsItems;
-  if (filter !== 'all') {
-    items = items.filter(item => {
-      const cat = (item.category || '').toLowerCase();
-      if (filter === 'kubernetes') return cat === 'kubernetes';
-      if (filter === 'ai') return cat.includes('ai') || cat.includes('cloud');
-      if (filter === 'security') return cat === 'security';
-      return true;
-    });
-  }
-
-  if (items.length === 0) {
-    newsOutput.innerHTML = `<div class="news-placeholder"><div class="news-placeholder-icon">&#128269;</div><div style="color:var(--text-secondary);">No items in this category.</div></div>`;
-    return;
-  }
-
-  const cardsHTML = items.map(item => {
-    const catClass = getCategoryClass(item.category);
-    const categoryLabel = item.category || 'Update';
-    const safeTitle = escapeHtml(item.title || 'Untitled');
-    const safeSummary = escapeHtml(item.summary || '');
-    const safeDate = escapeHtml(item.date || '');
-    const safeUrl = item.url ? escapeHtml(item.url) : '#';
-    const isValidUrl = item.url && (item.url.startsWith('https://') || item.url.startsWith('http://'));
-
-    return `
-      <div class="news-card">
-        <div class="news-card-header">
-          <div class="news-title">${safeTitle}</div>
-          <span class="news-category ${catClass}">${escapeHtml(categoryLabel)}</span>
-        </div>
-        ${safeSummary ? `<div class="news-summary">${safeSummary}</div>` : ''}
-        <div class="news-footer">
-          <span class="news-date">&#128197; ${safeDate || 'Recent'}</span>
-          ${isValidUrl
-            ? `<a class="news-link" href="${safeUrl}" target="_blank" rel="noopener noreferrer">Source &#8599;</a>`
-            : `<span class="text-muted text-sm">No link available</span>`
-          }
-        </div>
-      </div>`;
-  }).join('');
-
-  newsOutput.innerHTML = `<div class="news-list">${cardsHTML}</div>`;
-}
 
 // ===================================================================
 // SETTINGS
@@ -631,10 +566,12 @@ function renderNews(filter) {
 function openSettings() {
   const modal = document.getElementById('settingsModal');
   const apiKeyInput = document.getElementById('apiKeyInput');
-  apiKeyInput.value = appState.apiKey === DEFAULT_API_KEY ? '' : appState.apiKey;
-  apiKeyInput.placeholder = appState.apiKey === DEFAULT_API_KEY
-    ? 'Using default key (from .env)'
-    : 'Enter your Gemini API key…';
+  const configKey = (window.DEVOPS_SENTINEL_CONFIG || {}).API_KEY || '';
+  // Show blank if using the .env default (so user knows it's auto-loaded)
+  apiKeyInput.value = appState.apiKey === configKey ? '' : appState.apiKey;
+  apiKeyInput.placeholder = configKey
+    ? 'Using default key from .env — paste to override'
+    : 'Paste your Gemini API key…';
   modal.classList.remove('hidden');
 }
 
@@ -642,32 +579,56 @@ function closeSettings() {
   document.getElementById('settingsModal').classList.add('hidden');
 }
 
-function saveSettings() {
+async function saveSettings() {
   const val = document.getElementById('apiKeyInput').value.trim();
   if (val) {
     appState.apiKey = val;
+    if (typeof chrome !== 'undefined' && chrome.storage) {
+      chrome.storage.sync.set({ geminiApiKey: val });
+    }
   } else {
-    appState.apiKey = DEFAULT_API_KEY;
-  }
-  // Persist to chrome.storage
-  if (typeof chrome !== 'undefined' && chrome.storage) {
-    chrome.storage.sync.set({ geminiApiKey: appState.apiKey });
+    // User cleared the field — remove saved key, reload from .env
+    if (typeof chrome !== 'undefined' && chrome.storage) {
+      chrome.storage.sync.remove('geminiApiKey');
+    }
+    await loadSavedSettings();
   }
   closeSettings();
   showToast('Settings saved!', 'success');
 }
 
 async function loadSavedSettings() {
+  // ── Priority 1: read .env directly from the extension package ─────
+  // Always load the source-of-truth key first so stale chrome.storage
+  // values cannot shadow it unless the user explicitly overrode it.
+  const envKey = await readKeyFromDotEnv();
+
+  // ── Priority 2: config.js (window.DEVOPS_SENTINEL_CONFIG) ─────────
+  const cfgKey = (window.DEVOPS_SENTINEL_CONFIG || {}).API_KEY || '';
+
+  // The "default" key is whichever we can find from the project files
+  const defaultKey = envKey || cfgKey;
+
+  // ── Priority 3: user-saved key in chrome.storage (override) ───────
   if (typeof chrome !== 'undefined' && chrome.storage) {
-    return new Promise((resolve) => {
-      chrome.storage.sync.get(['geminiApiKey'], (result) => {
-        if (result.geminiApiKey) {
-          appState.apiKey = result.geminiApiKey;
-        }
-        resolve();
-      });
-    });
+    const savedKey = await new Promise(resolve =>
+      chrome.storage.sync.get(['geminiApiKey'], r => resolve(r.geminiApiKey || ''))
+    );
+    // Only honour chrome.storage if it matches the default key length/shape.
+    // This prevents a stale wrong key from persisting across sessions.
+    if (savedKey && savedKey.startsWith('AIza')) {
+      appState.apiKey = savedKey;
+    } else {
+      // Clear any invalid saved key so it doesn't pollute future loads
+      if (savedKey) chrome.storage.sync.remove('geminiApiKey');
+      appState.apiKey = defaultKey;
+    }
+  } else {
+    appState.apiKey = defaultKey;
   }
+
+  console.log(`[DevOps Sentinel] API key loaded — last 6: ...${(appState.apiKey || '').slice(-6) || 'NONE'}`);
+  if (!appState.apiKey) console.warn('[DevOps Sentinel] No API key found from any source.');
 }
 
 // ===================================================================
@@ -696,19 +657,6 @@ function switchTab(tabName) {
   });
 }
 
-// ===================================================================
-// NEWS FILTER BUTTONS
-// ===================================================================
-
-function setupNewsFilters() {
-  document.querySelectorAll('.filter-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      renderNews(btn.dataset.filter);
-    });
-  });
-}
 
 // ===================================================================
 // INITIALIZATION
@@ -767,9 +715,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     else showToast('No output to copy yet.', '');
   });
 
-  // ===== News Tab =====
-  setupNewsFilters();
-  document.getElementById('refreshNewsBtn').addEventListener('click', loadNews);
 
   // ===== Settings =====
   document.getElementById('settingsBtn').addEventListener('click', openSettings);
