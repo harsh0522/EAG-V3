@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DevOps Sentinel AI</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <!-- ===== Header ===== -->
+  <header class="app-header">
+    <div class="logo">
+      <div class="logo-icon">DS</div>
+      <span class="logo-text">DevOps Sentinel <span class="ai-badge">AI</span></span>
+    </div>
+    <div class="header-actions">
+      <div class="status-dot" title="AI Ready"></div>
+      <button id="settingsBtn" class="icon-btn" title="Settings">&#9881;</button>
+    </div>
+  </header>
+
+  <!-- ===== Tab Navigation ===== -->
+  <nav class="tab-nav">
+    <button class="tab-btn active" data-tab="yaml">&#128196; YAML Debugger</button>
+    <button class="tab-btn" data-tab="terraform">&#9782; Terraform Analyzer</button>
+    <button class="tab-btn" data-tab="news">&#128240; News Hub</button>
+  </nav>
+
+  <!-- ===== Main Content ===== -->
+  <main>
+
+    <!-- ===== Tab 1: YAML Debugger ===== -->
+    <section id="yaml-tab" class="tab-content active">
+      <div class="input-group">
+        <label>Paste YAML Code &mdash; K8s Manifests, Docker Compose, CI/CD Pipelines</label>
+        <textarea
+          id="yamlInput"
+          spellcheck="false"
+          placeholder="# Example: Kubernetes Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: my-app
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: my-app
+  template:
+    metadata:
+      labels:
+        app: my-app
+    spec:
+      containers:
+      - name: my-app
+        image: nginx:latest
+        ports:
+        - containerPort: 80"
+        ></textarea>
+      </div>
+
+      <div class="action-row">
+        <button id="explainYamlBtn" class="btn btn-primary">
+          &#128269; Explain
+        </button>
+        <button id="correctYamlBtn" class="btn btn-success">
+          &#10003; Correct &amp; Optimize
+        </button>
+        <button id="clearYamlBtn" class="btn btn-ghost btn-sm" style="margin-left:auto;">
+          Clear
+        </button>
+      </div>
+
+      <div id="yamlOutput" class="output-section hidden">
+        <div class="output-header">
+          <div class="output-label">
+            <span id="yamlOutputBadge" class="badge badge-explain">Explain</span>
+            AI Analysis
+          </div>
+          <button id="copyYamlOutput" class="copy-btn">
+            &#128203; Copy
+          </button>
+        </div>
+        <div class="output-body" id="yamlOutputBody"></div>
+      </div>
+    </section>
+
+    <!-- ===== Tab 2: Terraform Analyzer ===== -->
+    <section id="terraform-tab" class="tab-content">
+      <div class="input-group">
+        <label>Paste Terraform HCL &mdash; Resources, Modules, Providers</label>
+        <textarea
+          id="terraformInput"
+          spellcheck="false"
+          placeholder='# Example: Terraform AWS Resource
+terraform {
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 5.0"
+    }
+  }
+}
+
+provider "aws" {
+  region = var.region
+}
+
+resource "aws_instance" "web" {
+  ami           = var.ami_id
+  instance_type = "t3.micro"
+
+  tags = {
+    Name = "WebServer"
+    Env  = var.environment
+  }
+}'
+        ></textarea>
+      </div>
+
+      <div class="action-row">
+        <button id="logicCheckBtn" class="btn btn-primary">
+          &#128200; Logic Check
+        </button>
+        <button id="fixDeprecationsBtn" class="btn btn-warning">
+          &#128295; Fix Deprecations
+        </button>
+        <button id="clearTerraformBtn" class="btn btn-ghost btn-sm" style="margin-left:auto;">
+          Clear
+        </button>
+      </div>
+
+      <div id="terraformOutput" class="output-section hidden">
+        <div class="output-header">
+          <div class="output-label">
+            <span id="terraformOutputBadge" class="badge badge-logic">Logic Check</span>
+            AI Analysis
+          </div>
+          <button id="copyTerraformOutput" class="copy-btn">
+            &#128203; Copy
+          </button>
+        </div>
+        <div class="output-body" id="terraformOutputBody"></div>
+      </div>
+    </section>
+
+    <!-- ===== Tab 3: News Hub ===== -->
+    <section id="news-tab" class="tab-content">
+      <div class="news-toolbar">
+        <div class="filter-group">
+          <button class="filter-btn active" data-filter="all">All</button>
+          <button class="filter-btn" data-filter="kubernetes">Kubernetes</button>
+          <button class="filter-btn" data-filter="ai">AI / Cloud</button>
+          <button class="filter-btn" data-filter="security">Security</button>
+        </div>
+        <button id="refreshNewsBtn" class="btn btn-primary btn-sm">
+          &#8635; Refresh
+        </button>
+      </div>
+
+      <div id="newsOutput">
+        <div class="news-placeholder">
+          <div class="news-placeholder-icon">&#127757;</div>
+          <div style="font-size:13px;font-weight:600;color:var(--text-secondary);">
+            DevOps &amp; AI Industry Updates
+          </div>
+          <div style="font-size:12px;color:var(--text-muted);max-width:300px;line-height:1.5;">
+            Click <strong style="color:var(--accent-blue);">Refresh</strong> to load the latest updates in Kubernetes, AI/Cloud integrations, and CNCF security patches.
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ===== Settings Modal ===== -->
+  <div id="settingsModal" class="modal hidden">
+    <div class="modal-overlay" id="modalOverlay"></div>
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>&#9881; Settings</h2>
+        <button id="closeSettingsBtn" class="icon-btn">&#10005;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>Gemini API Key</label>
+          <input type="password" id="apiKeyInput" placeholder="AIza...">
+          <small>&#128274; Stored locally in your browser. Never transmitted to third parties.</small>
+        </div>
+        <div class="form-group">
+          <label>Active Model</label>
+          <input type="text" id="modelDisplay" value="gemini-3-flash-preview" readonly>
+          <small>Configured via DevOps Sentinel AI specification.</small>
+        </div>
+        <div class="form-group">
+          <label>System Role</label>
+          <div style="
+            background: var(--bg-primary);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            padding: 8px 12px;
+            font-size: 11px;
+            color: var(--text-secondary);
+            line-height: 1.5;
+          ">
+            Senior Staff DevOps Engineer with 15 years of experience in Infrastructure as Code and Kubernetes internals.
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button id="cancelSettingsBtn" class="btn btn-secondary">Cancel</button>
+        <button id="saveSettingsBtn" class="btn btn-primary">&#10003; Save</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== Toast ===== -->
+  <div id="toast" class="toast"></div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

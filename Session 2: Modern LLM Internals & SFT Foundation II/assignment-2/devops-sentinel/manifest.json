@@ -1,0 +1,11 @@
+{
+  "manifest_version": 3,
+  "name": "DevOps Sentinel AI",
+  "version": "1.0.0",
+  "description": "AI-driven DevOps assistant for YAML debugging, Terraform analysis, and industry updates",
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "DevOps Sentinel AI"
+  },
+  "permissions": ["storage", "scripting", "activeTab"]
+}

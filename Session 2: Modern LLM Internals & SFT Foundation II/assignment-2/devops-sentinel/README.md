@@ -39,4 +39,5 @@ DevOps Sentinel is a browser extension. It helps DevOps engineers debug, optimiz
 - A Settings menu for users to input their own API Key.
 
 ## Prompt Engineering Guidelines
+Make sure i can talk to this google LLM - "gemini-3-flash-preview" in every tab and api key present in same folder in .env file
 The system prompt must define the assistant as a "Senior Staff DevOps Engineer with 15 years of experience in Infrastructure as Code and Kubernetes internals." When sending code to the LLM, use this prompt.
