@@ -1,10 +1,9 @@
 # DevOps Sentinel AI 🛡️
 
-> An AI-powered Chrome extension that debugs, explains, and optimizes your **YAML** and **Terraform** configs — instantly, in your browser.
+> An AI-powered Chrome extension that debugs, explains, and optimizes your **YAML** and **Terraform** — instantly, in your browser.
 
 [![Twitter Demo](https://img.shields.io/badge/Demo-Twitter%2FX-black?logo=x)](https://x.com/kirk05222/status/2044132727725928668?s=20)
 [![YouTube](https://img.shields.io/badge/Watch-YouTube-red?logo=youtube)](https://youtu.be/lNXcf55jfC4)
-![Powered by Gemini](https://img.shields.io/badge/AI-Google%20Gemini-orange?logo=google)
 
 ---
 
@@ -14,7 +13,7 @@
 
 ## What It Does
 
-DevOps Sentinel gives you a **Senior Staff DevOps Engineer** in your browser — powered by Google Gemini with a specialized system prompt tuned for Infrastructure as Code and Kubernetes internals.
+DevOps Sentinel gives you extension in your browser — powered by Google Gemini with a specialized system prompt tuned for Infrastructure as Code and Kubernetes internals.
 
 Paste code. Click a button. Get expert-level analysis in seconds.
 
@@ -24,7 +23,7 @@ Paste code. Click a button. Get expert-level analysis in seconds.
 
 ### 🟡 Tab 1 — YAML Debugger
 
-Paste any YAML — Kubernetes manifests, Docker Compose files, CI/CD pipelines — and choose your action:
+Paste any YAML and TErraform files
 
 | Action | What It Does |
 |---|---|
@@ -195,10 +194,3 @@ This extension was built entirely by **Claude** (Anthropic's AI) from a spec wri
 5. Iterative fixes were made through conversation — no code was touched manually
 
 ---
-
-*Built with Claude · Powered by Google Gemini · Zero manual code*
-
-````
-
-Clean, accurate, and all references to tabs are corrected to just **YAML** and **Terraform**. Copy the block above directly into your `README.md`.
-````
