@@ -1,0 +1,42 @@
+# Environment & secrets — never commit these
+.env
+.env.*
+*.env
+secrets.json
+config.local.*
+
+# Runtime data (contains usage counts + last Telegram chat ID)
+usage_data.json
+
+# Python virtual environment
+.venv/
+venv/
+env/
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+
+# Distribution / packaging
+*.egg-info/
+dist/
+build/
+*.egg
+
+# Byte-compiled
+*.pyc
+
+# Logs
+*.log
+logs/
+
+# OS junk
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo

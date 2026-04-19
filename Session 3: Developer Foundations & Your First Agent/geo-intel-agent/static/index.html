@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GeoIntel Agent</title>
+
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header>
+    <div class="logo">&#9670; GeoIntel Agent</div>
+    <div class="header-right">
+      <div class="token-badge">
+        <span class="token-label">TOKENS</span>
+        <span id="token-display">0</span>
+        <span class="token-label">/ call&nbsp;</span>
+        <span id="token-call-display">0</span>
+      </div>
+      <div id="status-dot" class="status-dot idle" title="Idle"></div>
+    </div>
+  </header>
+
+  <main>
+
+    <!-- COL 1: Map -->
+    <section class="map-section">
+      <div id="map"></div>
+      <div id="map-hint">Click any country or region to begin analysis</div>
+    </section>
+
+    <!-- COL 2: Live Data + Headlines + Server Logs -->
+    <div class="col2">
+
+      <!-- Live Market Data -->
+      <div class="panel live-data-panel">
+        <div class="panel-title">&#9654; Live Market Data</div>
+        <div class="live-data-grid">
+          <div class="live-card" id="card-fng">
+            <div class="live-card-label">Fear &amp; Greed</div>
+            <div class="live-card-value" id="fng-value">—</div>
+            <div class="live-card-sub" id="fng-label">—</div>
+          </div>
+          <div class="live-card" id="card-oil">
+            <div class="live-card-label">WTI Crude</div>
+            <div class="live-card-value" id="oil-price">—</div>
+            <div class="live-card-sub" id="oil-change">—</div>
+          </div>
+          <div class="live-card" id="card-region">
+            <div class="live-card-label">Region</div>
+            <div class="live-card-value" id="region-name" style="font-size:0.82rem;">—</div>
+            <div class="live-card-sub" id="analysis-status">No analysis yet</div>
+          </div>
+        </div>
+        <!-- Inline API limits -->
+        <div class="limits-inline">
+          <div class="limit-row-sm">
+            <span class="limit-name-sm">YT</span>
+            <div class="limit-bar-wrap"><div class="limit-bar" id="yt-limit-bar" style="width:0%"></div></div>
+            <span class="limit-pct" id="yt-limit-pct">0%</span>
+          </div>
+          <div class="limit-row-sm">
+            <span class="limit-name-sm">Gemini</span>
+            <div class="limit-bar-wrap"><div class="limit-bar" id="gem-limit-bar" style="width:0%"></div></div>
+            <span class="limit-pct" id="gem-limit-pct">0%</span>
+          </div>
+          <div class="limit-row-sm">
+            <span class="limit-name-sm">TG</span>
+            <div class="limit-bar-wrap"><div class="limit-bar limit-bar-tg" id="tg-limit-bar" style="width:0%"></div></div>
+            <span class="limit-pct" id="tg-limit-pct">0</span>
+          </div>
+          <div class="limits-meta-row">
+            <span id="yt-limit-detail" class="limits-meta">YT: 0/100</span>
+            <span id="gem-limit-detail" class="limits-meta">Gem: 0/1500</span>
+            <span id="tg-limit-detail" class="limits-meta">TG: 0 today</span>
+          </div>
+          <div class="limits-meta-row">
+            <span class="limits-meta">Tokens today: <strong id="gem-tokens-today">0</strong></span>
+            <span class="limits-meta">Session: <strong id="gem-tokens-session">0</strong></span>
+            <span class="limits-meta">YT units: <strong id="yt-units">0</strong>/10k</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Top Headlines -->
+      <div class="panel news-panel">
+        <div class="panel-title">&#9654; Top Headlines</div>
+        <ul id="news-list">
+          <li class="placeholder">Select a region to load headlines…</li>
+        </ul>
+      </div>
+
+      <!-- Intelligence Report (hidden until ready) -->
+      <div class="panel report-panel" id="report-panel" style="display:none;">
+        <div class="panel-title">&#9654; Intelligence Report</div>
+        <div id="report-content" class="report-content"></div>
+      </div>
+
+    </div><!-- /col2 -->
+
+    <!-- COL 3: Agent Reasoning + Server Logs + Live Video square -->
+    <div class="col3">
+
+      <!-- Agent Reasoning Log (fills most of col3) -->
+      <div class="col3-section-header">
+        <span class="panel-title">&#9654; Agent Reasoning Log</span>
+        <button id="clear-log-btn" onclick="clearLog()">Clear</button>
+      </div>
+      <div id="agent-log" class="agent-log">
+        <div class="log-placeholder">Agent reasoning will stream here in real time…</div>
+      </div>
+
+      <!-- Bottom strip: Server Logs + Live Video square -->
+      <div class="col3-bottom">
+        <div class="col3-slog">
+          <div class="col3-section-header">
+            <span class="panel-title">&#9654; Server Logs</span>
+            <button id="clear-slog-btn" onclick="document.getElementById('server-log-box').innerHTML='';_lastLogTs=0;">Clear</button>
+          </div>
+          <div id="server-log-box" class="server-log-box"></div>
+        </div>
+        <div class="col3-video">
+          <div class="col3-video-top">
+            <button class="ch-btn active" id="btn-alj" onclick="switchChannel('alj')">AlJ</button>
+            <button class="ch-btn" id="btn-bbc" onclick="switchChannel('bbc')">BBC</button>
+            <span class="live-badge-sm">&#9679; LIVE</span>
+          </div>
+          <iframe id="live-iframe"
+            src="https://www.youtube.com/embed/live_stream?channel=UCNye-wNBqNL5ZzHSJdse9Bg&autoplay=1&mute=1"
+            allow="autoplay; encrypted-media; picture-in-picture"
+            allowfullscreen loading="lazy">
+          </iframe>
+        </div>
+      </div>
+
+    </div><!-- /col3 -->
+
+  </main>
+
+  <script src="app.js"></script>
+  <script>
+    const CHANNELS = {
+      alj: 'https://www.youtube.com/embed/live_stream?channel=UCNye-wNBqNL5ZzHSJdse9Bg&autoplay=1&mute=1',
+      bbc: 'https://www.youtube.com/embed/live_stream?channel=UC16niRr50-MSBwiO3YDb3RA&autoplay=1&mute=1',
+    };
+    function switchChannel(key) {
+      document.getElementById('live-iframe').src = CHANNELS[key];
+      document.querySelectorAll('.ch-btn').forEach(b => b.classList.remove('active'));
+      document.getElementById('btn-' + key).classList.add('active');
+    }
+  </script>
+</body>
+</html>
