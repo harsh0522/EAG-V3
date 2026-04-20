@@ -8,6 +8,25 @@ const state = {
   selectedLayer: null,
 };
 
+/* ── Log Storage (shared with logs.html via localStorage) ── */
+let _logEntries = [];
+let _toolLog = [];   // { iter, name, args, result, error, ms }
+
+function _syncLogs() {
+  try {
+    localStorage.setItem('geointel_logs', JSON.stringify({
+      entries: _logEntries,
+      running: state.running,
+      totalTokens: state.totalTokens,
+    }));
+  } catch {}
+}
+
+function openLogsPage() {
+  window.open('/logs.html', 'geointel-logs',
+    'width=1100,height=800,menubar=no,toolbar=no,location=no');
+}
+
 /* ── Map Init ─────────────────────────────────────────── */
 const map = L.map('map', {
   center: [20, 0],
@@ -106,6 +125,17 @@ function startAnalysis(region, lat, lng) {
   document.getElementById('report-content').innerHTML = '';
   document.getElementById('news-list').innerHTML = '<li class="placeholder">Loading…</li>';
 
+  // Reset video card
+  const iframe = document.getElementById('live-iframe');
+  const placeholder = document.getElementById('video-placeholder');
+  const label = document.getElementById('video-region-label');
+  const badge = document.getElementById('video-live-badge');
+  if (iframe) { iframe.src = ''; iframe.style.display = 'none'; }
+  if (placeholder) placeholder.style.display = 'flex';
+  if (label) label.textContent = 'Loading news video…';
+  if (badge) badge.style.display = 'none';
+
+  _toolLog = [];
   clearLog();
   appendLog('start', null, `Starting analysis for: <span class="log-highlight">${region}</span>`);
 
@@ -155,6 +185,7 @@ function handleEvent(ev, region, lat, lng) {
 
     case 'token_update':
       state.totalTokens = ev.total_tokens;
+      _syncLogs();
       setEl('token-display', ev.total_tokens.toLocaleString());
       setEl('token-call-display', ev.call_tokens?.toLocaleString() || '0');
       appendLog('tokens', ev.iteration,
@@ -176,19 +207,28 @@ function handleEvent(ev, region, lat, lng) {
       appendLog('tool-call', ev.iteration,
         `<span class="log-highlight">${ev.function}</span>(<span class="log-body json">${JSON.stringify(ev.args)}</span>)`
       );
+      _toolLog.push({ iter: ev.iteration, name: ev.function, args: ev.args, result: null, error: null, ms: null });
       break;
 
     case 'tool_result': {
       const d = ev.data || {};
       let lines = [
         `<span class="log-body url">URL: ${ev.url || '?'}</span>`,
-        `<span class="log-body time">Time: ${ev.response_time_ms}ms</span>`,
+        `<span class="log-body time">Method: ${ev.method || 'GET'}  |  Time: ${ev.response_time_ms}ms</span>`,
       ];
       if (ev.error) lines.push(`Error: ${ev.error}`);
 
       appendLog('tool-result', ev.iteration,
         `<span class="log-highlight">${ev.function}</span> → ${lines.join('  |  ')}`
       );
+
+      // Merge result into _toolLog entry
+      const tlEntry = [..._toolLog].reverse().find(t => t.name === ev.function);
+      if (tlEntry) {
+        tlEntry.result = ev.data || {};
+        tlEntry.error = ev.error || null;
+        tlEntry.ms = ev.response_time_ms;
+      }
 
       // Update UI panels from tool results
       if (ev.function === 'get_fear_greed_index' && d.data?.[0]) {
@@ -221,6 +261,8 @@ function handleEvent(ev, region, lat, lng) {
         `Total tokens: ${s.total_tokens}  |  Time: ${(s.total_time_ms/1000).toFixed(1)}s\n` +
         `URLs visited:\n${(s.all_urls || []).map(u => '  • ' + u).join('\n')}`
       );
+      appendToolTable(_toolLog);
+      sendLogsToTelegram(region);
       setStatus('done');
       state.running = false;
       document.getElementById('map-hint').classList.remove('hidden');
@@ -282,19 +324,21 @@ function updateNews(articles) {
 }
 
 function updateYT(videos) {
-  const grid = document.getElementById('yt-grid');
-  if (!videos.length) {
-    grid.innerHTML = '<div class="placeholder">No videos found (check YOUTUBE_API_KEY in .env)</div>';
-    return;
+  if (!videos.length) return;
+  const first = videos[0];
+  const iframe = document.getElementById('live-iframe');
+  const placeholder = document.getElementById('video-placeholder');
+  const label = document.getElementById('video-region-label');
+  const badge = document.getElementById('video-live-badge');
+  if (iframe && first.embed_url) {
+    let src = first.embed_url;
+    if (!src.includes('autoplay')) src += (src.includes('?') ? '&' : '?') + 'autoplay=1&mute=1';
+    iframe.src = src;
+    iframe.style.display = 'block';
+    if (placeholder) placeholder.style.display = 'none';
+    if (label) label.textContent = first.title ? first.title.substring(0, 50) + (first.title.length > 50 ? '…' : '') : state.selectedRegion;
+    if (badge) badge.style.display = 'inline';
   }
-  grid.innerHTML = videos.map(v => `
-    <div class="yt-card">
-      <iframe src="${v.embed_url}" allowfullscreen loading="lazy"
-        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture">
-      </iframe>
-      <div class="yt-title">${v.title}</div>
-    </div>
-  `).join('');
 }
 
 function showReport(markdown) {
@@ -322,6 +366,74 @@ function showPinPopup(region) {
   if (data?.content) showReport(data.content);
 }
 
+/* ── Tool Summary Table ───────────────────────────────── */
+const TOOL_REASONING = {
+  get_geopolitical_news:  'Gather latest regional news headlines to understand active conflicts, political shifts, and economic events driving geopolitical risk.',
+  get_fear_greed_index:   'Measure global market sentiment to determine whether investors are panic-selling (fear) or over-buying (greed), which amplifies or dampens oil price moves.',
+  get_oil_prices:         'Fetch the current WTI crude benchmark price and prior-close to establish the exact price level and recent momentum before making a trend prediction.',
+  predict_oil_trend:      'Synthesise news, sentiment, and price data through an LLM to produce a structured 48-hour directional forecast with confidence level and risk factors.',
+  get_youtube_videos:     'Surface the most recent video coverage for the region so the analyst can quickly watch primary-source reporting that may not yet appear in text feeds.',
+};
+
+function _summariseResult(name, result, error) {
+  if (error) return `<span style="color:var(--red)">Error: ${error}</span>`;
+  if (!result) return '—';
+  switch (name) {
+    case 'get_geopolitical_news':
+      return `${result.count ?? 0} articles fetched for <em>${result.region || ''}</em>`;
+    case 'get_fear_greed_index': {
+      const d = result.data?.[0] || {};
+      return d.value ? `Score ${d.value} — <em>${d.value_classification}</em>` : 'Data received';
+    }
+    case 'get_oil_prices':
+      return result.price_usd
+        ? `WTI $${result.price_usd} (${result.change_pct >= 0 ? '+' : ''}${result.change_pct}%)`
+        : 'Price data received';
+    case 'predict_oil_trend': {
+      const a = (result.analysis || '').substring(0, 120);
+      return a ? a + (result.analysis.length > 120 ? '…' : '') : 'Analysis generated';
+    }
+    case 'get_youtube_videos':
+      return result.videos?.length
+        ? `${result.videos.length} video(s) — "${result.videos[0].title?.substring(0, 60)}…"`
+        : 'No videos returned';
+    default:
+      return JSON.stringify(result).substring(0, 100);
+  }
+}
+
+function appendToolTable(toolLog) {
+  if (!toolLog.length) return;
+  const log = document.getElementById('agent-log');
+
+  const rows = toolLog.map((t, i) => {
+    const argsStr = Object.keys(t.args || {}).length
+      ? Object.entries(t.args).map(([k, v]) => `<span style="color:var(--text-dim)">${k}=</span><em>${String(v).substring(0, 40)}</em>`).join(', ')
+      : '<span style="color:var(--text-dim)">no args</span>';
+    const summary = _summariseResult(t.name, t.result, t.error);
+    const reasoning = TOOL_REASONING[t.name] || '—';
+    const ms = t.ms != null ? `<span style="color:var(--text-dim);font-size:0.68rem">${t.ms}ms</span>` : '';
+    return `<tr>
+      <td><span class="log-tag tool-call" style="display:inline-block;margin-bottom:3px">${t.name}</span><br>${argsStr} ${ms}</td>
+      <td>${summary}</td>
+      <td style="color:var(--text-dim);font-size:0.78rem">${reasoning}</td>
+    </tr>`;
+  }).join('');
+
+  const wrap = document.createElement('div');
+  wrap.className = 'log-entry';
+  wrap.innerHTML = `
+    <span class="log-tag summary">tool table</span>
+    <div class="log-body" style="overflow-x:auto;margin-top:6px">
+      <table class="tool-summary-table">
+        <thead><tr><th>Tool Called</th><th>What It Did</th><th>Reasoning</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>`;
+  log.appendChild(wrap);
+  log.scrollTop = log.scrollHeight;
+}
+
 /* ── Log Helpers ──────────────────────────────────────── */
 function appendLog(type, iteration, html) {
   const log = document.getElementById('agent-log');
@@ -336,10 +448,16 @@ function appendLog(type, iteration, html) {
   entry.innerHTML = `${tag}${iter}<div class="log-body">${html}</div>`;
   log.appendChild(entry);
   log.scrollTop = log.scrollHeight;
+
+  // Sync to localStorage for logs.html
+  _logEntries.push({ type, iteration, html, ts: Date.now(), region: state.selectedRegion });
+  _syncLogs();
 }
 
 function clearLog() {
   document.getElementById('agent-log').innerHTML = '<div class="log-placeholder">Agent reasoning will stream here in real time…</div>';
+  _logEntries = [];
+  _syncLogs();
 }
 
 /* ── API Limits ───────────────────────────────────────── */
@@ -379,6 +497,50 @@ async function fetchLimits() {
 // Poll limits every 10 seconds
 fetchLimits();
 setInterval(fetchLimits, 10000);
+
+
+
+/* ── Send Logs to Telegram ────────────────────────────────── */
+async function sendLogsToTelegram(region) {
+  try {
+    // Build plain-text log from _logEntries
+    const lines = _logEntries.map(e => {
+      const t = new Date(e.ts).toTimeString().substring(0, 8);
+      const iter = e.iteration ? `[iter ${e.iteration}] ` : '';
+      const plain = (e.html || '').replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim();
+      return `[${t}] [${(e.type || '').toUpperCase()}] ${iter}${plain}`;
+    });
+
+    // Append tool summary table as plain text
+    if (_toolLog.length) {
+      lines.push('');
+      lines.push('=== TOOL SUMMARY ===');
+      lines.push(['Tool', 'What It Did', 'Reasoning'].join(' | '));
+      lines.push('-'.repeat(90));
+      _toolLog.forEach(t => {
+        const argsStr = Object.entries(t.args || {}).map(([k,v]) => `${k}=${v}`).join(', ') || 'no args';
+        const summary = (t.error ? `Error: ${t.error}` : JSON.stringify(t.result || {}).substring(0, 80)).replace(/"/g, '');
+        const reasoning = (TOOL_REASONING[t.name] || '').substring(0, 80);
+        lines.push(`${t.name}(${argsStr}) | ${summary} | ${reasoning}`);
+      });
+    }
+
+    const log_text = lines.join('\n');
+    const resp = await fetch('/api/send-logs', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ region, log_text }),
+    });
+    const d = await resp.json();
+    if (d.ok) {
+      appendLog('summary', null, `Log file <span class="log-highlight">${d.filename}</span> sent to Telegram`);
+    } else {
+      appendLog('summary', null, `Telegram log send skipped: ${d.error}`);
+    }
+  } catch (e) {
+    appendLog('summary', null, `Telegram log send failed: ${e.message}`);
+  }
+}
 
 /* ── Server Logs ──────────────────────────────────────────── */
 let _lastLogTs = 0;

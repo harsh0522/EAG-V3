@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GeoIntel — Agent Logs</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:       #0a0e1a;
+      --surface:  #111827;
+      --surface2: #1a2235;
+      --border:   #1e3a5f;
+      --accent:   #00d4ff;
+      --accent2:  #7c3aed;
+      --green:    #22c55e;
+      --red:      #ef4444;
+      --yellow:   #f59e0b;
+      --text:     #e2e8f0;
+      --text-dim: #64748b;
+    }
+
+    html, body {
+      height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      font-size: 14px;
+    }
+
+    /* ── Header ── */
+    header {
+      height: 48px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 20px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .logo {
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--accent);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+    .logo span { color: var(--text-dim); font-weight: 400; margin-left: 8px; font-size: 0.75rem; }
+
+    .header-actions { display: flex; gap: 8px; align-items: center; }
+
+    .btn {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      color: var(--text-dim);
+      padding: 5px 14px;
+      border-radius: 5px;
+      font-size: 0.7rem;
+      cursor: pointer;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      transition: all 0.2s;
+    }
+    .btn:hover { border-color: var(--accent); color: var(--accent); }
+    .btn.primary { border-color: var(--accent); color: var(--accent); background: rgba(0,212,255,0.08); }
+    .btn.danger:hover { border-color: var(--red); color: var(--red); }
+
+    #live-badge {
+      font-size: 0.6rem;
+      font-weight: 700;
+      letter-spacing: 2px;
+      color: var(--green);
+      padding: 3px 8px;
+      border: 1px solid var(--green);
+      border-radius: 4px;
+      animation: pulse 2s infinite;
+    }
+    #live-badge.idle { color: var(--text-dim); border-color: var(--border); animation: none; }
+
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+    /* ── Stats bar ── */
+    .stats-bar {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 6px 20px;
+      display: flex;
+      gap: 24px;
+      font-size: 0.68rem;
+      color: var(--text-dim);
+    }
+    .stat strong { color: var(--accent); }
+
+    /* ── Filter bar ── */
+    .filter-bar {
+      background: var(--surface2);
+      border-bottom: 1px solid var(--border);
+      padding: 8px 20px;
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    .filter-label { font-size: 0.62rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px; margin-right: 4px; }
+
+    .tag-filter {
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 2px 10px;
+      font-size: 0.62rem;
+      cursor: pointer;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      background: transparent;
+      transition: all 0.15s;
+    }
+    .tag-filter.active { background: rgba(0,212,255,0.1); }
+
+    .tag-filter[data-tag="all"]         { color: var(--text-dim); border-color: var(--border); }
+    .tag-filter[data-tag="start"]       { color: var(--accent);   border-color: var(--accent); }
+    .tag-filter[data-tag="llm"]         { color: #a78bfa;         border-color: #a78bfa; }
+    .tag-filter[data-tag="tool-call"]   { color: #86efac;         border-color: #86efac; }
+    .tag-filter[data-tag="tool-result"] { color: #fdba74;         border-color: #fdba74; }
+    .tag-filter[data-tag="tokens"]      { color: #d9f99d;         border-color: #d9f99d; }
+    .tag-filter[data-tag="final"]       { color: var(--green);    border-color: var(--green); }
+    .tag-filter[data-tag="error"]       { color: var(--red);      border-color: var(--red); }
+    .tag-filter[data-tag="summary"]     { color: #93c5fd;         border-color: #93c5fd; }
+
+    /* ── Log area ── */
+    #log-container {
+      padding: 16px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      min-height: calc(100vh - 140px);
+    }
+
+    .log-entry {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 14px;
+      transition: border-color 0.2s;
+    }
+    .log-entry:hover { border-color: var(--accent); }
+
+    .log-meta {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 6px;
+    }
+
+    .log-tag {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 0.62rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    .log-tag.start       { background: #0d3a4a; color: var(--accent); }
+    .log-tag.llm         { background: #2d1b5e; color: #a78bfa; }
+    .log-tag.tool-call   { background: #1a3a0d; color: #86efac; }
+    .log-tag.tool-result { background: #3a1a0d; color: #fdba74; }
+    .log-tag.tokens      { background: #1a2a0d; color: #d9f99d; }
+    .log-tag.final       { background: #0d3a1a; color: var(--green); }
+    .log-tag.error       { background: #3a0d0d; color: var(--red); }
+    .log-tag.summary     { background: #1a1a3a; color: #93c5fd; }
+
+    .log-iter {
+      font-size: 0.62rem;
+      color: var(--text-dim);
+      font-family: monospace;
+    }
+    .log-time {
+      font-size: 0.6rem;
+      color: var(--text-dim);
+      margin-left: auto;
+      font-family: monospace;
+    }
+    .log-region {
+      font-size: 0.62rem;
+      color: var(--accent2);
+      font-weight: 600;
+    }
+
+    .log-body {
+      font-family: 'Courier New', monospace;
+      font-size: 0.72rem;
+      line-height: 1.6;
+      color: #94a3b8;
+      white-space: pre-wrap;
+      word-break: break-all;
+      user-select: text;
+    }
+    .log-highlight { color: var(--text); font-weight: 600; }
+    .log-body .url  { color: #86efac; }
+    .log-body .time { color: #fbbf24; }
+    .log-body .json { color: #7dd3fc; }
+
+    .empty-state {
+      text-align: center;
+      padding: 80px 20px;
+      color: var(--text-dim);
+    }
+    .empty-state .icon { font-size: 2.5rem; margin-bottom: 12px; }
+    .empty-state p { font-size: 0.85rem; }
+
+    /* ── Copy toast ── */
+    #copy-toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: var(--green);
+      color: #fff;
+      padding: 8px 18px;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      opacity: 0;
+      transition: opacity 0.3s;
+      pointer-events: none;
+      z-index: 999;
+    }
+    #copy-toast.show { opacity: 1; }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo">&#9670; GeoIntel <span>Agent Reasoning Logs</span></div>
+  <div class="header-actions">
+    <span id="live-badge">&#9679; LIVE</span>
+    <button class="btn primary" onclick="copyAllLogs()">&#128203; Copy All</button>
+    <button class="btn primary" onclick="downloadLogs()">&#8595; Download</button>
+    <button class="btn danger" onclick="clearLogs()">&#128465; Clear</button>
+  </div>
+</header>
+
+<div class="stats-bar">
+  <span class="stat">Entries: <strong id="stat-count">0</strong></span>
+  <span class="stat">Region: <strong id="stat-region">—</strong></span>
+  <span class="stat">Iterations: <strong id="stat-iters">0</strong></span>
+  <span class="stat">Total Tokens: <strong id="stat-tokens">0</strong></span>
+  <span class="stat">Last update: <strong id="stat-time">—</strong></span>
+</div>
+
+<div class="filter-bar">
+  <span class="filter-label">Filter:</span>
+  <button class="tag-filter active" data-tag="all" onclick="setFilter('all', this)">All</button>
+  <button class="tag-filter" data-tag="start"       onclick="setFilter('start', this)">Start</button>
+  <button class="tag-filter" data-tag="llm"         onclick="setFilter('llm', this)">LLM</button>
+  <button class="tag-filter" data-tag="tool-call"   onclick="setFilter('tool-call', this)">Tool Call</button>
+  <button class="tag-filter" data-tag="tool-result" onclick="setFilter('tool-result', this)">Tool Result</button>
+  <button class="tag-filter" data-tag="tokens"      onclick="setFilter('tokens', this)">Tokens</button>
+  <button class="tag-filter" data-tag="final"       onclick="setFilter('final', this)">Final</button>
+  <button class="tag-filter" data-tag="error"       onclick="setFilter('error', this)">Error</button>
+  <button class="tag-filter" data-tag="summary"     onclick="setFilter('summary', this)">Summary</button>
+</div>
+
+<div id="log-container">
+  <div class="empty-state">
+    <div class="icon">&#128269;</div>
+    <p>Waiting for logs from the main window…<br>Click a country on the map to start analysis.</p>
+  </div>
+</div>
+
+<div id="copy-toast">Copied to clipboard!</div>
+
+<script>
+  let activeFilter = 'all';
+  let lastCount = 0;
+  let _entries = [];
+
+  function setFilter(tag, btn) {
+    activeFilter = tag;
+    document.querySelectorAll('.tag-filter').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    renderEntries();
+  }
+
+  function stripHtml(html) {
+    const tmp = document.createElement('div');
+    tmp.innerHTML = html;
+    return tmp.textContent || tmp.innerText || '';
+  }
+
+  function formatTime(ts) {
+    if (!ts) return '';
+    return new Date(ts).toTimeString().substring(0, 8);
+  }
+
+  function renderEntries() {
+    const container = document.getElementById('log-container');
+    const filtered = activeFilter === 'all'
+      ? _entries
+      : _entries.filter(e => e.type === activeFilter);
+
+    if (!filtered.length) {
+      container.innerHTML = `<div class="empty-state">
+        <div class="icon">&#128269;</div>
+        <p>${_entries.length ? 'No entries match this filter.' : 'Waiting for logs from the main window…<br>Click a country on the map to start analysis.'}</p>
+      </div>`;
+      return;
+    }
+
+    container.innerHTML = filtered.map(e => {
+      const tagClass = e.type.replace('-', '-');
+      return `<div class="log-entry" data-type="${e.type}">
+        <div class="log-meta">
+          <span class="log-tag ${e.type}">${e.type.replace('-', ' ')}</span>
+          ${e.iteration ? `<span class="log-iter">[iter ${e.iteration}]</span>` : ''}
+          ${e.region ? `<span class="log-region">${e.region}</span>` : ''}
+          <span class="log-time">${formatTime(e.ts)}</span>
+        </div>
+        <div class="log-body">${e.html}</div>
+      </div>`;
+    }).join('');
+  }
+
+  function updateStats() {
+    const iters = _entries.filter(e => e.type === 'token_update').length;
+    const tokenEntry = [..._entries].reverse().find(e => e.type === 'tokens');
+    const regionEntry = _entries.find(e => e.type === 'start');
+
+    document.getElementById('stat-count').textContent = _entries.length;
+    document.getElementById('stat-iters').textContent = iters;
+
+    if (regionEntry) {
+      const region = stripHtml(regionEntry.html).replace('Starting analysis for: ', '').trim();
+      document.getElementById('stat-region').textContent = region;
+    }
+
+    const lastTs = _entries.length ? _entries[_entries.length - 1].ts : null;
+    if (lastTs) document.getElementById('stat-time').textContent = formatTime(lastTs);
+  }
+
+  function poll() {
+    try {
+      const raw = localStorage.getItem('geointel_logs');
+      if (!raw) return;
+      const data = JSON.parse(raw);
+      if (data.entries.length !== lastCount) {
+        _entries = data.entries;
+        lastCount = _entries.length;
+        renderEntries();
+        updateStats();
+
+        // Live badge
+        const badge = document.getElementById('live-badge');
+        const running = data.running;
+        badge.textContent = running ? '⬤ LIVE' : '⬤ IDLE';
+        badge.className = running ? '' : 'idle';
+
+        // token stat
+        if (data.totalTokens) {
+          document.getElementById('stat-tokens').textContent = data.totalTokens.toLocaleString();
+        }
+      }
+    } catch {}
+  }
+
+  function copyAllLogs() {
+    const lines = _entries.map(e => {
+      const iter = e.iteration ? ` [iter ${e.iteration}]` : '';
+      const time = formatTime(e.ts);
+      return `[${time}] [${e.type.toUpperCase()}]${iter}\n${stripHtml(e.html)}\n`;
+    });
+    navigator.clipboard.writeText(lines.join('\n---\n\n')).then(() => {
+      const toast = document.getElementById('copy-toast');
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 2000);
+    });
+  }
+
+  function downloadLogs() {
+    const lines = _entries.map(e => {
+      const iter = e.iteration ? ` [iter ${e.iteration}]` : '';
+      const time = formatTime(e.ts);
+      return `[${time}] [${e.type.toUpperCase()}]${iter}\n${stripHtml(e.html)}\n\n---\n`;
+    });
+    const blob = new Blob([lines.join('\n')], { type: 'text/plain' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `geointel-logs-${new Date().toISOString().slice(0,19).replace(/:/g,'-')}.txt`;
+    a.click();
+  }
+
+  function clearLogs() {
+    if (!confirm('Clear all logs?')) return;
+    localStorage.removeItem('geointel_logs');
+    _entries = [];
+    lastCount = 0;
+    renderEntries();
+  }
+
+  // Poll every 500ms
+  setInterval(poll, 500);
+  poll();
+</script>
+</body>
+</html>

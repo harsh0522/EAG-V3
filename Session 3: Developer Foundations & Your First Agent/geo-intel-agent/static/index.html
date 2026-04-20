@@ -107,7 +107,10 @@
       <!-- Agent Reasoning Log (fills most of col3) -->
       <div class="col3-section-header">
         <span class="panel-title">&#9654; Agent Reasoning Log</span>
-        <button id="clear-log-btn" onclick="clearLog()">Clear</button>
+        <div style="display:flex;gap:6px;">
+          <button id="open-logs-btn" onclick="openLogsPage()">&#8599; Full Page</button>
+          <button id="clear-log-btn" onclick="clearLog()">Clear</button>
+        </div>
       </div>
       <div id="agent-log" class="agent-log">
         <div class="log-placeholder">Agent reasoning will stream here in real time…</div>
@@ -124,12 +127,13 @@
         </div>
         <div class="col3-video">
           <div class="col3-video-top">
-            <button class="ch-btn active" id="btn-alj" onclick="switchChannel('alj')">AlJ</button>
-            <button class="ch-btn" id="btn-bbc" onclick="switchChannel('bbc')">BBC</button>
-            <span class="live-badge-sm">&#9679; LIVE</span>
+            <span id="video-region-label" style="font-size:0.72rem;color:var(--text-dim);flex:1;">Select a region to load news video</span>
+            <span class="live-badge-sm" id="video-live-badge" style="display:none;">&#9679; LIVE</span>
           </div>
-          <iframe id="live-iframe"
-            src="https://www.youtube.com/embed/live_stream?channel=UCNye-wNBqNL5ZzHSJdse9Bg&autoplay=1&mute=1"
+          <div id="video-placeholder" style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:var(--text-dim);font-size:0.72rem;background:var(--bg-card);border-radius:6px;">
+            Click a country to load news video
+          </div>
+          <iframe id="live-iframe" src="" style="display:none;"
             allow="autoplay; encrypted-media; picture-in-picture"
             allowfullscreen loading="lazy">
           </iframe>
@@ -141,16 +145,5 @@
   </main>
 
   <script src="app.js"></script>
-  <script>
-    const CHANNELS = {
-      alj: 'https://www.youtube.com/embed/live_stream?channel=UCNye-wNBqNL5ZzHSJdse9Bg&autoplay=1&mute=1',
-      bbc: 'https://www.youtube.com/embed/live_stream?channel=UC16niRr50-MSBwiO3YDb3RA&autoplay=1&mute=1',
-    };
-    function switchChannel(key) {
-      document.getElementById('live-iframe').src = CHANNELS[key];
-      document.querySelectorAll('.ch-btn').forEach(b => b.classList.remove('active'));
-      document.getElementById('btn-' + key).classList.add('active');
-    }
-  </script>
 </body>
 </html>

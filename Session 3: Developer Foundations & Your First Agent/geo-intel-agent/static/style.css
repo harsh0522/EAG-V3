@@ -397,7 +397,7 @@ main {
 .slog-line.slog-debug   { color: #475569; }
 
 /* ── Agent Log ────────────────────────────────────────── */
-#clear-log-btn {
+#clear-log-btn, #open-logs-btn {
   background: transparent;
   border: 1px solid var(--border);
   color: var(--text-dim);
@@ -409,6 +409,8 @@ main {
   letter-spacing: 1px;
 }
 #clear-log-btn:hover { border-color: var(--accent); color: var(--accent); }
+#open-logs-btn { border-color: var(--accent2); color: var(--accent2); }
+#open-logs-btn:hover { background: rgba(124,58,237,0.1); }
 
 .agent-log {
   overflow-y: auto;
@@ -476,3 +478,32 @@ main {
 }
 @keyframes spin { to { transform: rotate(360deg); } }
 #map-loading p { color: var(--accent); font-size: 0.8rem; letter-spacing: 1px; }
+
+/* ── Tool Summary Table ────────────────────────────────── */
+.tool-summary-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.76rem;
+  margin-top: 4px;
+}
+.tool-summary-table th {
+  background: rgba(0,212,255,0.08);
+  color: var(--accent);
+  text-align: left;
+  padding: 5px 8px;
+  font-size: 0.7rem;
+  letter-spacing: 0.5px;
+  border-bottom: 1px solid var(--border);
+}
+.tool-summary-table td {
+  padding: 6px 8px;
+  vertical-align: top;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+  color: var(--text);
+  line-height: 1.5;
+}
+.tool-summary-table tr:last-child td { border-bottom: none; }
+.tool-summary-table tr:hover td { background: rgba(255,255,255,0.02); }
+.tool-summary-table td:first-child { white-space: nowrap; min-width: 160px; }
+.tool-summary-table td:nth-child(2) { min-width: 160px; }
+.tool-summary-table td:nth-child(3) { color: var(--text-dim); font-size: 0.73rem; }

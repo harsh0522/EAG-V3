@@ -96,7 +96,7 @@ class GeoIntelAgent:
     def __init__(self):
         genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
         self.model = genai.GenerativeModel(
-            model_name="gemini-2.0-flash-lite",
+            model_name="gemini-2.5-flash-lite",
             tools=[TOOL_DECLARATIONS],
         )
 

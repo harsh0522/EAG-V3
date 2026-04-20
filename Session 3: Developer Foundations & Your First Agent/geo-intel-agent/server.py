@@ -3,6 +3,7 @@ import json
 import logging
 import os
 import time
+import xml.etree.ElementTree as ET
 from collections import deque
 
 import httpx
@@ -116,6 +117,37 @@ async def analyze(req: AnalyzeRequest):
     )
 
 
+class SendLogsRequest(BaseModel):
+    region: str
+    log_text: str
+
+
+@app.post("/api/send-logs")
+async def send_logs(req: SendLogsRequest):
+    token = os.getenv("TELEGRAM_BOT_TOKEN", "")
+    chat_id = tracker.last_telegram_chat_id
+    if not token or not chat_id:
+        return JSONResponse({"ok": False, "error": "Telegram not configured (no token or chat_id)"})
+    filename = f"geointel_{req.region.replace(' ', '_').lower()}_{int(time.time())}.txt"
+    try:
+        async with httpx.AsyncClient(timeout=30) as client:
+            resp = await client.post(
+                f"https://api.telegram.org/bot{token}/sendDocument",
+                data={"chat_id": chat_id, "caption": f"GeoIntel logs — {req.region}"},
+                files={"document": (filename, req.log_text.encode("utf-8"), "text/plain")},
+            )
+        result = resp.json()
+        if result.get("ok"):
+            tracker.record_telegram_message(chat_id=chat_id)
+            logger.info(f"Log file sent to Telegram for {req.region}")
+            return JSONResponse({"ok": True, "filename": filename})
+        else:
+            return JSONResponse({"ok": False, "error": result.get("description", "Unknown error")})
+    except Exception as e:
+        logger.warning(f"send-logs Telegram error: {e}")
+        return JSONResponse({"ok": False, "error": str(e)})
+
+
 @app.get("/api/limits")
 async def limits():
     return tracker.snapshot()
@@ -124,6 +156,42 @@ async def limits():
 @app.get("/api/server-logs")
 async def server_logs(since: float = 0):
     return JSONResponse([l for l in _log_buffer if l["ts"] > since])
+
+
+@app.get("/api/oil-price")
+async def oil_price_endpoint():
+    from tools import get_oil_prices
+    result = await get_oil_prices()
+    return JSONResponse(result.get("data", {}))
+
+
+@app.get("/api/latest-video")
+async def latest_video(ch: str = "alj"):
+    channel_ids = {
+        "alj": "UCNye-wNBqNL5ZzHSJdse9Bg",
+        "bbc": "UC16niRr50-MSBwiO3YDb3RA",
+    }
+    cid = channel_ids.get(ch, channel_ids["alj"])
+    url = f"https://www.youtube.com/feeds/videos.xml?channel_id={cid}"
+    try:
+        async with httpx.AsyncClient(timeout=10) as client:
+            r = await client.get(url, headers={"User-Agent": "Mozilla/5.0"})
+        root = ET.fromstring(r.text)
+        atom = "{http://www.w3.org/2005/Atom}"
+        yt = "{http://www.youtube.com/xml/schemas/2015}"
+        entry = root.find(f"{atom}entry")
+        if entry is not None:
+            vid_id = entry.find(f"{yt}videoId")
+            title_el = entry.find(f"{atom}title")
+            if vid_id is not None:
+                return JSONResponse({
+                    "embed_url": f"https://www.youtube.com/embed/{vid_id.text}?autoplay=1&mute=1",
+                    "video_id": vid_id.text,
+                    "title": title_el.text if title_el is not None else "",
+                })
+    except Exception as e:
+        logger.warning(f"latest-video fetch failed: {e}")
+    return JSONResponse({"embed_url": None, "error": "Could not fetch latest video"})
 
 
 @app.get("/api/health")
