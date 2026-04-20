@@ -119,6 +119,10 @@ function startAnalysis(region, lat, lng) {
   setStatus('running');
   setEl('region-name', region);
   setEl('analysis-status', 'Analyzing…');
+  setEl('trend-direction', '—');
+  setEl('trend-confidence', '—');
+  const trendCard = document.getElementById('card-trend');
+  if (trendCard) trendCard.style.borderColor = '';
   document.getElementById('map-hint').classList.add('hidden');
 
   document.getElementById('report-panel').style.display = 'none';
@@ -243,6 +247,9 @@ function handleEvent(ev, region, lat, lng) {
       if (ev.function === 'get_youtube_videos' && d.videos) {
         updateYT(d.videos);
       }
+      if (ev.function === 'predict_oil_trend' && d.analysis) {
+        updateOilTrend(d);
+      }
       break;
     }
 
@@ -307,6 +314,33 @@ function updateOil(d) {
   sub.textContent = `${sign}${pct}%`;
   sub.className = `live-card-sub ${pct >= 0 ? 'up' : 'down'}`;
   document.getElementById('card-oil').style.borderColor = pct >= 0 ? 'var(--green)' : 'var(--red)';
+}
+
+function updateOilTrend(d) {
+  const text = d.analysis || '';
+  const dirMatch = text.match(/TREND DIRECTION[^:]*:\s*\**\s*(BULLISH|BEARISH|NEUTRAL)/i);
+  const confMatch = text.match(/CONFIDENCE[^:]*:\s*\**\s*(HIGH|MEDIUM|LOW)/i);
+  const rangeMatch = text.match(/48.HOUR PRICE RANGE[^:]*:\s*\**\s*(\$[\d.,]+ ?[-–] ?\$[\d.,]+)/i);
+
+  const dir = dirMatch ? dirMatch[1].toUpperCase() : '—';
+  const conf = confMatch ? confMatch[1] : '';
+  const range = rangeMatch ? rangeMatch[1] : '';
+
+  setEl('trend-direction', dir);
+  const sub = document.getElementById('trend-confidence');
+  sub.textContent = [conf, range].filter(Boolean).join('  ');
+
+  const card = document.getElementById('card-trend');
+  if (dir === 'BULLISH') {
+    card.style.borderColor = 'var(--green)';
+    sub.className = 'live-card-sub up';
+  } else if (dir === 'BEARISH') {
+    card.style.borderColor = 'var(--red)';
+    sub.className = 'live-card-sub down';
+  } else {
+    card.style.borderColor = '';
+    sub.className = 'live-card-sub neutral';
+  }
 }
 
 function updateNews(articles) {

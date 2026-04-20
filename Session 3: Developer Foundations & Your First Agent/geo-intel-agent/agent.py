@@ -2,6 +2,7 @@ import asyncio
 import json
 import os
 import time
+from datetime import date
 from typing import AsyncGenerator
 
 import google.generativeai as genai
@@ -118,7 +119,7 @@ You MUST call these tools (in order):
 2. get_fear_greed_index() — check market sentiment
 3. get_oil_prices() — check crude oil prices
 4. predict_oil_trend(...) — pass summaries of the above to predict oil direction
-5. get_youtube_videos("{region} geopolitics 2024") — find relevant videos
+5. get_youtube_videos("{region} geopolitics {date.today().strftime('%d %B %Y')}") — find relevant videos
 
 After all tools have been called, write a final intelligence report with these sections:
 ## EXECUTIVE SUMMARY
