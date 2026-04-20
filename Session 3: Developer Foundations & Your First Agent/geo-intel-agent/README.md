@@ -139,6 +139,107 @@ The bot replies with:
 
 ---
 
+## Agent Execution Flow
+
+![Agent execution flow](image.png)
+
+The agent runs in a **multi-turn loop**:
+
+1. System prompt sent to Gemini with the region name
+2. **Iteration 1** — Gemini batches 3 tool calls (`get_geopolitical_news`, `get_fear_greed_index`, `get_oil_prices`). All 3 run **in parallel** via `asyncio.gather()` — the slowest one (Fear & Greed, ~3 s) is the only wait instead of stacking all three.
+3. **Iteration 2** — Gemini receives all 3 results and calls `predict_oil_trend`, passing its own summaries as arguments. This is a nested Gemini LLM call (~2 s).
+4. **Iteration 3** — Gemini calls `get_youtube_videos` with the region query.
+5. **Iteration 4** — No more function calls (`FinishReason.STOP`). Gemini writes the full structured intelligence report. The `final_answer` event fires, triggering an auto-Telegram notification and log file delivery.
+
+Token count grows each iteration because Gemini maintains **full conversation history** — every tool result is appended before the next call. That's what makes it a true multi-turn agent.
+
+---
+
+## Sample Session Log (Oman)
+
+```
+[10:28:23] [START]
+Starting analysis for: Oman
+
+[10:28:23] [START]
+Starting GeoIntel analysis for: Oman
+
+[10:28:24] [TOKENS] [iter 1]
+Tokens this call: 604  |  Total: 604
+
+[10:28:24] [LLM] [iter 1]
+Finish: FinishReason.STOP
+Function calls: get_geopolitical_news, get_fear_greed_index, get_oil_prices
+
+[10:28:24] [TOOL-CALL] [iter 1]
+get_geopolitical_news({"region":"Oman"})
+
+[10:28:25] [TOOL-RESULT] [iter 1]
+get_geopolitical_news → URL: https://news.google.com/rss/search?q=Oman+geopolitics+conflict+economy&hl=en-US&gl=US&ceid=US:en  |  Method: GET  |  Time: 1018.5ms
+
+[10:28:25] [TOOL-CALL] [iter 1]
+get_fear_greed_index({})
+
+[10:28:28] [TOOL-RESULT] [iter 1]
+get_fear_greed_index → URL: https://api.alternative.me/fng/?limit=1  |  Method: GET  |  Time: 2938ms
+
+[10:28:28] [TOOL-CALL] [iter 1]
+get_oil_prices({})
+
+[10:28:29] [TOOL-RESULT] [iter 1]
+get_oil_prices → URL: https://query2.finance.yahoo.com/v8/finance/chart/CL%3DF?interval=1d&range=5d  |  Method: GET  |  Time: 260.1ms
+
+[10:28:30] [TOKENS] [iter 2]
+Tokens this call: 5178  |  Total: 5782
+
+[10:28:30] [LLM] [iter 2]
+Finish: FinishReason.STOP
+Function calls: predict_oil_trend
+
+[10:28:30] [TOOL-CALL] [iter 2]
+predict_oil_trend({"sentiment":"Fear","prices":"WTI Crude Oil futures are trading at $82.59, with a significant decrease of 9.53% from the previous close of $91.29.","news":"Oman's geopolitical situation is influenced by its strategic location in the Strait of Hormuz and the broader Middle East tensions..."})
+
+[10:28:32] [TOOL-RESULT] [iter 2]
+predict_oil_trend → URL: internal:gemini_oil_trend_analysis  |  Method: LLM_CALL  |  Time: 2004.5ms
+
+[10:28:33] [TOKENS] [iter 3]
+Tokens this call: 5521  |  Total: 11303
+
+[10:28:33] [LLM] [iter 3]
+Finish: FinishReason.STOP
+Function calls: get_youtube_videos
+
+[10:28:33] [TOOL-CALL] [iter 3]
+get_youtube_videos({"query":"Oman geopolitics 2024"})
+
+[10:28:34] [TOOL-RESULT] [iter 3]
+get_youtube_videos → URL: https://www.googleapis.com/youtube/v3/search?part=snippet&q=Oman+geopolitics+2024&maxResults=3&type=video&key=***MASKED***  |  Method: GET  |  Time: 822ms
+
+[10:28:39] [TOKENS] [iter 4]
+Tokens this call: 6688  |  Total: 17991
+
+[10:28:39] [LLM] [iter 4]
+Finish: FinishReason.STOP
+(final intelligence report text)
+
+[10:28:39] [FINAL] [iter 4]
+Agent produced final intelligence report
+
+[10:28:39] [SUMMARY]
+Session complete — Iterations: 4  |  API calls: 9  |  Total tokens: 17991  |  Time: 16.4s
+URLs visited:
+  • https://news.google.com/rss/search?q=Oman+geopolitics+conflict+economy&hl=en-US&gl=US&ceid=US:en
+  • https://api.alternative.me/fng/?limit=1
+  • https://query2.finance.yahoo.com/v8/finance/chart/CL%3DF?interval=1d&range=5d
+  • internal:gemini_oil_trend_analysis
+  • https://www.googleapis.com/youtube/v3/search?part=snippet&q=Oman+geopolitics+2024&maxResults=3&type=video&key=***MASKED***
+
+[10:28:41] [SUMMARY]
+Log file geointel_oman_1776661119.txt sent to Telegram
+```
+
+---
+
 ## Agent Reasoning Log
 
 Every iteration shows:
@@ -151,7 +252,7 @@ Every iteration shows:
 - Tokens used per call and running total
 - Final session summary (total loops, all URLs visited, total time, total tokens)
 
-API keys are masked in all logs shown to the user.
+API keys are masked (`***MASKED***`) in all logs shown to the user.
 
 ---
 

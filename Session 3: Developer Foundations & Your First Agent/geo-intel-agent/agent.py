@@ -195,24 +195,26 @@ Be analytical, specific, and cite data from the tools. Do NOT call any more tool
                 })
                 break
 
-            # Execute each function call
+            # Execute all function calls in parallel
             function_response_parts = []
-            for fc in function_calls:
-                fn_name = fc.name
-                fn_args = dict(fc.args)
 
+            for fc in function_calls:
                 yield _event("tool_call", {
                     "iteration": iteration,
-                    "function": fn_name,
-                    "args": fn_args,
+                    "function": fc.name,
+                    "args": dict(fc.args),
                 })
 
-                tool_fn = TOOL_MAP.get(fn_name)
+            async def _run_tool(fc):
+                tool_fn = TOOL_MAP.get(fc.name)
                 if tool_fn is None:
-                    result = {"error": f"Unknown tool: {fn_name}"}
-                else:
-                    result = await tool_fn(**fn_args)
+                    return {"error": f"Unknown tool: {fc.name}"}
+                return await tool_fn(**dict(fc.args))
 
+            results = await asyncio.gather(*[_run_tool(fc) for fc in function_calls])
+
+            for fc, result in zip(function_calls, results):
+                fn_name = fc.name
                 all_urls.append(result.get("url", fn_name))
                 total_api_calls += 1
 
