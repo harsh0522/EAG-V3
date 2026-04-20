@@ -10,7 +10,7 @@ An AI-powered geopolitical intelligence system. Click any country on an interact
 - Fetches geopolitical news from Google News RSS
 - Checks Fear & Greed Index (market sentiment)
 - Pulls live WTI crude oil price from Yahoo Finance
-- Predicts oil price market trend for the next 24 hours using Gemini LLM
+- Predicts oil price market trend for the next 48 hours using Gemini LLM
 - Finds related YouTube videos
 - Streams every agent step live (which tool was called, what URL was hit, response time, raw JSON)
 - Writes a final structured intelligence report
