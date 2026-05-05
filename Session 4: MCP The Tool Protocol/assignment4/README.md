@@ -135,6 +135,82 @@ comparison mode.
 
 ---
 
+## Sample Run Output
+
+Below is a real run of the agent fetching **Tata Motors** and **Infosys**.
+
+```
+Enter prompt: detailed information about tatamotors and Infosys from the web.
+For each company, also include financial data you know: ticker symbol,
+approximate current share price, 5-year CAGR (%), and market cap.
+Save each company to the local data file. Then show both companies
+on the Prefab dashboard in comparison mode.
+
+MCP Server: http://127.0.0.1:8000/sse
+Model: gemini-2.0-flash  |  Max iterations: 15
+Discovered 3 tools: ['fetch_company_info', 'company_file_crud', 'show_on_dashboard']
+```
+
+**Iteration 1 — Fetch both companies in parallel:**
+```
+[TOOL CALL] fetch_company_info  { "company_name": "Tata Motors" }
+[TOOL RESULT] { "company": "Tata Motors", "description": "Indian multinational automobile
+  manufacturing company", "summary": "Tata Motors Limited...", "founded": "September 1, 1945",
+  "industry": "Automotive", "source_url": "https://en.wikipedia.org/wiki/Tata_Motors" }
+
+[TOOL CALL] fetch_company_info  { "company_name": "Infosys" }
+[TOOL RESULT] { "company": "Infosys", "description": "Indian multinational technology company",
+  "summary": "Infosys Limited is an Indian multinational technology company...",
+  "founded": "2 July 1981 in Pune, India", "key_people": "N. R. Narayana Murthy, Nandan
+  Nilekani, Kris Gopalakrishnan...", "industry": "Information technology Consulting" }
+```
+
+**Iteration 2 — Save both companies (Infosys already existed → error):**
+```
+[TOOL CALL] company_file_crud  { "operation": "create", "company_name": "Tata Motors",
+  "data": { "ticker": "TATAMOTORS.NS", "share_price": "950 INR",
+             "cagr_5yr_pct": 25, "market_cap": "3.5T INR", ... } }
+[TOOL RESULT] { "status": "success", "message": "Created 'Tata Motors'" }
+
+[TOOL CALL] company_file_crud  { "operation": "create", "company_name": "Infosys", ... }
+[TOOL RESULT] { "status": "error",
+  "message": "Company 'Infosys' already exists. Use 'update' to modify." }
+```
+
+**Iteration 3 — Agent self-corrects, retries Infosys with update:**
+```
+[TOOL CALL] company_file_crud  { "operation": "update", "company_name": "Infosys",
+  "data": { "ticker": "INFY.NS", "share_price": "1500 INR",
+             "cagr_5yr_pct": 12, "market_cap": "6.5T INR", ... } }
+[TOOL RESULT] { "status": "success", "message": "Updated 'Infosys'" }
+```
+
+**Iteration 4 — Launch the dashboard:**
+```
+[TOOL CALL] show_on_dashboard  { "mode": "comparison", "companies_data": [...] }
+[TOOL RESULT] { "status": "success",
+  "message": "Dashboard live with 4 companies in comparison mode.",
+  "url": "http://127.0.0.1:5175" }
+```
+
+**Iteration 5 — Gemini sees success, returns final text:**
+```
+[GEMINI] I have successfully fetched, enriched, and saved the data for
+Tata Motors and Infosys.
+
+• Tata Motors: ticker TATAMOTORS.NS, share price 950 INR, 5yr CAGR 25%, market cap 3.5T INR
+• Infosys:     ticker INFY.NS, share price 1500 INR, 5yr CAGR 12%, market cap 6.5T INR
+
+The comparison dashboard is now live at http://127.0.0.1:5175
+
+[AGENT] No more tool calls — task complete.
+```
+
+> The agent used **5 iterations** and **6 tool calls** total. It correctly self-corrected when
+> Infosys already existed (auto-switched create → update without any user intervention).
+
+---
+
 ## File Reference
 
 | File | Purpose |

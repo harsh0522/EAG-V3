@@ -1,0 +1,1185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Company Intelligence Agent — Full Explainer</title>
+<style>
+  :root {
+    --bg: #0f1117;
+    --bg2: #161b27;
+    --bg3: #1e2535;
+    --border: #2a3248;
+    --accent: #6366f1;
+    --accent2: #818cf8;
+    --green: #22c55e;
+    --yellow: #f59e0b;
+    --red: #ef4444;
+    --blue: #3b82f6;
+    --cyan: #06b6d4;
+    --pink: #ec4899;
+    --text: #e2e8f0;
+    --muted: #94a3b8;
+    --code-bg: #0d1117;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.7;
+  }
+
+  /* ── Nav ── */
+  nav {
+    position: sticky; top: 0; z-index: 100;
+    background: rgba(15,17,23,0.92);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--border);
+    padding: 0.75rem 2rem;
+    display: flex; gap: 1.5rem; align-items: center; flex-wrap: wrap;
+  }
+  nav a {
+    color: var(--muted); text-decoration: none; font-size: 0.85rem;
+    transition: color 0.2s;
+  }
+  nav a:hover { color: var(--accent2); }
+  nav .logo { color: var(--accent2); font-weight: 700; font-size: 1rem; margin-right: auto; }
+
+  /* ── Layout ── */
+  .hero {
+    text-align: center;
+    padding: 5rem 2rem 3rem;
+    background: radial-gradient(ellipse at top, #1e1f3e 0%, var(--bg) 60%);
+    border-bottom: 1px solid var(--border);
+  }
+  .hero h1 {
+    font-size: clamp(2rem, 5vw, 3.5rem);
+    font-weight: 800;
+    background: linear-gradient(135deg, #818cf8, #06b6d4, #22c55e);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text; margin-bottom: 1rem;
+  }
+  .hero p { color: var(--muted); font-size: 1.1rem; max-width: 680px; margin: 0 auto 2rem; }
+  .tags { display: flex; gap: 0.5rem; justify-content: center; flex-wrap: wrap; }
+  .tag {
+    padding: 0.3rem 0.8rem; border-radius: 999px; font-size: 0.78rem; font-weight: 600;
+    border: 1px solid;
+  }
+  .tag-purple { background: #3730a310; border-color: #6366f1; color: #a5b4fc; }
+  .tag-cyan   { background: #0e707510; border-color: #06b6d4; color: #67e8f9; }
+  .tag-green  { background: #14532d10; border-color: #22c55e; color: #86efac; }
+  .tag-yellow { background: #78350f10; border-color: #f59e0b; color: #fcd34d; }
+
+  main { max-width: 1100px; margin: 0 auto; padding: 2rem; }
+
+  /* ── Sections ── */
+  section { margin-bottom: 4rem; scroll-margin-top: 80px; }
+  .section-label {
+    font-size: 0.75rem; font-weight: 700; letter-spacing: 0.12em;
+    text-transform: uppercase; color: var(--accent2); margin-bottom: 0.5rem;
+  }
+  h2 {
+    font-size: 1.9rem; font-weight: 800; margin-bottom: 0.5rem;
+    color: var(--text);
+  }
+  h3 { font-size: 1.25rem; font-weight: 700; margin: 1.5rem 0 0.5rem; color: var(--text); }
+  p { color: var(--muted); margin-bottom: 0.75rem; }
+  ul, ol { color: var(--muted); padding-left: 1.4rem; margin-bottom: 0.75rem; }
+  li { margin-bottom: 0.4rem; }
+  li strong { color: var(--text); }
+
+  /* ── Cards ── */
+  .card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+  }
+  .card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem; }
+
+  /* ── Code ── */
+  pre {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1.2rem;
+    overflow-x: auto;
+    font-size: 0.82rem;
+    line-height: 1.6;
+    margin: 1rem 0;
+  }
+  code { font-family: 'JetBrains Mono', 'Fira Code', monospace; }
+  .kw  { color: #c792ea; }
+  .fn  { color: #82aaff; }
+  .str { color: #c3e88d; }
+  .cm  { color: #546e7a; }
+  .num { color: #f78c6c; }
+  .cls { color: #ffcb6b; }
+
+  /* ── Badges ── */
+  .badge {
+    display: inline-block;
+    padding: 0.2rem 0.6rem;
+    border-radius: 6px;
+    font-size: 0.73rem;
+    font-weight: 700;
+  }
+  .badge-blue   { background: #1d4ed820; color: #60a5fa; border: 1px solid #1d4ed860; }
+  .badge-green  { background: #15803d20; color: #4ade80; border: 1px solid #15803d60; }
+  .badge-purple { background: #6d28d920; color: #a78bfa; border: 1px solid #6d28d960; }
+  .badge-orange { background: #b4530920; color: #fb923c; border: 1px solid #b4530960; }
+  .badge-cyan   { background: #0e707520; color: #22d3ee; border: 1px solid #0e707560; }
+  .badge-pink   { background: #9d174d20; color: #f472b6; border: 1px solid #9d174d60; }
+
+  /* ── Flow diagram ── */
+  .flow {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 2rem;
+    margin: 1.5rem 0;
+    overflow-x: auto;
+  }
+  .flow-row { display: flex; align-items: center; justify-content: center; gap: 0; flex-wrap: nowrap; }
+  .flow-box {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 0.8rem 1.1rem;
+    text-align: center;
+    min-width: 120px;
+    font-size: 0.82rem;
+    font-weight: 600;
+  }
+  .flow-arrow {
+    color: var(--muted);
+    font-size: 1.3rem;
+    padding: 0 0.4rem;
+    flex-shrink: 0;
+  }
+  .flow-box.accent  { border-color: var(--accent); background: #3730a315; }
+  .flow-box.green   { border-color: var(--green);  background: #14532d15; }
+  .flow-box.cyan    { border-color: var(--cyan);   background: #0e707515; }
+  .flow-box.yellow  { border-color: var(--yellow); background: #78350f15; }
+  .flow-box.red     { border-color: var(--red);    background: #7f1d1d15; }
+  .flow-label { font-size: 0.7rem; color: var(--muted); margin-top: 0.3rem; }
+
+  /* ── Animated pulse ── */
+  @keyframes pulse-line {
+    0%   { opacity: 0.3; }
+    50%  { opacity: 1; }
+    100% { opacity: 0.3; }
+  }
+  .pulse { animation: pulse-line 2s ease-in-out infinite; }
+
+  /* ── Architecture SVG diagram ── */
+  .arch-wrap {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 2rem;
+    margin: 1.5rem 0;
+    overflow-x: auto;
+  }
+
+  /* ── Step list ── */
+  .steps { counter-reset: step; list-style: none; padding: 0; }
+  .steps li {
+    counter-increment: step;
+    display: flex; gap: 1rem;
+    margin-bottom: 1rem;
+    color: var(--muted);
+  }
+  .steps li::before {
+    content: counter(step);
+    background: var(--accent);
+    color: white;
+    min-width: 28px; height: 28px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.8rem; font-weight: 700;
+    flex-shrink: 0; margin-top: 0.1rem;
+  }
+
+  /* ── React loop visualiser ── */
+  .react-loop {
+    display: grid;
+    grid-template-columns: 1fr 40px 1fr 40px 1fr;
+    gap: 0;
+    align-items: center;
+    margin: 1.5rem 0;
+  }
+  .react-col {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1.2rem;
+    text-align: center;
+  }
+  .react-col h4 { font-size: 0.9rem; margin-bottom: 0.4rem; }
+  .react-col p  { font-size: 0.78rem; }
+  .react-arrow  { text-align: center; color: var(--muted); font-size: 1.4rem; }
+
+  /* ── Tool cards ── */
+  .tool-card {
+    background: var(--bg2);
+    border-radius: 12px;
+    overflow: hidden;
+    margin-bottom: 1.5rem;
+    border: 1px solid var(--border);
+  }
+  .tool-header {
+    padding: 1rem 1.5rem;
+    display: flex; align-items: center; gap: 1rem;
+  }
+  .tool-num {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 800; font-size: 1rem; flex-shrink: 0;
+  }
+  .tool-body { padding: 0 1.5rem 1.5rem; }
+  .fn-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 0.75rem; margin-top: 0.75rem; }
+  .fn-card {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0.9rem;
+  }
+  .fn-card .fn-name { font-size: 0.82rem; font-weight: 700; margin-bottom: 0.3rem; font-family: monospace; }
+  .fn-card p { font-size: 0.78rem; }
+
+  /* ── File tree ── */
+  .file-tree {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1.2rem 1.5rem;
+    font-family: monospace;
+    font-size: 0.83rem;
+    line-height: 2;
+    margin: 1rem 0;
+  }
+  .file-tree .dir  { color: var(--accent2); }
+  .file-tree .file { color: var(--text); }
+  .file-tree .note { color: var(--muted); font-size: 0.75rem; }
+
+  /* ── Data flow box ── */
+  .data-flow {
+    display: flex; flex-direction: column; gap: 0.5rem;
+    border-left: 3px solid var(--accent);
+    padding-left: 1.2rem;
+    margin: 1rem 0;
+  }
+  .data-flow-step { font-size: 0.88rem; color: var(--muted); }
+  .data-flow-step strong { color: var(--text); }
+
+  /* ── Comparison table ── */
+  table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: 0.85rem; }
+  th {
+    background: var(--bg3);
+    padding: 0.6rem 1rem;
+    text-align: left;
+    color: var(--muted);
+    font-weight: 600;
+    border-bottom: 1px solid var(--border);
+  }
+  td {
+    padding: 0.6rem 1rem;
+    border-bottom: 1px solid var(--border);
+    color: var(--text);
+    vertical-align: top;
+  }
+  tr:hover td { background: var(--bg2); }
+
+  /* ── Divider ── */
+  hr { border: none; border-top: 1px solid var(--border); margin: 2rem 0; }
+
+  /* ── Scrollbar ── */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+</style>
+</head>
+<body>
+
+<!-- ─── NAV ─── -->
+<nav>
+  <span class="logo">🏢 Company Intelligence Agent</span>
+  <a href="#what">What We Built</a>
+  <a href="#mcp">MCP Protocol</a>
+  <a href="#architecture">Architecture</a>
+  <a href="#server">MCP Server</a>
+  <a href="#agent">Agent</a>
+  <a href="#dashboard">Dashboard</a>
+  <a href="#samplerun">Sample Run</a>
+  <a href="#dataflow">Data Flow</a>
+  <a href="#files">Files</a>
+</nav>
+
+<!-- ─── HERO ─── -->
+<div class="hero">
+  <h1>Company Intelligence Agent</h1>
+  <p>A complete AI agent built with Model Context Protocol — fetches company data from the web, persists it to a local database, and renders an interactive live dashboard.</p>
+  <div class="tags">
+    <span class="tag tag-purple">MCP Protocol</span>
+    <span class="tag tag-cyan">Gemini 2.0 Flash</span>
+    <span class="tag tag-green">FastMCP</span>
+    <span class="tag tag-yellow">Prefab UI</span>
+    <span class="tag tag-purple">ReAct Loop</span>
+    <span class="tag tag-cyan">EAGv3 Session 4</span>
+  </div>
+</div>
+
+<main>
+
+<!-- ═══════════════════════════════════════════════════ -->
+<!-- 1. WHAT WE BUILT                                   -->
+<!-- ═══════════════════════════════════════════════════ -->
+<section id="what">
+  <div class="section-label">Overview</div>
+  <h2>What We Built</h2>
+  <p>Three programs that work together: an MCP server that exposes tools, an AI agent that uses those tools, and an auto-generated dashboard that displays the results.</p>
+
+  <div class="card-grid">
+    <div class="card">
+      <h3 style="color:#818cf8">⚙️ mcp_server.py</h3>
+      <p>The tool provider. Runs on port 8000. Exposes 3 tools to any MCP-compatible AI model. Handles web scraping, file persistence, and dashboard generation.</p>
+      <div style="margin-top:0.75rem">
+        <span class="badge badge-purple">Tool 1: fetch_company_info</span><br><br>
+        <span class="badge badge-green">Tool 2: company_file_crud</span><br><br>
+        <span class="badge badge-cyan">Tool 3: show_on_dashboard</span>
+      </div>
+    </div>
+    <div class="card">
+      <h3 style="color:#22d3ee">🧠 agent.py</h3>
+      <p>The AI brain. Uses Gemini 2.0 Flash to reason about a user's prompt and decide which tools to call, in what order, with what arguments.</p>
+      <div style="margin-top:0.75rem">
+        <span class="badge badge-cyan">ReAct Loop</span>&nbsp;
+        <span class="badge badge-blue">Max 15 Iterations</span><br><br>
+        <span class="badge badge-orange">Auto-retry on 429/503</span>
+      </div>
+    </div>
+    <div class="card">
+      <h3 style="color:#4ade80">📊 generated_app.py</h3>
+      <p>Auto-generated at runtime by Tool 3. A complete Prefab UI dashboard with 5 tabs, charts, comparison tables, and the full agent activity log.</p>
+      <div style="margin-top:0.75rem">
+        <span class="badge badge-green">Overview</span>&nbsp;
+        <span class="badge badge-blue">Comparison</span>&nbsp;
+        <span class="badge badge-purple">Log</span>&nbsp;
+        <span class="badge badge-orange">Stats</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════ -->
+<!-- 2. MCP PROTOCOL                                    -->
+<!-- ═══════════════════════════════════════════════════ -->
+<section id="mcp">
+  <div class="section-label">Core Concept</div>
+  <h2>What is MCP?</h2>
+  <p><strong style="color:var(--text)">Model Context Protocol</strong> is a standard for connecting AI models to external tools — like a USB standard for AI capabilities.</p>
+
+  <div class="flow">
+    <p style="text-align:center;font-size:0.8rem;color:var(--muted);margin-bottom:1.5rem">How MCP works — the three-step protocol</p>
+    <div class="flow-row">
+      <div class="flow-box accent">
+        <div>🤖 AI Model</div>
+        <div class="flow-label">(Gemini)</div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-box yellow">
+        <div>🔍 list_tools()</div>
+        <div class="flow-label">discover</div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-box green">
+        <div>⚙️ MCP Server</div>
+        <div class="flow-label">(mcp_server.py)</div>
+      </div>
+      <div class="flow-arrow">←</div>
+      <div class="flow-box yellow">
+        <div>📋 Tool list</div>
+        <div class="flow-label">response</div>
+      </div>
+    </div>
+    <br>
+    <div class="flow-row">
+      <div class="flow-box accent">
+        <div>🤖 AI Model</div>
+        <div class="flow-label">decides to call tool</div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-box cyan">
+        <div>📞 call_tool(name, args)</div>
+        <div class="flow-label">via SSE on port 8000</div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-box green">
+        <div>⚙️ MCP Server</div>
+        <div class="flow-label">executes the tool</div>
+      </div>
+      <div class="flow-arrow">←</div>
+      <div class="flow-box cyan">
+        <div>📦 Result dict</div>
+        <div class="flow-label">structured JSON</div>
+      </div>
+    </div>
+  </div>
+
+  <h3>Why MCP instead of custom glue code?</h3>
+  <div class="card-grid">
+    <div class="card">
+      <h3 style="color:var(--green);font-size:1rem">✅ With MCP</h3>
+      <ul>
+        <li>Tools are <strong>self-describing</strong> — model asks "what can you do?" and gets a schema back</li>
+        <li>Swap Gemini → Claude → GPT-4 without changing any tool code</li>
+        <li>Tools run in a separate process — isolated, restartable</li>
+        <li>Standard transport (SSE/WebSocket) — works over network too</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3 style="color:var(--red);font-size:1rem">❌ Without MCP</h3>
+      <ul>
+        <li>Every AI SDK has a different function-calling format</li>
+        <li>Tool schemas must be manually maintained in sync with the model's API format</li>
+        <li>Tight coupling — tools and model live in the same codebase</li>
+        <li>No standard — every team invents their own</li>
+      </ul>
+    </div>
+  </div>
+
+  <h3>Transport: Server-Sent Events (SSE)</h3>
+  <p>The MCP server in this project uses SSE transport. The agent opens a persistent HTTP connection to <code>http://127.0.0.1:8000/sse</code>. Tool calls are sent as HTTP POST, results stream back as SSE events. FastMCP handles all of this automatically.</p>
+</section>
+
+<!-- ═══════════════════════════════════════════════════ -->
+<!-- 3. ARCHITECTURE                                    -->
+<!-- ═══════════════════════════════════════════════════ -->
+<section id="architecture">
+  <div class="section-label">System Design</div>
+  <h2>Full Architecture</h2>
+
+  <div class="arch-wrap">
+    <svg viewBox="0 0 900 480" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:900px;display:block;margin:0 auto">
+      <defs>
+        <marker id="arr" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L0,6 L8,3 z" fill="#6366f1"/>
+        </marker>
+        <marker id="arr2" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L0,6 L8,3 z" fill="#22c55e"/>
+        </marker>
+        <marker id="arr3" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L0,6 L8,3 z" fill="#06b6d4"/>
+        </marker>
+      </defs>
+
+      <!-- User Prompt box -->
+      <rect x="330" y="10" width="240" height="56" rx="10" fill="#1e2535" stroke="#6366f1" stroke-width="1.5"/>
+      <text x="450" y="34" text-anchor="middle" fill="#a5b4fc" font-size="13" font-weight="700">👤 User Prompt</text>
+      <text x="450" y="52" text-anchor="middle" fill="#64748b" font-size="10">terminal / agent.py argument</text>
+
+      <!-- Arrow: User → Agent -->
+      <line x1="450" y1="66" x2="450" y2="115" stroke="#6366f1" stroke-width="1.5" marker-end="url(#arr)"/>
+
+      <!-- Agent box -->
+      <rect x="260" y="115" width="380" height="80" rx="10" fill="#1e2535" stroke="#818cf8" stroke-width="1.5"/>
+      <text x="450" y="140" text-anchor="middle" fill="#818cf8" font-size="14" font-weight="700">🧠 agent.py</text>
+      <text x="450" y="158" text-anchor="middle" fill="#94a3b8" font-size="10">Gemini 2.0 Flash · ReAct Loop · Max 15 iterations</text>
+      <text x="450" y="174" text-anchor="middle" fill="#94a3b8" font-size="10">FastMCP Client → connects via SSE</text>
+
+      <!-- Arrow: Agent → MCP Server -->
+      <line x1="380" y1="195" x2="250" y2="250" stroke="#6366f1" stroke-width="1.5" marker-end="url(#arr)"/>
+      <text x="285" y="232" fill="#6366f1" font-size="9">MCP SSE</text>
+      <text x="275" y="243" fill="#64748b" font-size="9">port 8000</text>
+
+      <!-- MCP Server box -->
+      <rect x="30" y="250" width="220" height="110" rx="10" fill="#1e2535" stroke="#6366f1" stroke-width="1.5"/>
+      <text x="140" y="274" text-anchor="middle" fill="#a5b4fc" font-size="13" font-weight="700">⚙️ mcp_server.py</text>
+      <text x="140" y="292" text-anchor="middle" fill="#22c55e" font-size="10">Tool 1: fetch_company_info</text>
+      <text x="140" y="308" text-anchor="middle" fill="#22c55e" font-size="10">Tool 2: company_file_crud</text>
+      <text x="140" y="324" text-anchor="middle" fill="#22c55e" font-size="10">Tool 3: show_on_dashboard</text>
+      <text x="140" y="348" text-anchor="middle" fill="#64748b" font-size="9">FastMCP · SSE transport</text>
+
+      <!-- Arrow: MCP → Web -->
+      <line x1="30" y1="285" x2="0" y2="285" stroke="none"/>
+      <line x1="80" y1="366" x2="80" y2="415" stroke="#06b6d4" stroke-width="1.5" marker-end="url(#arr3)"/>
+
+      <!-- Web / Wikipedia box -->
+      <rect x="30" y="415" width="220" height="50" rx="10" fill="#0e7075" opacity="0.15" stroke="#06b6d4" stroke-width="1.5"/>
+      <text x="140" y="438" text-anchor="middle" fill="#22d3ee" font-size="12" font-weight="700">🌐 Wikipedia + DuckDuckGo</text>
+      <text x="140" y="454" text-anchor="middle" fill="#64748b" font-size="9">Tool 1 fetches via HTTP requests</text>
+
+      <!-- Arrow: MCP → Data files -->
+      <line x1="250" y1="310" x2="360" y2="350" stroke="#22c55e" stroke-width="1.5" marker-end="url(#arr2)"/>
+
+      <!-- Data files box -->
+      <rect x="360" y="350" width="230" height="80" rx="10" fill="#1e2535" stroke="#22c55e" stroke-width="1.5"/>
+      <text x="475" y="374" text-anchor="middle" fill="#4ade80" font-size="13" font-weight="700">💾 Local Files</text>
+      <text x="475" y="392" text-anchor="middle" fill="#94a3b8" font-size="10">data/companies.json   (company DB)</text>
+      <text x="475" y="408" text-anchor="middle" fill="#94a3b8" font-size="10">data/agent_log.json   (activity log)</text>
+      <text x="475" y="424" text-anchor="middle" fill="#64748b" font-size="9">atomic writes · Tool 2 manages this</text>
+
+      <!-- Arrow: MCP → Dashboard -->
+      <line x1="250" y1="290" x2="630" y2="290" stroke="#f59e0b" stroke-width="1.5" marker-end="url(#arr)"/>
+      <text x="430" y="282" fill="#f59e0b" font-size="9">generates + launches</text>
+
+      <!-- Dashboard box -->
+      <rect x="630" y="250" width="240" height="110" rx="10" fill="#1e2535" stroke="#f59e0b" stroke-width="1.5"/>
+      <text x="750" y="274" text-anchor="middle" fill="#fcd34d" font-size="13" font-weight="700">📊 Prefab Dashboard</text>
+      <text x="750" y="292" text-anchor="middle" fill="#94a3b8" font-size="10">generated_app.py</text>
+      <text x="750" y="308" text-anchor="middle" fill="#94a3b8" font-size="10">prefab serve :5175</text>
+      <text x="750" y="324" text-anchor="middle" fill="#94a3b8" font-size="10">5 tabs · charts · log</text>
+      <text x="750" y="348" text-anchor="middle" fill="#64748b" font-size="9">http://127.0.0.1:5175</text>
+
+      <!-- Arrow: Result back to Agent -->
+      <path d="M260,230 C220,230 220,200 260,195" stroke="#818cf8" stroke-width="1.2" fill="none" stroke-dasharray="4,3" marker-end="url(#arr)"/>
+      <text x="195" y="218" fill="#818cf8" font-size="9">tool result</text>
+      <text x="195" y="229" fill="#64748b" font-size="9">back to Gemini</text>
+    </svg>
+  </div>
+
+  <h3>How the three processes coordinate</h3>
+  <div class="card-grid">
+    <div class="card">
+      <span class="badge badge-purple">Process 1</span>
+      <h3 style="font-size:1rem;margin-top:0.5rem">mcp_server.py</h3>
+      <p>Runs permanently in Terminal 1. Listens on port 8000. All tool logic lives here.</p>
+    </div>
+    <div class="card">
+      <span class="badge badge-cyan">Process 2</span>
+      <h3 style="font-size:1rem;margin-top:0.5rem">agent.py</h3>
+      <p>Run in Terminal 2 per task. Connects to the server, loops until done, exits.</p>
+    </div>
+    <div class="card">
+      <span class="badge badge-orange">Process 3</span>
+      <h3 style="font-size:1rem;margin-top:0.5rem">prefab serve</h3>
+      <p>Spawned automatically by Tool 3. Serves the dashboard until the next tool call kills and restarts it.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════ -->
+<!-- 4. MCP SERVER — every function                     -->
+<!-- ═══════════════════════════════════════════════════ -->
+<section id="server">
+  <div class="section-label">mcp_server.py</div>
+  <h2>MCP Server — Every Function Explained</h2>
+
+  <!-- Helper functions -->
+  <h3>Helper / Utility Functions</h3>
+  <div class="fn-grid">
+    <div class="fn-card">
+      <div class="fn-name" style="color:#82aaff">ensure_data_files()</div>
+      <p>Runs once at startup. Creates <code>data/</code> directory and empty <code>companies.json</code> + <code>agent_log.json</code> if they don't exist. Ensures the server never crashes due to missing files.</p>
+    </div>
+    <div class="fn-card">
+      <div class="fn-name" style="color:#82aaff">load_companies() → dict</div>
+      <p>Reads <code>companies.json</code> and returns it as a Python dict. If the file is missing or corrupt, returns an empty dict instead of crashing.</p>
+    </div>
+    <div class="fn-card">
+      <div class="fn-name" style="color:#82aaff">save_companies(data)</div>
+      <p><strong style="color:var(--text)">Atomic write.</strong> Writes to a <code>.tmp</code> file first, then renames it to the real file. This prevents data corruption if the process is killed mid-write.</p>
+      <pre><code><span class="kw">def</span> <span class="fn">save_companies</span>(data):
+    tmp = COMPANIES_FILE.<span class="fn">with_suffix</span>(<span class="str">".tmp"</span>)
+    tmp.<span class="fn">write_text</span>(json.<span class="fn">dumps</span>(data))
+    tmp.<span class="fn">replace</span>(COMPANIES_FILE)  <span class="cm"># atomic!</span></code></pre>
+    </div>
+    <div class="fn-card">
+      <div class="fn-name" style="color:#82aaff">load_logs() → list</div>
+      <p>Reads <code>agent_log.json</code> and returns it as a list of operation dicts. Same safe fallback pattern as <code>load_companies</code>.</p>
+    </div>
+    <div class="fn-card">
+      <div class="fn-name" style="color:#82aaff">append_log(operation, company, tool)</div>
+      <p>Appends a single log entry with <code>timestamp</code>, <code>operation</code>, <code>company</code>, and <code>tool</code> to the log file. Called by every tool on every action so the Agent Log tab always has complete history.</p>
+    </div>
+  </div>
+
+  <hr>
+
+  <!-- TOOL 1 -->
+  <div class="tool-card">
+    <div class="tool-header" style="background: linear-gradient(135deg, #1a1f38, #1e2535);">
+      <div class="tool-num" style="background:#6366f130;color:#818cf8;border:1.5px solid #6366f1">1</div>
+      <div>
+        <div style="font-weight:700;font-size:1.05rem;color:#818cf8">fetch_company_info(company_name)</div>
+        <div style="font-size:0.8rem;color:var(--muted)">Tool 1 — Web Scraper</div>
+      </div>
+      <span class="badge badge-purple" style="margin-left:auto">@mcp.tool()</span>
+    </div>
+    <div class="tool-body">
+      <p><strong style="color:var(--text)">What it does:</strong> Takes a company name, fetches structured information from two public APIs, and returns a dict with 9 fields.</p>
+
+      <h3>Step-by-step inside the function</h3>
+      <ol class="steps">
+        <li><strong>Build empty result dict</strong> — pre-fills all 9 keys with <code>None</code> so the structure is always consistent even if some sources fail.</li>
+        <li><strong>Wikipedia REST API</strong> — calls <code>https://en.wikipedia.org/api/rest_v1/page/summary/{company}</code>. Extracts: <code>description</code>, first 600 chars of <code>summary</code>, and the <code>source_url</code>.</li>
+        <li><strong>DuckDuckGo Instant Answer API</strong> — calls the DDG JSON API. If Wikipedia didn't return a description, DDG fills it in. Also parses the <code>Infobox</code> section for: <code>founded</code>, <code>headquarters</code>, <code>industry</code>, <code>key_people</code>.</li>
+        <li><strong>Regex fallback for founded year</strong> — if founded is still empty, runs a regex on the summary text to find a 4-digit year after the word "founded".</li>
+        <li><strong>Log the operation</strong> — calls <code>append_log("fetch", company_name, "fetch_company_info")</code>.</li>
+        <li><strong>Fill N/A for blanks</strong> — any field still <code>None</code> or <code>""</code> gets set to <code>"N/A"</code> so downstream code never sees <code>None</code>.</li>
+      </ol>
+
+      <h3>Returned fields</h3>
+      <table>
+        <tr><th>Field</th><th>Source</th><th>Example</th></tr>
+        <tr><td><code>company</code></td><td>input</td><td>Infosys</td></tr>
+        <tr><td><code>description</code></td><td>Wikipedia / DDG</td><td>Indian multinational IT company</td></tr>
+        <tr><td><code>summary</code></td><td>Wikipedia / DDG</td><td>Founded in 1981... (up to 600 chars)</td></tr>
+        <tr><td><code>founded</code></td><td>DDG Infobox / regex</td><td>1981</td></tr>
+        <tr><td><code>headquarters</code></td><td>DDG Infobox</td><td>Bengaluru, India</td></tr>
+        <tr><td><code>key_people</code></td><td>DDG Infobox</td><td>Salil Parekh (CEO)</td></tr>
+        <tr><td><code>industry</code></td><td>DDG Infobox</td><td>Information Technology</td></tr>
+        <tr><td><code>source_url</code></td><td>Wikipedia</td><td>https://en.wikipedia.org/wiki/Infosys</td></tr>
+        <tr><td><code>fetched_at</code></td><td>generated</td><td>2025-05-05T10:30:00Z</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <!-- TOOL 2 -->
+  <div class="tool-card">
+    <div class="tool-header" style="background: linear-gradient(135deg, #14532d15, #1e2535);">
+      <div class="tool-num" style="background:#22c55e30;color:#22c55e;border:1.5px solid #22c55e">2</div>
+      <div>
+        <div style="font-weight:700;font-size:1.05rem;color:#4ade80">company_file_crud(operation, company_name, data)</div>
+        <div style="font-size:0.8rem;color:var(--muted)">Tool 2 — Database Manager</div>
+      </div>
+      <span class="badge badge-green" style="margin-left:auto">@mcp.tool()</span>
+    </div>
+    <div class="tool-body">
+      <p><strong style="color:var(--text)">What it does:</strong> A full CRUD interface over <code>data/companies.json</code>. The AI model calls this to save, read, update, or delete company records.</p>
+
+      <h3>The 5 Operations</h3>
+      <div class="fn-grid">
+        <div class="fn-card">
+          <div class="fn-name" style="color:#4ade80">create</div>
+          <p>Adds a new company. Fails with a clear error if the name already exists — tells the agent to use <code>update</code> instead. Adds <code>created_at</code> timestamp. Calls <code>save_companies()</code> atomically.</p>
+        </div>
+        <div class="fn-card">
+          <div class="fn-name" style="color:#60a5fa">read</div>
+          <p>Returns one company's data (by name) or all companies if <code>company_name="all"</code>. Read-only — no file write.</p>
+        </div>
+        <div class="fn-card">
+          <div class="fn-name" style="color:#fcd34d">update</div>
+          <p>Merges new fields into the existing company entry using <code>.update()</code>. Adds <code>updated_at</code> timestamp. Returns the full merged entry.</p>
+        </div>
+        <div class="fn-card">
+          <div class="fn-name" style="color:#f87171">delete</div>
+          <p>Removes a company entry by name. Returns an error if not found. Saves atomically.</p>
+        </div>
+        <div class="fn-card">
+          <div class="fn-name" style="color:#a78bfa">list</div>
+          <p>Returns just the list of company names and a count. Lightweight — no full data returned.</p>
+        </div>
+      </div>
+
+      <h3>Why atomic writes matter</h3>
+      <p>If the process crashed halfway through writing <code>companies.json</code>, you'd get a half-written, corrupt file. By writing to <code>companies.tmp</code> first and then <code>rename()</code>-ing it, the OS guarantees the swap is instant — the file is either old or new, never in between.</p>
+    </div>
+  </div>
+
+  <!-- TOOL 3 -->
+  <div class="tool-card">
+    <div class="tool-header" style="background: linear-gradient(135deg, #78350f15, #1e2535);">
+      <div class="tool-num" style="background:#f59e0b30;color:#f59e0b;border:1.5px solid #f59e0b">3</div>
+      <div>
+        <div style="font-weight:700;font-size:1.05rem;color:#fcd34d">show_on_dashboard(companies_data, mode)</div>
+        <div style="font-size:0.8rem;color:var(--muted)">Tool 3 — Dashboard Generator + Launcher</div>
+      </div>
+      <span class="badge badge-yellow" style="margin-left:auto">@mcp.tool()</span>
+    </div>
+    <div class="tool-body">
+      <p><strong style="color:var(--text)">What it does:</strong> Reads the company database, generates a complete Python dashboard file, validates it, kills any old dashboard process, and starts a new one.</p>
+
+      <ol class="steps">
+        <li><strong>Load all companies + logs</strong> — reads current state of both JSON files.</li>
+        <li><strong>Auto-detect mode</strong> — if more than 1 company exists, switches to <code>"comparison"</code> mode automatically.</li>
+        <li><strong>Call _generate_prefab_code()</strong> — builds the full Python dashboard file as a string (explained below).</li>
+        <li><strong>Validate with py_compile</strong> — writes the code to a temp file, runs Python's compile checker. Rejects invalid code before it can break the dashboard.</li>
+        <li><strong>Write generated_app.py</strong> — overwrites the file with the validated code.</li>
+        <li><strong>Kill old prefab process</strong> — reads the PID from <code>prefab.pid</code> and kills the old process, then runs <code>pkill -f "prefab serve"</code> as a cleanup.</li>
+        <li><strong>Resolve how to launch prefab</strong> — tries 3 strategies: (a) <code>prefab</code> in PATH, (b) prefab next to the Python executable in the venv, (c) <code>uv tool run --from prefab-ui prefab serve</code>.</li>
+        <li><strong>Launch new prefab process</strong> — starts <code>prefab serve generated_app.py --port 5175</code> as a background subprocess, saves its PID to <code>prefab.pid</code>.</li>
+        <li><strong>Return success</strong> — returns URL, company count, and mode to the agent.</li>
+      </ol>
+
+      <h3>_generate_prefab_code() — the code generator</h3>
+      <p>This private function builds the entire <code>generated_app.py</code> as a Python f-string template. Here's what it does before writing the template:</p>
+      <div class="fn-grid">
+        <div class="fn-card">
+          <div class="fn-name" style="color:#fcd34d">Base64 embedding</div>
+          <p>All company data and log data are JSON-encoded, then base64-encoded and baked into the generated file as string literals. This avoids any escaping issues with special characters in company names or descriptions.</p>
+        </div>
+        <div class="fn-card">
+          <div class="fn-name" style="color:#fcd34d">Chart data pre-computed</div>
+          <p>Industry counts, bar chart data (company age, CAGR, share price), sparkline data, and financial data are all computed at generation time and embedded as Python <code>repr()</code> literals. The dashboard itself doesn't do any computation.</p>
+        </div>
+        <div class="fn-card">
+          <div class="fn-name" style="color:#fcd34d">5 tab-builder functions</div>
+          <p>The template includes <code>build_overview_tab()</code>, <code>build_comparison_tab()</code>, <code>build_search_tab()</code>, <code>build_log_tab()</code>, and <code>build_stats_tab()</code> — each returns a tree of Prefab UI components.</p>
+        </div>
+        <div class="fn-card">
+          <div class="fn-name" style="color:#fcd34d">Completeness scoring</div>
+          <p><code>_completeness(company)</code> checks 5 key fields (description, summary, founded, key_people, industry) and returns a 0–100% score used for the progress bars and data quality badges.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════ -->
+<!-- 5. AGENT                                           -->
+<!-- ═══════════════════════════════════════════════════ -->
+<section id="agent">
+  <div class="section-label">agent.py</div>
+  <h2>The AI Agent — How It Works</h2>
+
+  <p>The agent is the orchestrator. It takes a user prompt, connects to the MCP server, and runs a loop where it alternately asks Gemini "what to do next" and executes the suggested tool calls.</p>
+
+  <h3>The ReAct Loop</h3>
+  <p><strong style="color:var(--text)">ReAct = Reasoning + Acting.</strong> Each iteration: Gemini reasons about the current state and either produces text (done) or produces function calls (keep going).</p>
+
+  <div class="flow" style="padding:1.5rem">
+    <div style="display:grid;grid-template-columns:1fr 30px 1fr 30px 1fr 30px 1fr;align-items:center;gap:0.3rem">
+      <div class="flow-box accent" style="padding:1rem">
+        <div style="font-size:1.2rem">📝</div>
+        <div><strong>Send history</strong><br>to Gemini</div>
+        <div class="flow-label">all messages + tool results so far</div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-box yellow" style="padding:1rem">
+        <div style="font-size:1.2rem">🤔</div>
+        <div><strong>Gemini decides</strong><br>text or tool call?</div>
+        <div class="flow-label">reasoning step</div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-box green" style="padding:1rem">
+        <div style="font-size:1.2rem">⚙️</div>
+        <div><strong>Execute tool</strong><br>via MCP</div>
+        <div class="flow-label">call_tool(name, args)</div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-box cyan" style="padding:1rem">
+        <div style="font-size:1.2rem">📦</div>
+        <div><strong>Append result</strong><br>to history</div>
+        <div class="flow-label">loop back ↩</div>
+      </div>
+    </div>
+    <p style="text-align:center;margin-top:1rem;color:var(--muted);font-size:0.8rem">Loop exits when Gemini returns text only (no function calls) · Max 15 iterations</p>
+  </div>
+
+  <h3>Key functions in agent.py</h3>
+  <div class="fn-grid">
+    <div class="fn-card">
+      <div class="fn-name" style="color:#82aaff">run_agent(prompt)</div>
+      <p>The main async function. Connects to MCP, discovers tools, builds the Gemini client, and runs the ReAct loop. Handles <code>ConnectionRefusedError</code> gracefully if the MCP server isn't running.</p>
+    </div>
+    <div class="fn-card">
+      <div class="fn-name" style="color:#82aaff">_mcp_tool_to_gemini(tool)</div>
+      <p>Converts an MCP Tool object (which has a JSON Schema) into the format Gemini expects for function declarations. Gemini only accepts a subset of JSON Schema — this function strips unsupported fields.</p>
+    </div>
+    <div class="fn-card">
+      <div class="fn-name" style="color:#82aaff">_clean_schema(schema)</div>
+      <p>Recursively removes JSON Schema fields that Gemini rejects (e.g. <code>additionalProperties</code>, <code>$schema</code>). Only keeps: <code>type</code>, <code>properties</code>, <code>required</code>, <code>description</code>, <code>enum</code>, <code>items</code>, <code>anyOf</code>.</p>
+    </div>
+    <div class="fn-card">
+      <div class="fn-name" style="color:#82aaff">_extract_tool_result(raw)</div>
+      <p>FastMCP can return results as a dict, a list of content items, or raw strings. This function normalises all three formats into a plain Python dict for consistent handling.</p>
+    </div>
+    <div class="fn-card">
+      <div class="fn-name" style="color:#82aaff">_print_tool_call / _print_tool_result</div>
+      <p>Pretty-print helpers for the terminal output. Shows each tool call with indented JSON arguments, and truncates very long results to 800 chars to keep the terminal readable.</p>
+    </div>
+    <div class="fn-card">
+      <div class="fn-name" style="color:#82aaff">main()</div>
+      <p>Entry point. If arguments are passed on the command line, uses them as the prompt. Otherwise shows the demo prompt and waits for user input. Calls <code>asyncio.run(run_agent(prompt))</code>.</p>
+    </div>
+  </div>
+
+  <h3>Retry logic</h3>
+  <p>Gemini API can return <code>429 RESOURCE_EXHAUSTED</code> (rate limit) or <code>503 UNAVAILABLE</code> (overloaded). The agent retries up to 3 times with increasing backoff:</p>
+  <pre><code><span class="kw">for</span> attempt <span class="kw">in</span> <span class="fn">range</span>(<span class="num">3</span>):
+    <span class="kw">try</span>:
+        response = <span class="kw">await</span> gemini_client.aio.models.<span class="fn">generate_content</span>(...)
+        <span class="kw">break</span>
+    <span class="kw">except</span> <span class="cls">Exception</span> <span class="kw">as</span> api_err:
+        <span class="kw">if</span> <span class="str">"429"</span> <span class="kw">in</span> err_str <span class="kw">or</span> <span class="str">"503"</span> <span class="kw">in</span> err_str:
+            wait = <span class="num">10</span> * (attempt + <span class="num">1</span>)   <span class="cm"># 10s, 20s, 30s</span>
+            <span class="kw">await</span> asyncio.<span class="fn">sleep</span>(wait)
+        <span class="kw">else</span>:
+            <span class="kw">raise</span></code></pre>
+
+  <h3>Two Workflows (controlled by the prompt)</h3>
+  <div class="card-grid">
+    <div class="card">
+      <span class="badge badge-blue">Workflow A — Web Fetch</span>
+      <p style="margin-top:0.75rem">Triggered when prompt says "fetch" or doesn't specify otherwise.</p>
+      <ol class="steps" style="margin-top:0.75rem">
+        <li>Call <code>fetch_company_info</code> for each company (real web data)</li>
+        <li>Gemini enriches with financial data from its own knowledge</li>
+        <li>Save with <code>company_file_crud</code></li>
+        <li>Call <code>show_on_dashboard</code> once at the end</li>
+      </ol>
+    </div>
+    <div class="card">
+      <span class="badge badge-purple">Workflow B — LLM Knowledge Only</span>
+      <p style="margin-top:0.75rem">Triggered when prompt says "use LLM knowledge", "no fetch", or "skip fetch".</p>
+      <ol class="steps" style="margin-top:0.75rem">
+        <li>Skip <code>fetch_company_info</code> entirely</li>
+        <li>Gemini builds the full dict from training knowledge</li>
+        <li>Save with <code>company_file_crud</code></li>
+        <li>Call <code>show_on_dashboard</code> once at the end</li>
+      </ol>
+    </div>
+  </div>
+
+  <h3>The System Prompt</h3>
+  <p>The SYSTEM_PROMPT is prepended to every conversation. It tells Gemini exactly which tools are available, what each field should look like, the two workflows, and the rules (e.g. "if create fails with 'already exists', immediately retry with update"). This is what makes the agent behave consistently without needing code changes.</p>
+</section>
+
+<!-- ═══════════════════════════════════════════════════ -->
+<!-- 6. DASHBOARD                                       -->
+<!-- ═══════════════════════════════════════════════════ -->
+<section id="dashboard">
+  <div class="section-label">generated_app.py + Prefab UI</div>
+  <h2>The Live Dashboard — 5 Tabs Explained</h2>
+
+  <p>Every time <code>show_on_dashboard</code> is called, a fresh <code>generated_app.py</code> is written and the Prefab server restarts. The dashboard is a complete snapshot of the current data.</p>
+
+  <div class="card-grid">
+    <div class="card">
+      <h3 style="color:#818cf8;font-size:1rem">Tab 1 — Overview</h3>
+      <p>One <strong>Card</strong> per company. Shows: description, summary, industry, founded year, share price, 5yr CAGR, market cap, key people, and a <strong>Progress bar</strong> for data completeness (0–100%).</p>
+      <p>The completeness badge turns green ≥80%, yellow ≥50%, red below 50%.</p>
+    </div>
+    <div class="card">
+      <h3 style="color:#22d3ee;font-size:1rem">Tab 2 — Comparison</h3>
+      <p>Three <strong>BarCharts</strong>: 5yr CAGR %, current share price, and company age (years since founding). Below that, a full comparison table with all companies side-by-side.</p>
+      <p>Requires at least 2 companies — shows a hint message if only 1 is loaded.</p>
+    </div>
+    <div class="card">
+      <h3 style="color:#4ade80;font-size:1rem">Tab 3 — Search & Add</h3>
+      <p>An <strong>Input</strong> + <strong>Button</strong> UI for entering company names, plus a <strong>Sparkline</strong> chart of how many companies were added per day. The button is decorative — actual adding happens via the agent CLI.</p>
+    </div>
+    <div class="card">
+      <h3 style="color:#fcd34d;font-size:1rem">Tab 4 — Agent Log</h3>
+      <p>Every single operation logged by the agent, newest first. Each row shows: operation badge (ADD/FETCH/UPDATE/DEL), company name, tool name badge, date and time in UTC. No cap — all entries shown.</p>
+    </div>
+    <div class="card">
+      <h3 style="color:#f472b6;font-size:1rem">Tab 5 — Stats</h3>
+      <p>Summary cards (total companies, avg data quality, total ops, most active company, best 5yr CAGR). A <strong>PieChart</strong> of industry distribution. Per-company quality scores with progress bars.</p>
+    </div>
+  </div>
+
+  <h3>Why is it auto-generated code, not a fixed template?</h3>
+  <p>Because the data changes on every agent run. The chart data, company lists, and log entries are all dynamic. By generating Python code with the data embedded as base64 literals, Prefab can serve the dashboard with zero network calls — everything is self-contained in one file. This also means the dashboard works offline.</p>
+</section>
+
+<!-- ═══════════════════════════════════════════════════ -->
+<!-- 7. SAMPLE RUN LOGS                                 -->
+<!-- ═══════════════════════════════════════════════════ -->
+<section id="samplerun">
+  <div class="section-label">Real Output</div>
+  <h2>Sample Run — Live Agent Logs</h2>
+  <p>This is a real terminal run of the agent fetching <strong style="color:var(--text)">Tata Motors</strong> and <strong style="color:var(--text)">Infosys</strong> from the web, saving them, and launching the dashboard. 5 iterations, 6 tool calls.</p>
+
+  <!-- Header banner -->
+  <div style="background:var(--code-bg);border:1px solid var(--border);border-radius:10px;padding:1.2rem 1.5rem;margin:1rem 0;font-family:monospace;font-size:0.82rem">
+    <div style="color:#64748b;margin-bottom:0.5rem">── Startup ──────────────────────────────────────────────────</div>
+    <div style="color:#94a3b8">Prompt: <span style="color:#c3e88d">detailed information about tatamotors and Infosys from the web. For each company,</span></div>
+    <div style="color:#94a3b8;padding-left:2rem"><span style="color:#c3e88d">also include financial data: ticker, share price, 5yr CAGR, market cap. Save and show dashboard.</span></div>
+    <div style="margin-top:0.5rem;color:#94a3b8">MCP Server: <span style="color:#818cf8">http://127.0.0.1:8000/sse</span></div>
+    <div style="color:#94a3b8">Model: <span style="color:#818cf8">gemini-2.0-flash</span>  |  Max iterations: <span style="color:#f78c6c">15</span></div>
+    <div style="margin-top:0.5rem;color:#4ade80">✓ Connected to MCP server</div>
+    <div style="color:#4ade80">✓ Discovered <span style="color:#f78c6c">3</span> tools: [<span style="color:#c3e88d">'fetch_company_info'</span>, <span style="color:#c3e88d">'company_file_crud'</span>, <span style="color:#c3e88d">'show_on_dashboard'</span>]</div>
+  </div>
+
+  <!-- Iteration 1 -->
+  <div class="tool-card" style="margin-bottom:1rem">
+    <div class="tool-header" style="background:linear-gradient(135deg,#1a1f38,#1e2535);padding:0.8rem 1.2rem">
+      <div class="tool-num" style="background:#6366f130;color:#818cf8;border:1.5px solid #6366f1;width:28px;height:28px;font-size:0.8rem">1</div>
+      <span style="font-weight:700;color:#a5b4fc">Iteration 1 / 15</span>
+      <span class="badge badge-purple" style="margin-left:auto">2 tool calls — parallel</span>
+    </div>
+    <div style="padding:1rem 1.2rem">
+      <p style="font-size:0.83rem;color:var(--muted);margin-bottom:0.75rem">Gemini decides to fetch both companies at once in the same response.</p>
+
+      <!-- Tool call 1 -->
+      <div style="background:var(--code-bg);border:1px solid #6366f140;border-left:3px solid #6366f1;border-radius:6px;padding:0.8rem 1rem;margin-bottom:0.5rem;font-family:monospace;font-size:0.8rem">
+        <div style="color:#818cf8;margin-bottom:0.3rem">[TOOL CALL] fetch_company_info</div>
+        <div style="color:#94a3b8">{ <span style="color:#c3e88d">"company_name"</span>: <span style="color:#c3e88d">"Tata Motors"</span> }</div>
+      </div>
+      <div style="background:var(--code-bg);border:1px solid #22c55e40;border-left:3px solid #22c55e;border-radius:6px;padding:0.8rem 1rem;margin-bottom:1rem;font-family:monospace;font-size:0.8rem">
+        <div style="color:#4ade80;margin-bottom:0.3rem">[TOOL RESULT]</div>
+        <div style="color:#94a3b8">{ <span style="color:#c3e88d">"company"</span>: <span style="color:#c3e88d">"Tata Motors"</span>,</div>
+        <div style="color:#94a3b8;padding-left:1rem"><span style="color:#c3e88d">"description"</span>: <span style="color:#c3e88d">"Indian multinational automobile manufacturing company"</span>,</div>
+        <div style="color:#94a3b8;padding-left:1rem"><span style="color:#c3e88d">"founded"</span>: <span style="color:#c3e88d">"September 1, 1945"</span>,  <span style="color:#c3e88d">"industry"</span>: <span style="color:#c3e88d">"Automotive"</span>,</div>
+        <div style="color:#94a3b8;padding-left:1rem"><span style="color:#c3e88d">"source_url"</span>: <span style="color:#c3e88d">"https://en.wikipedia.org/wiki/Tata_Motors"</span> }</div>
+        <div style="color:#22d3ee;margin-top:0.3rem;font-size:0.75rem">← Wikipedia REST API hit ✓  •  DuckDuckGo Infobox hit ✓</div>
+      </div>
+
+      <!-- Tool call 2 -->
+      <div style="background:var(--code-bg);border:1px solid #6366f140;border-left:3px solid #6366f1;border-radius:6px;padding:0.8rem 1rem;margin-bottom:0.5rem;font-family:monospace;font-size:0.8rem">
+        <div style="color:#818cf8;margin-bottom:0.3rem">[TOOL CALL] fetch_company_info</div>
+        <div style="color:#94a3b8">{ <span style="color:#c3e88d">"company_name"</span>: <span style="color:#c3e88d">"Infosys"</span> }</div>
+      </div>
+      <div style="background:var(--code-bg);border:1px solid #22c55e40;border-left:3px solid #22c55e;border-radius:6px;padding:0.8rem 1rem;font-family:monospace;font-size:0.8rem">
+        <div style="color:#4ade80;margin-bottom:0.3rem">[TOOL RESULT]</div>
+        <div style="color:#94a3b8">{ <span style="color:#c3e88d">"company"</span>: <span style="color:#c3e88d">"Infosys"</span>,</div>
+        <div style="color:#94a3b8;padding-left:1rem"><span style="color:#c3e88d">"description"</span>: <span style="color:#c3e88d">"Indian multinational technology company"</span>,</div>
+        <div style="color:#94a3b8;padding-left:1rem"><span style="color:#c3e88d">"founded"</span>: <span style="color:#c3e88d">"2 July 1981 in Pune, India"</span>,</div>
+        <div style="color:#94a3b8;padding-left:1rem"><span style="color:#c3e88d">"key_people"</span>: <span style="color:#c3e88d">"N. R. Narayana Murthy, Nandan Nilekani, Kris Gopalakrishnan..."</span>,</div>
+        <div style="color:#94a3b8;padding-left:1rem"><span style="color:#c3e88d">"industry"</span>: <span style="color:#c3e88d">"Information technology Consulting, Outsourcing"</span> }</div>
+        <div style="color:#22d3ee;margin-top:0.3rem;font-size:0.75rem">← Wikipedia REST API hit ✓  •  DuckDuckGo Infobox hit ✓</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Iteration 2 -->
+  <div class="tool-card" style="margin-bottom:1rem">
+    <div class="tool-header" style="background:linear-gradient(135deg,#14532d15,#1e2535);padding:0.8rem 1.2rem">
+      <div class="tool-num" style="background:#22c55e30;color:#22c55e;border:1.5px solid #22c55e;width:28px;height:28px;font-size:0.8rem">2</div>
+      <span style="font-weight:700;color:#4ade80">Iteration 2 / 15</span>
+      <span class="badge badge-green" style="margin-left:auto">2 tool calls — save both</span>
+    </div>
+    <div style="padding:1rem 1.2rem">
+      <p style="font-size:0.83rem;color:var(--muted);margin-bottom:0.75rem">Gemini enriches both companies with financial data from its own knowledge, then tries to save. Tata Motors succeeds. Infosys fails — it was already in the database from a previous run.</p>
+
+      <div style="background:var(--code-bg);border:1px solid #6366f140;border-left:3px solid #6366f1;border-radius:6px;padding:0.8rem 1rem;margin-bottom:0.5rem;font-family:monospace;font-size:0.8rem">
+        <div style="color:#818cf8;margin-bottom:0.3rem">[TOOL CALL] company_file_crud</div>
+        <div style="color:#94a3b8">{ <span style="color:#c3e88d">"operation"</span>: <span style="color:#c3e88d">"create"</span>,  <span style="color:#c3e88d">"company_name"</span>: <span style="color:#c3e88d">"Tata Motors"</span>,</div>
+        <div style="color:#94a3b8;padding-left:1rem"><span style="color:#c3e88d">"data"</span>: { <span style="color:#c3e88d">"ticker"</span>: <span style="color:#c3e88d">"TATAMOTORS.NS"</span>,  <span style="color:#c3e88d">"share_price"</span>: <span style="color:#c3e88d">"950 INR"</span>,</div>
+        <div style="color:#94a3b8;padding-left:3.5rem"><span style="color:#c3e88d">"cagr_5yr_pct"</span>: <span style="color:#f78c6c">25</span>,  <span style="color:#c3e88d">"market_cap"</span>: <span style="color:#c3e88d">"3.5T INR"</span>, <span style="color:#546e7a">...fetched fields...</span> } }</div>
+      </div>
+      <div style="background:var(--code-bg);border:1px solid #22c55e40;border-left:3px solid #22c55e;border-radius:6px;padding:0.8rem 1rem;margin-bottom:1rem;font-family:monospace;font-size:0.8rem">
+        <div style="color:#4ade80;margin-bottom:0.3rem">[TOOL RESULT]</div>
+        <div style="color:#4ade80">{ <span style="color:#c3e88d">"status"</span>: <span style="color:#c3e88d">"success"</span>,  <span style="color:#c3e88d">"message"</span>: <span style="color:#c3e88d">"Created 'Tata Motors'"</span> }</div>
+        <div style="color:#22d3ee;margin-top:0.3rem;font-size:0.75rem">← Atomic write: companies.tmp → companies.json  •  append_log("create", "Tata Motors") ✓</div>
+      </div>
+
+      <div style="background:var(--code-bg);border:1px solid #6366f140;border-left:3px solid #6366f1;border-radius:6px;padding:0.8rem 1rem;margin-bottom:0.5rem;font-family:monospace;font-size:0.8rem">
+        <div style="color:#818cf8;margin-bottom:0.3rem">[TOOL CALL] company_file_crud</div>
+        <div style="color:#94a3b8">{ <span style="color:#c3e88d">"operation"</span>: <span style="color:#c3e88d">"create"</span>,  <span style="color:#c3e88d">"company_name"</span>: <span style="color:#c3e88d">"Infosys"</span>, <span style="color:#546e7a">...data...</span> }</div>
+      </div>
+      <div style="background:var(--code-bg);border:1px solid #ef444440;border-left:3px solid #ef4444;border-radius:6px;padding:0.8rem 1rem;font-family:monospace;font-size:0.8rem">
+        <div style="color:#f87171;margin-bottom:0.3rem">[TOOL RESULT] — create failed</div>
+        <div style="color:#f87171">{ <span style="color:#c3e88d">"status"</span>: <span style="color:#c3e88d">"error"</span>,</div>
+        <div style="color:#f87171;padding-left:1rem"><span style="color:#c3e88d">"message"</span>: <span style="color:#c3e88d">"Company 'Infosys' already exists. Use 'update' to modify."</span> }</div>
+        <div style="color:#f59e0b;margin-top:0.3rem;font-size:0.75rem">⚠ The system prompt tells Gemini: "if create fails, immediately retry with update"</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Iteration 3 -->
+  <div class="tool-card" style="margin-bottom:1rem">
+    <div class="tool-header" style="background:linear-gradient(135deg,#78350f15,#1e2535);padding:0.8rem 1.2rem">
+      <div class="tool-num" style="background:#f59e0b30;color:#f59e0b;border:1.5px solid #f59e0b;width:28px;height:28px;font-size:0.8rem">3</div>
+      <span style="font-weight:700;color:#fcd34d">Iteration 3 / 15</span>
+      <span class="badge badge-orange" style="margin-left:auto">self-correction — retry as update</span>
+    </div>
+    <div style="padding:1rem 1.2rem">
+      <p style="font-size:0.83rem;color:var(--muted);margin-bottom:0.75rem">No human intervention. Gemini read the error message, understood it must use "update", and immediately retried with the correct operation.</p>
+
+      <div style="background:var(--code-bg);border:1px solid #6366f140;border-left:3px solid #6366f1;border-radius:6px;padding:0.8rem 1rem;margin-bottom:0.5rem;font-family:monospace;font-size:0.8rem">
+        <div style="color:#818cf8;margin-bottom:0.3rem">[TOOL CALL] company_file_crud</div>
+        <div style="color:#94a3b8">{ <span style="color:#c3e88d">"operation"</span>: <span style="color:#fcd34d">"update"</span>,  <span style="color:#c3e88d">"company_name"</span>: <span style="color:#c3e88d">"Infosys"</span>,</div>
+        <div style="color:#94a3b8;padding-left:1rem"><span style="color:#c3e88d">"data"</span>: { <span style="color:#c3e88d">"ticker"</span>: <span style="color:#c3e88d">"INFY.NS"</span>,  <span style="color:#c3e88d">"share_price"</span>: <span style="color:#c3e88d">"1500 INR"</span>,</div>
+        <div style="color:#94a3b8;padding-left:3.5rem"><span style="color:#c3e88d">"cagr_5yr_pct"</span>: <span style="color:#f78c6c">12</span>,  <span style="color:#c3e88d">"market_cap"</span>: <span style="color:#c3e88d">"6.5T INR"</span>, <span style="color:#546e7a">...all fields...</span> } }</div>
+      </div>
+      <div style="background:var(--code-bg);border:1px solid #22c55e40;border-left:3px solid #22c55e;border-radius:6px;padding:0.8rem 1rem;font-family:monospace;font-size:0.8rem">
+        <div style="color:#4ade80;margin-bottom:0.3rem">[TOOL RESULT]</div>
+        <div style="color:#4ade80">{ <span style="color:#c3e88d">"status"</span>: <span style="color:#c3e88d">"success"</span>,  <span style="color:#c3e88d">"message"</span>: <span style="color:#c3e88d">"Updated 'Infosys'"</span> }</div>
+        <div style="color:#22d3ee;margin-top:0.3rem;font-size:0.75rem">← .update() merges new fields  •  updated_at timestamp added  •  append_log("update", "Infosys") ✓</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Iteration 4 -->
+  <div class="tool-card" style="margin-bottom:1rem">
+    <div class="tool-header" style="background:linear-gradient(135deg,#0e707515,#1e2535);padding:0.8rem 1.2rem">
+      <div class="tool-num" style="background:#06b6d430;color:#06b6d4;border:1.5px solid #06b6d4;width:28px;height:28px;font-size:0.8rem">4</div>
+      <span style="font-weight:700;color:#22d3ee">Iteration 4 / 15</span>
+      <span class="badge badge-cyan" style="margin-left:auto">launch dashboard</span>
+    </div>
+    <div style="padding:1rem 1.2rem">
+      <p style="font-size:0.83rem;color:var(--muted);margin-bottom:0.75rem">Both companies are saved. Gemini calls show_on_dashboard once. The tool generates <code>generated_app.py</code>, validates it with py_compile, kills the old prefab process, and starts a fresh one.</p>
+
+      <div style="background:var(--code-bg);border:1px solid #6366f140;border-left:3px solid #6366f1;border-radius:6px;padding:0.8rem 1rem;margin-bottom:0.5rem;font-family:monospace;font-size:0.8rem">
+        <div style="color:#818cf8;margin-bottom:0.3rem">[TOOL CALL] show_on_dashboard</div>
+        <div style="color:#94a3b8">{ <span style="color:#c3e88d">"mode"</span>: <span style="color:#c3e88d">"comparison"</span>,</div>
+        <div style="color:#94a3b8;padding-left:1rem"><span style="color:#c3e88d">"companies_data"</span>: [</div>
+        <div style="color:#94a3b8;padding-left:2rem">{ <span style="color:#c3e88d">"company"</span>: <span style="color:#c3e88d">"Tata Motors"</span>, <span style="color:#c3e88d">"ticker"</span>: <span style="color:#c3e88d">"TATAMOTORS.NS"</span>, <span style="color:#546e7a">...</span> },</div>
+        <div style="color:#94a3b8;padding-left:2rem">{ <span style="color:#c3e88d">"company"</span>: <span style="color:#c3e88d">"Infosys"</span>, <span style="color:#c3e88d">"ticker"</span>: <span style="color:#c3e88d">"INFY.NS"</span>, <span style="color:#546e7a">...</span> }</div>
+        <div style="color:#94a3b8;padding-left:1rem">] }</div>
+      </div>
+      <div style="background:var(--code-bg);border:1px solid #22c55e40;border-left:3px solid #22c55e;border-radius:6px;padding:0.8rem 1rem;font-family:monospace;font-size:0.8rem">
+        <div style="color:#4ade80;margin-bottom:0.3rem">[TOOL RESULT]</div>
+        <div style="color:#4ade80">{ <span style="color:#c3e88d">"status"</span>: <span style="color:#c3e88d">"success"</span>,</div>
+        <div style="color:#4ade80;padding-left:1rem"><span style="color:#c3e88d">"message"</span>: <span style="color:#c3e88d">"Dashboard live with 4 companies in comparison mode."</span>,</div>
+        <div style="color:#4ade80;padding-left:1rem"><span style="color:#c3e88d">"url"</span>: <span style="color:#c3e88d">"http://127.0.0.1:5175"</span> }</div>
+        <div style="color:#22d3ee;margin-top:0.3rem;font-size:0.75rem">← generated_app.py written (validated)  •  prefab serve started (new PID)  •  append_log("dashboard") ✓</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Iteration 5 -->
+  <div class="tool-card" style="margin-bottom:1.5rem">
+    <div class="tool-header" style="background:linear-gradient(135deg,#1a1f38,#1e2535);padding:0.8rem 1.2rem">
+      <div class="tool-num" style="background:#22c55e30;color:#22c55e;border:1.5px solid #22c55e;width:28px;height:28px;font-size:0.8rem">5</div>
+      <span style="font-weight:700;color:#4ade80">Iteration 5 / 15 — Done</span>
+      <span class="badge badge-green" style="margin-left:auto">no tool calls → loop exits</span>
+    </div>
+    <div style="padding:1rem 1.2rem">
+      <p style="font-size:0.83rem;color:var(--muted);margin-bottom:0.75rem">Gemini sees all tool calls succeeded. It returns plain text (no function calls). The ReAct loop detects this and exits.</p>
+      <div style="background:var(--code-bg);border:1px solid #22c55e60;border-radius:6px;padding:1rem 1.2rem;font-family:monospace;font-size:0.82rem;line-height:1.7">
+        <div style="color:#22d3ee">[GEMINI] I have successfully fetched, enriched, and saved the data for</div>
+        <div style="color:#22d3ee"><strong>Tata Motors</strong> and <strong>Infosys</strong>.</div>
+        <br>
+        <div style="color:#94a3b8">• <strong style="color:#fcd34d">Tata Motors</strong> — ticker <span style="color:#c3e88d">TATAMOTORS.NS</span>, share price <span style="color:#c3e88d">950 INR</span>,</div>
+        <div style="color:#94a3b8;padding-left:1.2rem">5yr CAGR <span style="color:#4ade80">25%</span>, market cap <span style="color:#c3e88d">3.5T INR</span></div>
+        <div style="color:#94a3b8">• <strong style="color:#fcd34d">Infosys</strong> &nbsp;&nbsp;&nbsp;&nbsp; — ticker <span style="color:#c3e88d">INFY.NS</span>, share price <span style="color:#c3e88d">1500 INR</span>,</div>
+        <div style="color:#94a3b8;padding-left:1.2rem">5yr CAGR <span style="color:#4ade80">12%</span>, market cap <span style="color:#c3e88d">6.5T INR</span></div>
+        <br>
+        <div style="color:#22d3ee">The comparison dashboard is now live at <span style="color:#818cf8">http://127.0.0.1:5175</span></div>
+        <br>
+        <div style="color:#4ade80">[AGENT] No more tool calls — task complete.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Summary stats -->
+  <div class="card-grid">
+    <div class="card" style="text-align:center">
+      <div style="font-size:2rem;font-weight:800;color:#818cf8">5</div>
+      <div style="color:var(--muted);font-size:0.85rem">Total Iterations</div>
+    </div>
+    <div class="card" style="text-align:center">
+      <div style="font-size:2rem;font-weight:800;color:#22c55e">6</div>
+      <div style="color:var(--muted);font-size:0.85rem">Tool Calls Made</div>
+    </div>
+    <div class="card" style="text-align:center">
+      <div style="font-size:2rem;font-weight:800;color:#f59e0b">1</div>
+      <div style="color:var(--muted);font-size:0.85rem">Auto Self-Correction</div>
+      <div style="color:var(--muted);font-size:0.75rem">(create → update)</div>
+    </div>
+    <div class="card" style="text-align:center">
+      <div style="font-size:2rem;font-weight:800;color:#06b6d4">0</div>
+      <div style="color:var(--muted);font-size:0.85rem">Human Interventions</div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════ -->
+<!-- 8. DATA FLOW                                       -->
+<!-- ═══════════════════════════════════════════════════ -->
+<section id="dataflow">
+  <div class="section-label">End-to-End</div>
+  <h2>Complete Data Flow — One Company, Start to Finish</h2>
+
+  <div class="flow" style="padding:1.5rem">
+    <div class="data-flow">
+      <div class="data-flow-step">1. <strong>User types:</strong> <code>"Fetch info about Infosys and show the dashboard"</code></div>
+      <div class="data-flow-step">2. <strong>agent.py</strong> sends this + SYSTEM_PROMPT to Gemini 2.0 Flash</div>
+      <div class="data-flow-step">3. <strong>Gemini responds</strong> with a function call: <code>fetch_company_info("Infosys")</code></div>
+      <div class="data-flow-step">4. <strong>agent.py</strong> sends this call to the MCP server via FastMCP Client (SSE, port 8000)</div>
+      <div class="data-flow-step">5. <strong>mcp_server.py</strong> → <code>fetch_company_info</code> runs: hits Wikipedia API → gets description + summary. Hits DuckDuckGo API → gets industry + key people. Runs regex for founded year. Calls <code>append_log("fetch", "Infosys", "fetch_company_info")</code>. Returns dict with 9 fields.</div>
+      <div class="data-flow-step">6. <strong>agent.py</strong> receives result, appends it to conversation history, sends back to Gemini</div>
+      <div class="data-flow-step">7. <strong>Gemini responds</strong> with another function call: <code>company_file_crud(operation="create", company_name="Infosys", data={...enriched dict...})</code></div>
+      <div class="data-flow-step">8. <strong>mcp_server.py</strong> → <code>company_file_crud</code> runs: checks company doesn't already exist. Writes to <code>companies.tmp</code>, renames to <code>companies.json</code>. Calls <code>append_log("create", "Infosys", "company_file_crud")</code>. Returns success.</div>
+      <div class="data-flow-step">9. <strong>Gemini responds</strong> with: <code>show_on_dashboard(mode="comparison")</code></div>
+      <div class="data-flow-step">10. <strong>mcp_server.py</strong> → <code>show_on_dashboard</code> runs: reads companies.json, reads agent_log.json, calls <code>_generate_prefab_code()</code>, validates with <code>py_compile</code>, writes <code>generated_app.py</code>, kills old prefab process, starts new <code>prefab serve generated_app.py --port 5175</code>, saves PID. Returns success + URL.</div>
+      <div class="data-flow-step">11. <strong>Gemini sees</strong> success — returns final text: "Done! Dashboard is live at http://127.0.0.1:5175"</div>
+      <div class="data-flow-step">12. <strong>agent.py</strong> detects no more function calls — prints final summary and exits.</div>
+      <div class="data-flow-step">13. <strong>Browser</strong> → <code>http://127.0.0.1:5175</code> → Prefab serves the dashboard. User sees all 5 tabs with Infosys data, charts, and the log showing all 3 operations.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════ -->
+<!-- 8. FILE STRUCTURE                                  -->
+<!-- ═══════════════════════════════════════════════════ -->
+<section id="files">
+  <div class="section-label">Project Structure</div>
+  <h2>Every File — What It Is and Why It Exists</h2>
+
+  <div class="file-tree">
+    <span class="dir">assignment4/</span><br>
+    &nbsp;&nbsp;├── <span class="file">mcp_server.py</span> &nbsp;&nbsp;<span class="note">← MCP server · 3 tools · SSE on port 8000</span><br>
+    &nbsp;&nbsp;├── <span class="file">agent.py</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="note">← Gemini ReAct agent · connects to MCP</span><br>
+    &nbsp;&nbsp;├── <span class="file">requirements.txt</span> &nbsp;<span class="note">← pip dependencies (no telegram)</span><br>
+    &nbsp;&nbsp;├── <span class="file">README.md</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="note">← setup + run instructions</span><br>
+    &nbsp;&nbsp;├── <span class="file">explainer.html</span> &nbsp;&nbsp;<span class="note">← this file</span><br>
+    &nbsp;&nbsp;├── <span class="file">VOICEOVER_SCRIPT.md</span> <span class="note">← AI voiceover script</span><br>
+    &nbsp;&nbsp;├── <span class="file">.env</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="note">← API keys (gitignored)</span><br>
+    &nbsp;&nbsp;├── <span class="file">.gitignore</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="note">← excludes .env, data/, generated_app.py</span><br>
+    &nbsp;&nbsp;├── <span class="file">generated_app.py</span> &nbsp;<span class="note">← auto-written by Tool 3 · gitignored</span><br>
+    &nbsp;&nbsp;├── <span class="file">prefab.pid</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="note">← PID of running prefab process · gitignored</span><br>
+    &nbsp;&nbsp;├── <span class="file">prefab_server.log</span> <span class="note">← prefab serve stdout/stderr · gitignored</span><br>
+    &nbsp;&nbsp;├── <span class="dir">.venv/</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="note">← Python virtual environment · gitignored</span><br>
+    &nbsp;&nbsp;└── <span class="dir">data/</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="note">← gitignored (runtime data)</span><br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;├── <span class="file">companies.json</span> &nbsp;<span class="note">← the company database</span><br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└── <span class="file">agent_log.json</span> &nbsp;<span class="note">← every tool operation logged</span>
+  </div>
+
+  <h3>Why are generated_app.py and data/ gitignored?</h3>
+  <div class="card-grid">
+    <div class="card">
+      <h3 style="font-size:1rem;color:#f472b6">generated_app.py</h3>
+      <p>Created fresh every time <code>show_on_dashboard</code> is called. It embeds a snapshot of the current data as base64. Committing it would mean committing a binary blob that changes on every agent run — useless noise in git history. Anyone who clones the repo gets it regenerated on first use.</p>
+    </div>
+    <div class="card">
+      <h3 style="font-size:1rem;color:#f472b6">data/companies.json + agent_log.json</h3>
+      <p>Runtime state — they grow and change every time the agent runs. Not source code. Each developer/user has their own company database. These files are created automatically by <code>ensure_data_files()</code> on first server startup.</p>
+    </div>
+    <div class="card">
+      <h3 style="font-size:1rem;color:#f472b6">.env</h3>
+      <p>Contains your <code>GEMINI_API_KEY</code>. If this were committed, your API key would be public in git history forever — even if you deleted it later. Always gitignored, always.</p>
+    </div>
+  </div>
+
+  <h3>Key Python dependencies</h3>
+  <table>
+    <tr><th>Package</th><th>What it does in this project</th></tr>
+    <tr><td><code>fastmcp</code></td><td>Provides <code>FastMCP</code> server and <code>Client</code>. Handles SSE transport, tool registration, and schema generation automatically.</td></tr>
+    <tr><td><code>google-genai</code></td><td>Official Google Gemini SDK. Used in agent.py to call <code>generate_content</code> with function declarations.</td></tr>
+    <tr><td><code>prefab-ui</code></td><td>Python dashboard framework. Provides components like <code>BarChart</code>, <code>Card</code>, <code>Badge</code>, <code>Progress</code>, <code>PieChart</code>. Serves the dashboard via <code>prefab serve</code>.</td></tr>
+    <tr><td><code>requests</code></td><td>HTTP client used in Tool 1 to call Wikipedia and DuckDuckGo APIs.</td></tr>
+    <tr><td><code>python-dotenv</code></td><td>Loads <code>GEMINI_API_KEY</code> from <code>.env</code> into <code>os.environ</code>.</td></tr>
+    <tr><td><code>beautifulsoup4</code></td><td>HTML parser (available for enhanced scraping if needed).</td></tr>
+    <tr><td><code>yfinance</code></td><td>Yahoo Finance Python library (available for real-time stock data).</td></tr>
+  </table>
+</section>
+
+<!-- ═══════════════════════════════════════════════════ -->
+<!-- FOOTER                                             -->
+<!-- ═══════════════════════════════════════════════════ -->
+<section>
+  <div class="card" style="text-align:center;background:linear-gradient(135deg,#1a1f38,#1e2535)">
+    <h2 style="font-size:1.5rem;margin-bottom:0.5rem">EAGv3 Session 4 — Company Intelligence Agent</h2>
+    <p>Built with MCP · Gemini 2.0 Flash · FastMCP · Prefab UI</p>
+    <div style="margin-top:1rem">
+      <span class="badge badge-purple">MCP Protocol</span>&nbsp;
+      <span class="badge badge-cyan">ReAct Loop</span>&nbsp;
+      <span class="badge badge-green">Atomic Writes</span>&nbsp;
+      <span class="badge badge-orange">Auto-Retry</span>&nbsp;
+      <span class="badge badge-pink">Code Generation</span>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<script>
+  // Smooth scroll for nav links
+  document.querySelectorAll('a[href^="#"]').forEach(a => {
+    a.addEventListener('click', e => {
+      e.preventDefault();
+      document.querySelector(a.getAttribute('href'))?.scrollIntoView({ behavior: 'smooth' });
+    });
+  });
+</script>
+</body>
+</html>
