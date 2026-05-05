@@ -8,8 +8,7 @@ and displays it on a live Prefab UI dashboard — all orchestrated via the
 
 ## Demo Video
 
-> **YouTube:** _(link coming soon — will be updated)_
-
+> **YouTube:** https://youtu.be/-xULn8eRI9I
 ---
 
 ## Architecture
