@@ -1,0 +1,9 @@
+fastmcp
+prefab-ui
+google-genai
+python-dotenv
+requests
+httpx
+beautifulsoup4
+uvicorn
+yfinance

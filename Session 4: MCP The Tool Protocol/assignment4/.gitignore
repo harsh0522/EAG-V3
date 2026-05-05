@@ -1,0 +1,30 @@
+# Secrets — never commit
+.env
+
+# Python runtime
+__pycache__/
+*.py[cod]
+*.pyo
+.Python
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Auto-generated at runtime by the agent
+generated_app.py
+prefab_server.log
+prefab.pid
+
+# Runtime data (populated by the agent; exclude from source control)
+data/companies.json
+data/agent_log.json
+
+# macOS
+.DS_Store
+
+# IDE
+.idea/
+.vscode/
+*.swp
