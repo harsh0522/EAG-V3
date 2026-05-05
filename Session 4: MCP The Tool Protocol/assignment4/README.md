@@ -11,6 +11,11 @@ and displays it on a live Prefab UI dashboard — all orchestrated via the
 > **YouTube:** https://youtu.be/-xULn8eRI9I
 ---
 
+## Twitter
+
+> **Twitter:** https://x.com/agarwalharsh051/status/2051587887028977672?s=20
+---
+
 ## Architecture
 
 ```
