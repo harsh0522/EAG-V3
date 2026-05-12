@@ -9,17 +9,14 @@
 <!-- ── YouTube ── -->
 **Video Walkthrough**
 
-[![Watch on YouTube](https://img.shields.io/badge/YouTube-Watch%20Demo-red?style=for-the-badge&logo=youtube)](YOUR_YOUTUBE_URL_HERE)
+[![Watch on YouTube](https://img.shields.io/badge/YouTube-Watch%20Demo-red?style=for-the-badge&logo=youtube)](https://youtu.be/OA2_KHBHXtc)
 
-<!-- Replace YOUR_YOUTUBE_URL_HERE with your video link. To embed the thumbnail, use:
-[![Demo](https://img.youtube.com/vi/YOUR_VIDEO_ID/maxresdefault.jpg)](https://youtu.be/YOUR_VIDEO_ID) -->
+[![Demo](https://img.youtube.com/vi/OA2_KHBHXtc/maxresdefault.jpg)](https://youtu.be/OA2_KHBHXtc)
 
 <!-- ── Twitter ── -->
 **Follow updates on Twitter / X**
 
-[![Twitter](https://img.shields.io/badge/Twitter-Follow-1DA1F2?style=for-the-badge&logo=twitter)](YOUR_TWITTER_URL_HERE)
-
-<!-- Replace YOUR_TWITTER_URL_HERE with your profile or post link, e.g. https://twitter.com/yourhandle -->
+[![Twitter](https://img.shields.io/badge/Twitter-Follow-1DA1F2?style=for-the-badge&logo=twitter)](https://x.com/agarwalharsh051/status/2054282217313140973?s=20)
 
 ---
 
