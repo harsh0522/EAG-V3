@@ -23,6 +23,50 @@
 
 ---
 
+## Screenshots
+
+### LLM Gateway V2 — Live Dashboard
+> All 4 LLM steps route through the local gateway. Swap the model in one line without touching any agent code.
+
+![LLM Gateway V2 Dashboard](../LLM%20gatewayv2.png)
+
+---
+
+### Step 1 & 2 — Builder builds the prompt, Evaluator scores it (most criteria fail initially)
+> The Builder Agent converts your rough idea into a structured prompt. The Evaluator then scores it on 8 criteria — intentionally strict so the Improver has real work to do.
+
+![Step 1 and 2 - Builder and Evaluator](../1.png)
+
+---
+
+### Step 3 — Improver rewrites the prompt to fix every failing criterion
+> The Improver Agent receives the original prompt + the failing scores. It identifies all 8 weaknesses and rewrites the prompt so every criterion becomes true.
+
+![Step 3 - Improver Agent](../2.png)
+
+---
+
+### Step 4 — Re-Evaluator confirms all 8 pass + Before/After comparison
+> The same Evaluator runs again on the improved prompt. All 8 criteria now pass. The Before/After table shows exactly what changed. Self-check confirms: "All 8 criteria passed." Confidence: 100%.
+
+![Step 4 - Re-Evaluator and Before After](../3.png)
+
+---
+
+### Tech Stack & Run Summary
+> Every tool used in the project and what it does. Run summary shows 4 steps completed, 0 retries, 100% confidence.
+
+![Tech Stack and Run Summary](../4.png)
+
+---
+
+### Final JSON Output
+> The complete machine-readable output — original idea, both prompt versions, both scorecards, weaknesses found, self-check, and confidence score.
+
+![Final JSON Output](../5.png)
+
+---
+
 ## Latest Run Log
 
 > Full interactive HTML report — shows every LLM step, Pydantic validation cards, Before/After scorecards, and a YouTube-style walkthrough.
