@@ -23,6 +23,29 @@
 
 ---
 
+## Latest Run Log
+
+> Full interactive HTML report — shows every LLM step, Pydantic validation cards, Before/After scorecards, and a YouTube-style walkthrough.
+
+**[Open latest.html](logs/latest.html)**
+
+To view it:
+- **Locally:** open `logs/latest.html` in any browser
+- **On GitHub:** click the link above → click **Raw** → save and open, or use [htmlpreview.github.io](https://htmlpreview.github.io/) and paste the raw URL
+
+What the log contains:
+| Section | What you see |
+|---|---|
+| YouTube Explainer | 9-block plain-English walkthrough of the entire run |
+| Run Summary | Idea, total time, confidence score, pass/fail count |
+| Generated vs Improved Prompt | Side-by-side before/after with weaknesses list |
+| Before / After Scorecard | 8-criteria badge grid for both evaluation rounds |
+| Step-by-Step LLM Calls | Each step's system prompt, user message, raw response, parsed output |
+| Pydantic Validation Cards | What went IN → type conversions/defaults applied → what came OUT |
+| Final JSON | Full machine-readable output of the entire pipeline |
+
+---
+
 ## What it does
 
 You type a rough project idea into the terminal. The app runs it through a **4-step LLM pipeline**:
