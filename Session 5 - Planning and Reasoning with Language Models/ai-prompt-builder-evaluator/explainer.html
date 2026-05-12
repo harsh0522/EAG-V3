@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Prompt Builder Evaluator — Explained</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: #0f1117;
+      color: #e2e8f0;
+      line-height: 1.7;
+    }
+
+    /* ── Hero ── */
+    .hero {
+      background: linear-gradient(135deg, #1a1f35 0%, #0f1117 60%, #1a1030 100%);
+      border-bottom: 1px solid #2d3748;
+      padding: 60px 40px 50px;
+      text-align: center;
+    }
+    .hero h1 {
+      font-size: 2.6rem;
+      font-weight: 800;
+      background: linear-gradient(90deg, #7c3aed, #06b6d4, #7c3aed);
+      background-size: 200%;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      animation: shimmer 3s linear infinite;
+    }
+    @keyframes shimmer { 0%{background-position:0%} 100%{background-position:200%} }
+    .hero p {
+      margin-top: 14px;
+      font-size: 1.1rem;
+      color: #94a3b8;
+      max-width: 650px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    .badge {
+      display: inline-block;
+      margin-top: 20px;
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 999px;
+      padding: 6px 18px;
+      font-size: 0.82rem;
+      color: #7c3aed;
+      letter-spacing: 0.05em;
+      font-weight: 600;
+    }
+
+    /* ── Layout ── */
+    .container { max-width: 960px; margin: 0 auto; padding: 50px 24px 80px; }
+
+    /* ── Section headings ── */
+    .section-title {
+      font-size: 1.55rem;
+      font-weight: 700;
+      color: #e2e8f0;
+      margin: 56px 0 20px;
+      padding-bottom: 10px;
+      border-bottom: 2px solid #1e293b;
+    }
+    .section-title span { color: #7c3aed; }
+
+    /* ── Cards ── */
+    .card {
+      background: #1e293b;
+      border: 1px solid #2d3748;
+      border-radius: 14px;
+      padding: 24px 28px;
+      margin-bottom: 16px;
+      transition: border-color 0.2s;
+    }
+    .card:hover { border-color: #7c3aed55; }
+    .card h3 { font-size: 1.05rem; font-weight: 700; color: #c4b5fd; margin-bottom: 8px; }
+    .card p { color: #94a3b8; font-size: 0.95rem; }
+
+    /* ── File grid ── */
+    .file-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    @media(max-width:600px){ .file-grid { grid-template-columns: 1fr; } }
+    .file-card {
+      background: #1e293b;
+      border: 1px solid #2d3748;
+      border-radius: 12px;
+      padding: 18px 20px;
+      transition: border-color 0.2s, transform 0.15s;
+    }
+    .file-card:hover { border-color: #06b6d455; transform: translateY(-2px); }
+    .file-name {
+      font-family: 'Courier New', monospace;
+      font-size: 0.92rem;
+      color: #06b6d4;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+    .file-card p { color: #94a3b8; font-size: 0.88rem; }
+
+    /* ── Flow pipeline ── */
+    .pipeline {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      position: relative;
+    }
+    .pipeline::before {
+      content: '';
+      position: absolute;
+      left: 34px;
+      top: 48px;
+      bottom: 48px;
+      width: 2px;
+      background: linear-gradient(to bottom, #7c3aed, #06b6d4);
+    }
+    .step {
+      display: flex;
+      align-items: flex-start;
+      gap: 20px;
+      background: #1e293b;
+      border: 1px solid #2d3748;
+      border-radius: 14px;
+      padding: 20px 22px;
+      margin-bottom: 14px;
+      position: relative;
+    }
+    .step-num {
+      flex-shrink: 0;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 0.9rem;
+      z-index: 1;
+    }
+    .s1 { background: #7c3aed22; border: 2px solid #7c3aed; color: #c4b5fd; }
+    .s2 { background: #0891b222; border: 2px solid #0891b2; color: #67e8f9; }
+    .s3 { background: #059669;   border: 2px solid #059669; color: #fff; background: #05966922; }
+    .s4 { background: #d9770622; border: 2px solid #d97706; color: #fbbf24; }
+
+    .step-body h4 { font-size: 1rem; font-weight: 700; color: #e2e8f0; margin-bottom: 4px; }
+    .step-body .agent { font-size: 0.78rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #64748b; margin-bottom: 8px; }
+    .step-body p { color: #94a3b8; font-size: 0.9rem; }
+    .step-body .io {
+      margin-top: 10px;
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .tag {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 999px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+    .tag-in  { background: #1e3a5f; color: #7dd3fc; border: 1px solid #1e4a7f; }
+    .tag-out { background: #14532d; color: #86efac; border: 1px solid #166534; }
+
+    /* ── Model tables ── */
+    .model-block {
+      background: #1e293b;
+      border: 1px solid #2d3748;
+      border-radius: 14px;
+      padding: 22px 26px;
+      margin-bottom: 16px;
+    }
+    .model-block h3 {
+      font-family: 'Courier New', monospace;
+      color: #c4b5fd;
+      font-size: 1rem;
+      font-weight: 700;
+      margin-bottom: 14px;
+    }
+    .field-list { list-style: none; }
+    .field-list li {
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+      padding: 6px 0;
+      border-bottom: 1px solid #2d3748;
+      font-size: 0.88rem;
+    }
+    .field-list li:last-child { border-bottom: none; }
+    .field-name { font-family: 'Courier New', monospace; color: #38bdf8; min-width: 200px; }
+    .field-type { color: #fb923c; }
+    .field-desc { color: #64748b; font-style: italic; }
+
+    /* ── Code blocks ── */
+    pre {
+      background: #0f172a;
+      border: 1px solid #1e293b;
+      border-radius: 10px;
+      padding: 20px;
+      overflow-x: auto;
+      font-family: 'Courier New', monospace;
+      font-size: 0.85rem;
+      color: #e2e8f0;
+      margin-top: 10px;
+    }
+    code { color: #7dd3fc; }
+
+    /* ── How to run ── */
+    .run-steps { counter-reset: run; }
+    .run-step {
+      display: flex;
+      gap: 16px;
+      align-items: flex-start;
+      margin-bottom: 14px;
+    }
+    .run-step::before {
+      counter-increment: run;
+      content: counter(run);
+      flex-shrink: 0;
+      width: 30px; height: 30px;
+      border-radius: 50%;
+      background: #7c3aed;
+      color: #fff;
+      font-size: 0.85rem;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .run-step p { color: #cbd5e1; font-size: 0.92rem; padding-top: 4px; }
+    .run-step code { background: #0f172a; padding: 2px 8px; border-radius: 5px; font-size: 0.85rem; color: #67e8f9; }
+
+    /* ── Info callout ── */
+    .callout {
+      background: #1e293b;
+      border-left: 4px solid #7c3aed;
+      border-radius: 0 10px 10px 0;
+      padding: 16px 20px;
+      margin: 20px 0;
+      font-size: 0.92rem;
+      color: #94a3b8;
+    }
+    .callout strong { color: #c4b5fd; }
+
+    /* ── Data flow diagram ── */
+    .flow-diagram {
+      background: #0f172a;
+      border: 1px solid #2d3748;
+      border-radius: 14px;
+      padding: 30px 20px;
+      text-align: center;
+      overflow-x: auto;
+    }
+    .flow-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 6px;
+    }
+    .flow-box {
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 8px;
+      padding: 8px 14px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+    .flow-box.user   { border-color: #7c3aed; color: #c4b5fd; }
+    .flow-box.llm    { border-color: #0891b2; color: #67e8f9; }
+    .flow-box.out    { border-color: #059669; color: #86efac; }
+    .flow-arrow { color: #475569; font-size: 1.1rem; font-weight: 700; }
+
+    footer {
+      text-align: center;
+      padding: 30px;
+      color: #334155;
+      font-size: 0.8rem;
+      border-top: 1px solid #1e293b;
+    }
+  </style>
+</head>
+<body>
+
+<!-- ══════════════════════════════ HERO ══════════════════════════════ -->
+<div class="hero">
+  <div class="badge">Session 5 · Planning and Reasoning with Language Models</div>
+  <h1>AI Prompt Builder & Evaluator</h1>
+  <p>
+    You type a rough project idea. The app runs it through <strong>4 chained LLM agents</strong>,
+    builds a high-quality prompt, scores it on 8 criteria, improves it, and returns a final
+    evaluated result — all as structured JSON.
+  </p>
+</div>
+
+<div class="container">
+
+  <!-- ══════════ BIG PICTURE ══════════ -->
+  <div class="section-title"><span>#1</span> What does this project do?</div>
+
+  <div class="card">
+    <h3>The Core Idea</h3>
+    <p>
+      Most people give AI a vague, poorly-structured prompt. This tool takes your rough idea and
+      automatically transforms it into a <em>production-quality</em> LLM prompt using a pipeline
+      of 4 specialised AI agents — a Builder, an Evaluator, an Improver, and a Re-Evaluator.
+      Each agent's output is the next agent's input. The final result is a fully validated,
+      scored JSON document.
+    </p>
+  </div>
+
+  <div class="flow-diagram">
+    <div class="flow-row">
+      <div class="flow-box user">You type a rough idea</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-box llm">Step 1: Prompt Builder</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-box llm">Step 2: Prompt Evaluator</div>
+    </div>
+    <div class="flow-row" style="margin-top:10px;">
+      <div class="flow-box out">Final JSON Output</div>
+      <div class="flow-arrow">←</div>
+      <div class="flow-box llm">Step 4: Re-Evaluator</div>
+      <div class="flow-arrow">←</div>
+      <div class="flow-box llm">Step 3: Prompt Improver</div>
+    </div>
+  </div>
+
+  <!-- ══════════ FILES ══════════ -->
+  <div class="section-title"><span>#2</span> File Structure</div>
+
+  <div class="file-grid">
+    <div class="file-card">
+      <div class="file-name">main.py</div>
+      <p>Entry point. Reads your idea from the terminal, loads the <code>.env</code> file, calls the evaluator, and prints the final JSON.</p>
+    </div>
+    <div class="file-card">
+      <div class="file-name">gateway_client.py</div>
+      <p>The <em>only</em> place that talks to the LLM. Sends HTTP POST requests to the local LLM Gateway at <code>localhost:8100</code>. No SDK, no LangChain.</p>
+    </div>
+    <div class="file-card">
+      <div class="file-name">models.py</div>
+      <p>Pydantic data models. Every piece of data entering or leaving the pipeline is validated here — wrong types fail fast.</p>
+    </div>
+    <div class="file-card">
+      <div class="file-name">prompts.py</div>
+      <p>All system prompt strings live here. Separating prompts from logic makes them easy to tune without touching business logic.</p>
+    </div>
+    <div class="file-card">
+      <div class="file-name">evaluator.py</div>
+      <p>The brain. Orchestrates the 4-step LLM pipeline, handles JSON parse failures with one retry, and assembles the final output.</p>
+    </div>
+    <div class="file-card">
+      <div class="file-name">.env</div>
+      <p>Holds your API key, model name (<code>gemini-preview-lite-3</code>), provider, and gateway URL. Loaded at startup.</p>
+    </div>
+    <div class="file-card">
+      <div class="file-name">pyproject.toml</div>
+      <p>Package config for <code>uv</code>. Declares two dependencies: <code>pydantic</code> and <code>httpx</code>.</p>
+    </div>
+    <div class="file-card">
+      <div class="file-name">tests/sample_inputs.json</div>
+      <p>Two ready-made project ideas you can paste in to test the pipeline without having to think of something.</p>
+    </div>
+  </div>
+
+  <!-- ══════════ 4 STEPS ══════════ -->
+  <div class="section-title"><span>#3</span> The 4 LLM Steps (inside evaluator.py)</div>
+
+  <div class="callout">
+    <strong>Every step follows the same pattern:</strong>
+    call <code>call_llm(system_prompt, user_message)</code> →
+    get back a string → parse it as JSON → validate with Pydantic → pass result to next step.
+    If JSON parsing fails, it retries once with "Return only valid JSON, no extra text."
+  </div>
+
+  <div class="pipeline">
+
+    <div class="step">
+      <div class="step-num s1">1</div>
+      <div class="step-body">
+        <div class="agent">Prompt Builder Agent</div>
+        <h4>Turn the rough idea into a proper LLM prompt</h4>
+        <p>
+          Takes your raw idea and thinks step-by-step about what a good LLM prompt for it
+          would look like. It figures out the right tone, structure, features to include,
+          and reasoning approach.
+        </p>
+        <div class="io">
+          <span class="tag tag-in">IN: your raw idea (string)</span>
+          <span class="tag tag-out">OUT: generated_prompt, reasoning, reasoning_type, included_features, confidence</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num s2">2</div>
+      <div class="step-body">
+        <div class="agent">Prompt Evaluator Agent</div>
+        <h4>Score the generated prompt on 8 quality criteria</h4>
+        <p>
+          A strict evaluator that reads the generated prompt and checks each of 8 dimensions:
+          Does it ask for explicit reasoning? Structured output? Does it handle failures?
+          Does it use correct framing? Each is a <code>true/false</code> score.
+        </p>
+        <div class="io">
+          <span class="tag tag-in">IN: generated_prompt from Step 1</span>
+          <span class="tag tag-out">OUT: 8 boolean scores + overall_clarity string → validated as PromptReview</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num s3">3</div>
+      <div class="step-body">
+        <div class="agent">Prompt Improver Agent</div>
+        <h4>Fix every criterion that scored false</h4>
+        <p>
+          Receives both the original prompt AND the first review. It reads which criteria
+          failed, explains why (weaknesses_found), and rewrites the prompt so all 8 pass.
+          Thinks step-by-step before writing the improved version.
+        </p>
+        <div class="io">
+          <span class="tag tag-in">IN: generated_prompt + first_review JSON</span>
+          <span class="tag tag-out">OUT: weaknesses_found, improved_prompt, reasoning, confidence</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num s4">4</div>
+      <div class="step-body">
+        <div class="agent">Prompt Re-Evaluator Agent</div>
+        <h4>Re-score the improved prompt (same agent as Step 2)</h4>
+        <p>
+          Runs the exact same evaluation as Step 2, but now on the <em>improved</em> prompt.
+          This gives a fair "before vs after" comparison. The <strong>self_check</strong>
+          field is then computed: if all 8 booleans are now true → "All 8 criteria passed."
+          Otherwise it lists which ones still failed.
+        </p>
+        <div class="io">
+          <span class="tag tag-in">IN: improved_prompt from Step 3</span>
+          <span class="tag tag-out">OUT: 8 boolean scores + overall_clarity → validated as PromptReview</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ══════════ 8 CRITERIA ══════════ -->
+  <div class="section-title"><span>#4</span> The 8 Evaluation Criteria</div>
+
+  <div class="file-grid">
+    <div class="file-card">
+      <div class="file-name">explicit_reasoning</div>
+      <p>Does the prompt ask the model to <em>think step by step</em> or show its reasoning before answering?</p>
+    </div>
+    <div class="file-card">
+      <div class="file-name">structured_output</div>
+      <p>Does it ask for output in a specific format — JSON, markdown table, numbered list?</p>
+    </div>
+    <div class="file-card">
+      <div class="file-name">tool_separation</div>
+      <p>Are different capabilities (search, compute, retrieval) clearly separated as distinct tools?</p>
+    </div>
+    <div class="file-card">
+      <div class="file-name">conversation_loop</div>
+      <p>Does it allow for back-and-forth — asking clarifying questions or iterating?</p>
+    </div>
+    <div class="file-card">
+      <div class="file-name">instructional_framing</div>
+      <p>Is the LLM given a clear role or persona to frame how it should respond?</p>
+    </div>
+    <div class="file-card">
+      <div class="file-name">internal_self_checks</div>
+      <p>Does the prompt ask the model to review or verify its own output before returning it?</p>
+    </div>
+    <div class="file-card">
+      <div class="file-name">reasoning_type_awareness</div>
+      <p>Does the prompt specify <em>which type</em> of reasoning to use (deductive, analogical, causal)?</p>
+    </div>
+    <div class="file-card">
+      <div class="file-name">fallbacks</div>
+      <p>Does the prompt tell the model what to do when it's uncertain or can't complete the task?</p>
+    </div>
+  </div>
+
+  <!-- ══════════ PYDANTIC MODELS ══════════ -->
+  <div class="section-title"><span>#5</span> Pydantic Models (models.py)</div>
+
+  <div class="callout">
+    <strong>Why Pydantic?</strong> Every JSON response from the LLM is parsed and validated
+    through a Pydantic model. If the LLM returns a wrong type (e.g. a string where a bool
+    is expected), Pydantic raises an error immediately. This prevents silent bugs from
+    propagating through the pipeline.
+  </div>
+
+  <div class="model-block">
+    <h3>ProjectIdeaInput — what you give the app</h3>
+    <ul class="field-list">
+      <li><span class="field-name">project_idea</span><span class="field-type">str</span><span class="field-desc">Your raw, rough idea in plain English</span></li>
+      <li><span class="field-name">target_user</span><span class="field-type">Optional[str]</span><span class="field-desc">Who will use this? (optional)</span></li>
+      <li><span class="field-name">constraints</span><span class="field-type">List[str]</span><span class="field-desc">Any limits like "no internet", "must be fast" (optional)</span></li>
+    </ul>
+  </div>
+
+  <div class="model-block">
+    <h3>PromptReview — the evaluation scorecard</h3>
+    <ul class="field-list">
+      <li><span class="field-name">explicit_reasoning</span><span class="field-type">bool</span></li>
+      <li><span class="field-name">structured_output</span><span class="field-type">bool</span></li>
+      <li><span class="field-name">tool_separation</span><span class="field-type">bool</span></li>
+      <li><span class="field-name">conversation_loop</span><span class="field-type">bool</span></li>
+      <li><span class="field-name">instructional_framing</span><span class="field-type">bool</span></li>
+      <li><span class="field-name">internal_self_checks</span><span class="field-type">bool</span></li>
+      <li><span class="field-name">reasoning_type_awareness</span><span class="field-type">bool</span></li>
+      <li><span class="field-name">fallbacks</span><span class="field-type">bool</span></li>
+      <li><span class="field-name">overall_clarity</span><span class="field-type">str</span><span class="field-desc">Human-readable summary of quality</span></li>
+    </ul>
+  </div>
+
+  <div class="model-block">
+    <h3>ImprovedPromptOutput — everything the pipeline produces</h3>
+    <ul class="field-list">
+      <li><span class="field-name">original_idea</span><span class="field-type">str</span><span class="field-desc">Your original input, preserved</span></li>
+      <li><span class="field-name">reasoning</span><span class="field-type">str</span><span class="field-desc">Why the improver made the changes it did</span></li>
+      <li><span class="field-name">generated_prompt</span><span class="field-type">str</span><span class="field-desc">The first prompt built in Step 1</span></li>
+      <li><span class="field-name">first_review</span><span class="field-type">PromptReview</span><span class="field-desc">Score before improvement (Step 2)</span></li>
+      <li><span class="field-name">weaknesses_found</span><span class="field-type">List[str]</span><span class="field-desc">What the improver identified as problems</span></li>
+      <li><span class="field-name">improved_prompt</span><span class="field-type">str</span><span class="field-desc">The rewritten, better prompt from Step 3</span></li>
+      <li><span class="field-name">final_review</span><span class="field-type">PromptReview</span><span class="field-desc">Score after improvement (Step 4)</span></li>
+      <li><span class="field-name">self_check</span><span class="field-type">str</span><span class="field-desc">"All 8 criteria passed." or lists what failed</span></li>
+      <li><span class="field-name">confidence</span><span class="field-type">float (0.0–1.0)</span><span class="field-desc">How confident the improver is in its result</span></li>
+    </ul>
+  </div>
+
+  <!-- ══════════ GATEWAY ══════════ -->
+  <div class="section-title"><span>#6</span> How the LLM Gateway Works</div>
+
+  <div class="card">
+    <h3>Why a Gateway instead of calling the API directly?</h3>
+    <p>
+      The LLM Gateway runs locally at <code>http://localhost:8100</code>. It acts as a
+      <strong>universal router</strong> — you tell it which provider and model to use,
+      and it handles authentication, rate-limiting, and model-specific formatting.
+      The app itself never holds or uses raw API keys in its code — they stay in
+      <code>.env</code> and on the gateway server.
+    </p>
+  </div>
+
+  <pre><code># gateway_client.py — the only file that makes HTTP calls
+
+class LLM:
+    def chat(self, prompt, *, system, provider, model, ...):
+        body = { "prompt": ..., "system": ..., "provider": "google",
+                 "model": "gemini-preview-lite-3", ... }
+        r = httpx.post("http://localhost:8100/v1/chat", json=body)
+        return r.json()   # → { "text": "..." }
+
+def call_llm(system_prompt, user_message):
+    result = LLM().chat(...)
+    return result["text"]   # ← evaluator.py only sees the raw text string</code></pre>
+
+  <!-- ══════════ ENV ══════════ -->
+  <div class="section-title"><span>#7</span> Environment Variables (.env)</div>
+
+  <pre><code>LLM_GATEWAY_V2_URL=http://localhost:8100   # where the gateway runs
+GEMINI_API_KEY=your_gemini_api_key_here    # ← replace this with your real key
+LLM_MODEL=gemini-preview-lite-3            # which model to use
+LLM_PROVIDER=google                        # which provider</code></pre>
+
+  <div class="callout">
+    <strong>Important:</strong> Replace <code>your_gemini_api_key_here</code> with your actual
+    Gemini API key. The key is loaded at runtime by <code>main.py</code> — it is never
+    hardcoded into the Python files.
+  </div>
+
+  <!-- ══════════ HOW TO RUN ══════════ -->
+  <div class="section-title"><span>#8</span> How to Run It</div>
+
+  <div class="run-steps">
+    <div class="run-step">
+      <p>Make sure your local LLM Gateway is running at <code>http://localhost:8100</code>.</p>
+    </div>
+    <div class="run-step">
+      <p>Edit <code>.env</code> and replace <code>your_gemini_api_key_here</code> with your real Gemini API key.</p>
+    </div>
+    <div class="run-step">
+      <p>Install dependencies with uv: <code>uv pip install pydantic httpx</code></p>
+    </div>
+    <div class="run-step">
+      <p>Run the app: <code>python main.py</code></p>
+    </div>
+    <div class="run-step">
+      <p>Type your rough project idea when prompted and press Enter. Wait ~30–60 seconds while the 4 agents work.</p>
+    </div>
+    <div class="run-step">
+      <p>Read the final JSON output in your terminal — it contains the original idea, improved prompt, two scorecards, weaknesses, and confidence score.</p>
+    </div>
+  </div>
+
+  <!-- ══════════ EXAMPLE OUTPUT ══════════ -->
+  <div class="section-title"><span>#9</span> What the Output Looks Like</div>
+
+  <pre><code>{
+  "original_idea": "Build a personal finance tracker with AI",
+  "reasoning": "The original prompt lacked fallback instructions and ...",
+  "generated_prompt": "You are a personal finance assistant. Given ...",
+  "first_review": {
+    "explicit_reasoning": true,
+    "structured_output": false,
+    "tool_separation": false,
+    "conversation_loop": true,
+    "instructional_framing": true,
+    "internal_self_checks": false,
+    "reasoning_type_awareness": false,
+    "fallbacks": false,
+    "overall_clarity": "Clear goal but missing structured output and fallbacks"
+  },
+  "weaknesses_found": [
+    "No structured output format specified",
+    "No fallback for ambiguous transactions",
+    "Missing reasoning type specification"
+  ],
+  "improved_prompt": "You are a personal finance assistant. Always reason ...",
+  "final_review": {
+    "explicit_reasoning": true,
+    "structured_output": true,
+    "tool_separation": true,
+    "conversation_loop": true,
+    "instructional_framing": true,
+    "internal_self_checks": true,
+    "reasoning_type_awareness": true,
+    "fallbacks": true,
+    "overall_clarity": "Excellent — all criteria met"
+  },
+  "self_check": "All 8 criteria passed.",
+  "confidence": 0.92
+}</code></pre>
+
+</div><!-- /container -->
+
+<footer>
+  EAGv3 · Session 5 · AI Prompt Builder Evaluator · Built with Python, Pydantic, httpx
+</footer>
+
+</body>
+</html>

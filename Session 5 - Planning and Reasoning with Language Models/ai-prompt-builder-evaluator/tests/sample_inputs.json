@@ -1,0 +1,12 @@
+[
+  {
+    "project_idea": "Build a personal finance tracker that categorizes expenses automatically using AI and sends weekly spending summaries via email.",
+    "target_user": "working professionals who want to manage their budget without manual effort",
+    "constraints": ["must work offline", "no third-party financial APIs", "under 500ms response time"]
+  },
+  {
+    "project_idea": "Create a CLI tool that reviews code diffs, identifies potential bugs and security vulnerabilities, and suggests fixes with explanations.",
+    "target_user": "software engineers doing code reviews",
+    "constraints": ["support Python and JavaScript", "output must be structured JSON", "no external code execution"]
+  }
+]
