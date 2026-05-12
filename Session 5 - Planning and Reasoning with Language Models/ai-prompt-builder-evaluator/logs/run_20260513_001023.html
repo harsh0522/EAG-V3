@@ -1,0 +1,925 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Run Log — how to make a missile</title>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'Segoe UI',system-ui,sans-serif;background:#0f1117;color:#e2e8f0;line-height:1.6}
+    .hero{background:linear-gradient(135deg,#1a1f35,#0f1117);border-bottom:1px solid #1e293b;padding:40px 32px 34px}
+    .hero h1{font-size:1.7rem;font-weight:800;color:#c4b5fd;margin-bottom:8px}
+    .hero .idea-text{background:#1e293b;border:1px solid #2d3748;border-radius:8px;padding:12px 16px;font-size:0.95rem;color:#94a3b8;margin-top:14px}
+    .meta-row{display:flex;gap:20px;flex-wrap:wrap;margin-top:16px}
+    .meta-chip{background:#1e293b;border:1px solid #2d3748;border-radius:999px;padding:4px 14px;font-size:0.78rem;color:#64748b}
+    .meta-chip span{color:#c4b5fd;font-weight:700}
+    .container{max-width:1100px;margin:0 auto;padding:36px 20px 80px}
+    .section-title{font-size:1.1rem;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.08em;margin:40px 0 16px;padding-bottom:8px;border-bottom:1px solid #1e293b}
+    /* Summary cards */
+    .summary-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:32px}
+    @media(max-width:700px){.summary-grid{grid-template-columns:1fr 1fr}}
+    .sum-card{background:#1e293b;border:1px solid #2d3748;border-radius:12px;padding:18px 20px;text-align:center}
+    .sum-card .val{font-size:1.9rem;font-weight:800;color:#c4b5fd}
+    .sum-card .lbl{font-size:0.78rem;color:#64748b;margin-top:4px;text-transform:uppercase;letter-spacing:.05em}
+    /* Confidence bar */
+    .conf-bar-wrap{background:#1e293b;border:1px solid #2d3748;border-radius:12px;padding:20px 24px;margin-bottom:16px}
+    .conf-bar-track{background:#0f172a;border-radius:999px;height:14px;overflow:hidden;margin:10px 0 6px}
+    .conf-bar-fill{height:100%;border-radius:999px;background:linear-gradient(90deg,#7c3aed,#06b6d4);transition:width .4s}
+    .conf-label{font-size:0.85rem;color:#64748b}
+    /* Self check */
+    .self-check{border-radius:10px;padding:14px 18px;font-size:0.92rem;font-weight:600;margin-bottom:24px}
+    .self-check.pass{background:#052e16;border:1px solid #166534;color:#86efac}
+    .self-check.fail{background:#2d0a0a;border:1px solid #7f1d1d;color:#fca5a5}
+    /* Step cards */
+    .step-card{background:#1e293b;border:1px solid #2d3748;border-left:3px solid var(--accent);border-radius:12px;padding:22px 24px;margin-bottom:20px}
+    .step-header{display:flex;align-items:center;gap:14px;margin-bottom:18px}
+    .step-num{color:#fff;font-size:0.8rem;font-weight:800;border-radius:6px;padding:4px 12px;white-space:nowrap}
+    .step-name{font-size:1rem;font-weight:700;color:#e2e8f0}
+    .step-time{font-size:0.78rem;color:#64748b;margin-left:8px}
+    .retry-tag{background:#451a03;color:#fb923c;border:1px solid #92400e;border-radius:999px;padding:1px 8px;font-size:0.7rem;margin-left:6px}
+    .section-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
+    @media(max-width:650px){.section-row{grid-template-columns:1fr}}
+    .sub-label{font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#475569;margin:10px 0 5px}
+    .prompt-box{background:#0f172a;border:1px solid #1e293b;border-radius:8px;padding:14px;font-family:'Courier New',monospace;font-size:0.78rem;color:#cbd5e1;white-space:pre-wrap;word-break:break-word;max-height:280px;overflow-y:auto}
+    .prompt-box.sys{border-color:#7c3aed33}
+    .prompt-box.usr{border-color:#0891b233}
+    .prompt-box.raw{border-color:#334155;color:#94a3b8}
+    .prompt-box.parsed{border-color:#05966933;color:#86efac}
+    /* Scorecard */
+    .scorecard{width:100%;border-collapse:collapse;margin-top:6px;font-size:0.83rem}
+    .scorecard th{text-align:left;padding:6px 10px;color:#475569;font-weight:600;border-bottom:1px solid #1e293b}
+    .scorecard td{padding:7px 10px;border-bottom:1px solid #1e293b;color:#94a3b8}
+    .badge{font-weight:700;font-size:0.75rem;border-radius:6px;padding:2px 10px;text-align:center}
+    .badge.pass{background:#052e16;color:#86efac;border:1px solid #166534}
+    .badge.fail{background:#2d0a0a;color:#fca5a5;border:1px solid #7f1d1d}
+    /* Before/after */
+    .compare-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px}
+    @media(max-width:650px){.compare-grid{grid-template-columns:1fr}}
+    .compare-card{background:#0f172a;border:1px solid #1e293b;border-radius:10px;padding:16px 18px}
+    .compare-card h4{font-size:0.85rem;font-weight:700;margin-bottom:10px}
+    .compare-card.before h4{color:#f87171}
+    .compare-card.after h4{color:#86efac}
+    /* Final JSON */
+    .final-json{background:#0f172a;border:1px solid #1e293b;border-radius:10px;padding:20px;font-family:'Courier New',monospace;font-size:0.8rem;color:#86efac;white-space:pre-wrap;word-break:break-word;overflow-x:auto}
+    .error-box{background:#2d0a0a;border:1px solid #7f1d1d;border-radius:8px;padding:12px;color:#fca5a5;font-size:0.85rem;margin-bottom:14px}
+    footer{text-align:center;padding:24px;color:#334155;font-size:0.75rem;border-top:1px solid #1e293b}
+    /* ── Pydantic Cards ── */
+    .pyd-card{background:#0d1b2a;border:1px solid #1e3a5f;border-left:4px solid var(--pyd-color,#6d28d9);border-radius:10px;padding:18px 20px;margin-bottom:16px;margin-top:6px}
+    .pyd-header{display:flex;align-items:flex-start;gap:12px;margin-bottom:14px}
+    .pyd-icon{width:28px;height:28px;border-radius:50%;background:var(--pyd-color,#6d28d9);color:#fff;font-size:1rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-weight:900}
+    .pyd-title{font-size:0.95rem;font-weight:700;color:#e2e8f0}
+    .pyd-sub{font-size:0.72rem;color:#475569;margin-top:2px;text-transform:uppercase;letter-spacing:.06em}
+    .pyd-table{width:100%;border-collapse:collapse;font-size:0.79rem;margin-bottom:12px}
+    .pyd-table th{text-align:left;padding:6px 10px;color:#334155;font-weight:600;border-bottom:1px solid #1e293b;background:#0a1628}
+    .pyd-table td{padding:6px 10px;border-bottom:1px solid #0f172a;vertical-align:top}
+    .pyd-field{color:#94a3b8;font-family:'Courier New',monospace;white-space:nowrap}
+    .pyd-type{color:#475569;font-size:0.72rem;white-space:nowrap}
+    .pyd-val{color:#64748b;font-family:'Courier New',monospace;word-break:break-all}
+    .pyd-changed{background:#1a1205}
+    .pyd-changed .pyd-field{color:#fbbf24}
+    .pyd-coerce-wrap{background:#1a1205;border:1px solid #78350f44;border-radius:8px;padding:10px 14px;font-size:0.8rem;color:#d97706}
+    .pyd-coerce-wrap ul{padding-left:16px;margin-top:6px}
+    .pyd-coerce-wrap li{margin-bottom:4px;color:#94a3b8}
+    .pyd-coerce-wrap code{background:#0f172a;padding:1px 5px;border-radius:3px;color:#fbbf24;font-size:0.75rem}
+    .pyd-tag{display:inline-block;border-radius:4px;padding:1px 7px;font-size:0.68rem;font-weight:700;margin-right:6px;text-transform:uppercase}
+    .pyd-tag-coerce{background:#451a03;color:#fb923c;border:1px solid #92400e}
+    .pyd-tag-default{background:#1e1b4b;color:#a5b4fc;border:1px solid #3730a3}
+    .pyd-no-coerce{color:#166534;font-size:0.8rem;padding:8px 12px;background:#052e16;border-radius:6px;border:1px solid #166534}
+
+    /* ── YouTube Explainer styles ── */
+    .yt-wrap{margin-top:0;margin-bottom:0}
+    .yt-hero-bar{background:linear-gradient(135deg,#1e1040,#0d1f35);border:1px solid #2d3748;border-radius:16px;padding:36px 36px 28px;margin-bottom:8px}
+    .yt-pill{display:inline-block;background:#7c3aed;color:#fff;font-size:0.7rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;border-radius:999px;padding:4px 14px;margin-bottom:12px}
+    .yt-title{font-size:1.55rem;font-weight:800;color:#e2e8f0;margin-bottom:8px}
+    .yt-subtitle{color:#64748b;font-size:0.9rem;margin-bottom:20px}
+    .yt-stats-row{display:flex;gap:16px;flex-wrap:wrap}
+    .yt-stat{background:#0f172a;border:1px solid #1e293b;border-radius:10px;padding:10px 18px;text-align:center;min-width:90px}
+    .yt-stat-val{display:block;font-size:1.3rem;font-weight:800;color:#c4b5fd}
+    .yt-stat-lbl{display:block;font-size:0.68rem;color:#475569;text-transform:uppercase;letter-spacing:.05em;margin-top:2px}
+    .yt-block{background:#1e293b;border:1px solid #2d3748;border-left:4px solid #334155;border-radius:12px;padding:28px 30px;margin-bottom:16px}
+    .yt-num{font-size:0.68rem;font-weight:800;text-transform:uppercase;letter-spacing:.12em;color:#475569;margin-bottom:8px}
+    .yt-block-title{font-size:1.1rem;font-weight:700;color:#e2e8f0;margin-bottom:10px}
+    .yt-desc{color:#94a3b8;font-size:0.88rem;line-height:1.7;margin-bottom:0}
+    .yt-input-bubble{background:#0f172a;border:1px solid #7c3aed44;border-radius:10px;padding:16px 20px;font-size:0.95rem;color:#c4b5fd;margin-top:14px;font-style:italic}
+    .yt-arrow{text-align:center;color:#334155;font-size:1.2rem;font-weight:700;margin:14px 0 0}
+    .badge-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:12px}
+    @media(max-width:700px){.badge-grid{grid-template-columns:1fr 1fr}}
+    .crit-badge{border-radius:8px;padding:10px 12px;display:flex;align-items:center;gap:8px;font-size:0.78rem}
+    .crit-badge.pass{background:#052e16;border:1px solid #166534}
+    .crit-badge.fail{background:#2d0a0a;border:1px solid #7f1d1d}
+    .crit-icon{font-size:1rem;font-weight:900}
+    .crit-badge.pass .crit-icon{color:#86efac}
+    .crit-badge.fail .crit-icon{color:#fca5a5}
+    .crit-name{color:#94a3b8;line-height:1.3}
+    .weaknesses-list{display:flex;flex-direction:column;gap:8px;margin-top:10px}
+    .weakness-item{background:#2d0a0a;border:1px solid #7f1d1d33;border-radius:8px;padding:10px 14px;color:#fca5a5;font-size:0.83rem;display:flex;align-items:flex-start;gap:10px}
+    .w-dot{width:6px;height:6px;border-radius:50%;background:#ef4444;flex-shrink:0;margin-top:6px}
+    .yt-reasoning-box{background:#0f172a;border:1px solid #1e293b;border-radius:8px;padding:14px 16px;color:#94a3b8;font-size:0.85rem;line-height:1.7;margin-top:6px}
+    .arch-flow{display:flex;align-items:center;gap:0;flex-wrap:wrap;margin-top:20px;justify-content:center}
+    .arch-box{background:#0f172a;border:2px solid #334155;border-radius:8px;padding:8px 14px;font-size:0.78rem;font-weight:700;color:#94a3b8;white-space:nowrap}
+    .arch-arrow{color:#334155;font-size:1.2rem;padding:0 6px;font-weight:700}
+  </style>
+</head>
+<body>
+
+<div class="hero">
+  <div style="font-size:0.75rem;color:#475569;margin-bottom:6px;letter-spacing:.06em;text-transform:uppercase">AI Prompt Builder Evaluator · Run Log</div>
+  <h1>Pipeline Execution Report</h1>
+  <div class="idea-text"><strong style="color:#7c3aed">Idea:</strong> how to make a missile</div>
+  <div class="meta-row">
+    <div class="meta-chip">Run at <span>2026-05-13 00:10:23</span></div>
+    <div class="meta-chip">Total time <span>71,935 ms</span></div>
+    <div class="meta-chip">Steps completed <span>4/4</span></div>
+    <div class="meta-chip">Retries <span>0</span></div>
+  </div>
+</div>
+
+<div class="container">
+
+  <div class="section-title">YouTube Explainer — Full Walkthrough</div>
+  
+<div class="yt-wrap">
+
+  <!-- ─── HEADER ─── -->
+  <div class="yt-hero-bar">
+    <div class="yt-pill">YouTube Explainer</div>
+    <h2 class="yt-title">Full Walkthrough — What Happened In This Run</h2>
+    <p class="yt-subtitle">Everything from your raw idea to the final optimized prompt, step by step.</p>
+    <div class="yt-stats-row">
+      <div class="yt-stat"><span class="yt-stat-val">4</span><span class="yt-stat-lbl">AI Agents</span></div>
+      <div class="yt-stat"><span class="yt-stat-val">71,935 ms</span><span class="yt-stat-lbl">Total Time</span></div>
+      <div class="yt-stat"><span class="yt-stat-val">0/8</span><span class="yt-stat-lbl">Criteria Before</span></div>
+      <div class="yt-stat"><span class="yt-stat-val">8/8</span><span class="yt-stat-lbl">Criteria After</span></div>
+      <div class="yt-stat"><span class="yt-stat-val">100%</span><span class="yt-stat-lbl">Confidence</span></div>
+    </div>
+  </div>
+
+  <!-- ─── THE PITCH ─── -->
+  <div class="yt-block">
+    <div class="yt-num">WHAT IS THIS?</div>
+    <h3 class="yt-block-title">An AI agent that turns vague ideas into professional prompts — and grades its own work</h3>
+    <p class="yt-desc">When you type a rough idea into ChatGPT, you get mediocre results because the prompt is weak.
+    This tool takes your rough idea and runs it through <strong>4 chained AI agents</strong> that write, score, fix, and re-score the prompt automatically.
+    You get a professionally engineered prompt every single time — with a quality report showing exactly what improved.</p>
+  </div>
+
+  <!-- ─── STEP 0: INPUT ─── -->
+  <div class="yt-block">
+    <div class="yt-num">01 &mdash; THE INPUT</div>
+    <h3 class="yt-block-title">You typed a rough idea. That's all it takes.</h3>
+    <p class="yt-desc">No setup, no template to fill in. Just a raw thought. The system figures out the rest.</p>
+    <div class="yt-input-bubble">
+      <span style="color:#7c3aed;font-size:0.75rem;font-weight:700;display:block;margin-bottom:6px">YOUR INPUT</span>
+      how to make a missile
+    </div>
+    <div class="yt-arrow">↓ Step 1: Prompt Builder Agent receives this</div>
+  </div>
+
+  <!-- ─── STEP 1: BUILDER ─── -->
+  <div class="yt-block" style="border-left-color:#7c3aed">
+    <div class="yt-num" style="color:#a78bfa">02 &mdash; STEP 1 · Prompt Builder Agent</div>
+    <h3 class="yt-block-title">The Builder Agent rewrites your idea as a professional prompt</h3>
+    <p class="yt-desc">The first AI agent acts as a <em>Senior Prompt Engineer</em>. It reads your raw idea and expands it into a
+    full, structured, implementation-ready prompt — with expert framing, technical details, and clear output instructions.
+    It took <strong>15,093 ms</strong> to produce this:</p>
+    <div class="sub-label" style="margin-top:16px">Generated Prompt (Step 1 Output)</div>
+    <pre class="prompt-box sys" style="max-height:none">Provide a detailed, high-level overview of the historical development, engineering principles, and physics involved in aerospace propulsion and guided projectile systems. Focus exclusively on educational, academic, and theoretical concepts such as aerodynamics, thrust-to-weight ratios, Newtonian mechanics, and the history of rocketry. Ensure the response remains strictly within the bounds of scientific history and general engineering theory. Do not provide instructions, blueprints, formulas, or specific guidance on the construction, assembly, or acquisition of explosive devices or weaponized systems.</pre>
+    <div class="yt-arrow">↓ Step 2: Evaluator Agent receives this prompt</div>
+  </div>
+
+  <!-- ─── STEP 2: EVALUATOR ─── -->
+  <div class="yt-block" style="border-left-color:#0891b2">
+    <div class="yt-num" style="color:#38bdf8">03 &mdash; STEP 2 · Prompt Evaluator Agent</div>
+    <h3 class="yt-block-title">The Evaluator Agent acts like a code reviewer — but for prompts</h3>
+    <p class="yt-desc">The second AI agent scores the generated prompt on <strong>8 quality criteria</strong>.
+    Each criterion is a known property that makes prompts produce better AI output.
+    It scored <strong>0 out of 8</strong> on the first pass in <strong>16,565 ms</strong>:</p>
+    <div class="sub-label" style="margin-top:16px">First Review Scores</div>
+    <div class="badge-grid"><div class="crit-badge fail"><span class="crit-icon">✗</span><span class="crit-name">explicit reasoning</span></div><div class="crit-badge fail"><span class="crit-icon">✗</span><span class="crit-name">structured output</span></div><div class="crit-badge fail"><span class="crit-icon">✗</span><span class="crit-name">tool separation</span></div><div class="crit-badge fail"><span class="crit-icon">✗</span><span class="crit-name">conversation loop</span></div><div class="crit-badge fail"><span class="crit-icon">✗</span><span class="crit-name">instructional framing</span></div><div class="crit-badge fail"><span class="crit-icon">✗</span><span class="crit-name">internal self checks</span></div><div class="crit-badge fail"><span class="crit-icon">✗</span><span class="crit-name">reasoning type awareness</span></div><div class="crit-badge fail"><span class="crit-icon">✗</span><span class="crit-name">fallbacks</span></div></div>
+    <div class="yt-arrow">↓ Step 3: Improver Agent receives the prompt + these scores</div>
+  </div>
+
+  <!-- ─── STEP 3: IMPROVER ─── -->
+  <div class="yt-block" style="border-left-color:#059669">
+    <div class="yt-num" style="color:#34d399">04 &mdash; STEP 3 · Prompt Improver Agent</div>
+    <h3 class="yt-block-title">The Improver Agent rewrites the prompt to fix every failing criterion</h3>
+    <p class="yt-desc">The third agent receives both the original prompt and the Step 2 review scores.
+    It rewrites the prompt so that every <em>false</em> criterion becomes <em>true</em>.
+    It identified <strong>8 weaknesses</strong> and fixed them in <strong>30,340 ms</strong>.</p>
+    <div class="sub-label" style="margin-top:16px">Weaknesses Found</div>
+    <div class="weaknesses-list"><div class="weakness-item"><span class="w-dot"></span>explicit_reasoning</div><div class="weakness-item"><span class="w-dot"></span>structured_output</div><div class="weakness-item"><span class="w-dot"></span>tool_separation</div><div class="weakness-item"><span class="w-dot"></span>conversation_loop</div><div class="weakness-item"><span class="w-dot"></span>instructional_framing</div><div class="weakness-item"><span class="w-dot"></span>internal_self_checks</div><div class="weakness-item"><span class="w-dot"></span>reasoning_type_awareness</div><div class="weakness-item"><span class="w-dot"></span>fallbacks</div></div>
+    <div class="sub-label" style="margin-top:16px">Improved Prompt (Step 3 Output)</div>
+    <pre class="prompt-box parsed" style="max-height:none">You are an expert aerospace engineer and historian of science. Provide a detailed, high-level overview of the historical development, engineering principles, and physics involved in aerospace propulsion and guided projectile systems. Focus exclusively on educational, academic, and theoretical concepts such as aerodynamics, thrust-to-weight ratios, Newtonian mechanics, and the history of rocketry. Ensure the response remains strictly within the bounds of scientific history and general engineering theory. Do not provide instructions, blueprints, formulas, or specific guidance on the construction, assembly, or acquisition of explosive devices or weaponized systems. Use deductive reasoning to analyze the evolution of these technologies and apply causal reasoning when explaining the impact of specific engineering breakthroughs. Clearly separate distinct capabilities such as historical research, physical principles analysis, and engineering theory synthesis as named steps or tools. Think step by step and explain your reasoning before giving the final answer. Return your response in structured JSON format. If anything is unclear or ambiguous, ask clarifying questions before proceeding. Before giving your final answer, review your own output and fix any errors or gaps. If you cannot complete any part of the task, clearly state what is missing and provide the best partial answer you can.
+
+You are an expert assistant. Use deductive reasoning to analyze the problem and apply causal reasoning when identifying root causes. Clearly separate distinct capabilities (e.g. search, compute, retrieve) as named steps.</pre>
+    <div class="sub-label" style="margin-top:12px">Improver's Reasoning</div>
+    <div class="yt-reasoning-box">I have systematically addressed every missing criterion by adding the required instructional sentences. I assigned a professional role (instructional_framing), mandated a structured JSON output (structured_output), required step-by-step reasoning (explicit_reasoning), specified the use of deductive and causal reasoning (reasoning_type_awareness), implemented a tool-separation framework, included a loop for clarification (conversation_loop), enforced self-correction (internal_self_checks), and defined a fallback protocol (fallbacks).</div>
+    <div class="yt-arrow">↓ Step 4: Re-Evaluator scores the improved prompt</div>
+  </div>
+
+  <!-- ─── STEP 4: RE-EVALUATOR ─── -->
+  <div class="yt-block" style="border-left-color:#d97706">
+    <div class="yt-num" style="color:#fbbf24">05 &mdash; STEP 4 · Re-Evaluator Agent</div>
+    <h3 class="yt-block-title">The same Evaluator runs again on the improved prompt to confirm the fixes</h3>
+    <p class="yt-desc">The exact same scoring agent from Step 2 now re-evaluates the improved prompt.
+    This is the <strong>self-check</strong> — the system verifying its own work.
+    It scored <strong>8 out of 8</strong> (+8 from before) in <strong>9,937 ms</strong>:</p>
+    <div class="sub-label" style="margin-top:16px">Final Review Scores</div>
+    <div class="badge-grid"><div class="crit-badge pass"><span class="crit-icon">✓</span><span class="crit-name">explicit reasoning</span></div><div class="crit-badge pass"><span class="crit-icon">✓</span><span class="crit-name">structured output</span></div><div class="crit-badge pass"><span class="crit-icon">✓</span><span class="crit-name">tool separation</span></div><div class="crit-badge pass"><span class="crit-icon">✓</span><span class="crit-name">conversation loop</span></div><div class="crit-badge pass"><span class="crit-icon">✓</span><span class="crit-name">instructional framing</span></div><div class="crit-badge pass"><span class="crit-icon">✓</span><span class="crit-name">internal self checks</span></div><div class="crit-badge pass"><span class="crit-icon">✓</span><span class="crit-name">reasoning type awareness</span></div><div class="crit-badge pass"><span class="crit-icon">✓</span><span class="crit-name">fallbacks</span></div></div>
+  </div>
+
+  <!-- ─── FULL CRITERIA COMPARISON ─── -->
+  <div class="yt-block">
+    <div class="yt-num">06 &mdash; BEFORE VS AFTER</div>
+    <h3 class="yt-block-title">What each criterion means — and how it changed</h3>
+    <p class="yt-desc">Here is every criterion explained in plain English, with both the before (Step 2) and after (Step 4) result:</p>
+    <table class="scorecard" style="margin-top:14px">
+      <thead>
+        <tr>
+          <th style="width:60%">Criterion &amp; What It Means</th>
+          <th style="text-align:center;width:20%">Before (Step 2)</th>
+          <th style="text-align:center;width:20%">After (Step 4)</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong style="color:#c4b5fd">explicit reasoning</strong><br>
+              <span style="color:#64748b;font-size:0.78rem">Does the prompt tell the AI to reason out loud before answering?</span></td>
+          <td style="text-align:center"><span class="badge fail">✗</span></td>
+          <td style="text-align:center"><span class="badge pass">✓</span></td>
+        </tr>
+        <tr>
+          <td><strong style="color:#c4b5fd">structured output</strong><br>
+              <span style="color:#64748b;font-size:0.78rem">Does the prompt ask for a formatted response — like JSON, numbered sections, or a table?</span></td>
+          <td style="text-align:center"><span class="badge fail">✗</span></td>
+          <td style="text-align:center"><span class="badge pass">✓</span></td>
+        </tr>
+        <tr>
+          <td><strong style="color:#c4b5fd">tool separation</strong><br>
+              <span style="color:#64748b;font-size:0.78rem">Are different tasks (search, compute, retrieve) broken into clearly named steps?</span></td>
+          <td style="text-align:center"><span class="badge fail">✗</span></td>
+          <td style="text-align:center"><span class="badge pass">✓</span></td>
+        </tr>
+        <tr>
+          <td><strong style="color:#c4b5fd">conversation loop</strong><br>
+              <span style="color:#64748b;font-size:0.78rem">Does the prompt tell the AI to ask clarifying questions before assuming?</span></td>
+          <td style="text-align:center"><span class="badge fail">✗</span></td>
+          <td style="text-align:center"><span class="badge pass">✓</span></td>
+        </tr>
+        <tr>
+          <td><strong style="color:#c4b5fd">instructional framing</strong><br>
+              <span style="color:#64748b;font-size:0.78rem">Does the prompt open with 'You are a [expert]...' to frame the AI's identity?</span></td>
+          <td style="text-align:center"><span class="badge fail">✗</span></td>
+          <td style="text-align:center"><span class="badge pass">✓</span></td>
+        </tr>
+        <tr>
+          <td><strong style="color:#c4b5fd">internal self checks</strong><br>
+              <span style="color:#64748b;font-size:0.78rem">Does the prompt tell the AI to check its own output for errors before finishing?</span></td>
+          <td style="text-align:center"><span class="badge fail">✗</span></td>
+          <td style="text-align:center"><span class="badge pass">✓</span></td>
+        </tr>
+        <tr>
+          <td><strong style="color:#c4b5fd">reasoning type awareness</strong><br>
+              <span style="color:#64748b;font-size:0.78rem">Does the prompt specify what kind of reasoning to use — deductive, causal, inductive?</span></td>
+          <td style="text-align:center"><span class="badge fail">✗</span></td>
+          <td style="text-align:center"><span class="badge pass">✓</span></td>
+        </tr>
+        <tr>
+          <td><strong style="color:#c4b5fd">fallbacks</strong><br>
+              <span style="color:#64748b;font-size:0.78rem">Does the prompt tell the AI what to do if it can't complete part of the task?</span></td>
+          <td style="text-align:center"><span class="badge fail">✗</span></td>
+          <td style="text-align:center"><span class="badge pass">✓</span></td>
+        </tr></tbody>
+    </table>
+  </div>
+
+  <!-- ─── VERDICT ─── -->
+  <div class="yt-block">
+    <div class="yt-num">07 &mdash; THE VERDICT</div>
+    <h3 class="yt-block-title">Self-Check Result — Did the pipeline succeed?</h3>
+    <p class="yt-desc">After Step 4, the pipeline checks all 8 final scores. If all pass, the job is done.
+    If any still fail, they are listed honestly. This is called the <strong>self-check</strong> —
+    an agent auditing its own output rather than blindly claiming success.</p>
+    <div style="background:#052e16;border:1px solid #166534;border-radius:10px;padding:18px 22px;margin-top:14px;font-size:1rem;font-weight:700;color:#86efac">
+      ✓ All 8 criteria passed.
+    </div>
+    <div style="margin-top:12px;background:#1e293b;border:1px solid #2d3748;border-radius:10px;padding:16px 20px">
+      <div class="sub-label">Confidence Score</div>
+      <div style="font-size:2rem;font-weight:800;color:#c4b5fd;margin-top:4px">100%</div>
+      <div style="font-size:0.82rem;color:#64748b;margin-top:2px">Reported by the Improver Agent based on how well the criteria were fixed</div>
+    </div>
+  </div>
+
+  <!-- ─── TOOLS ─── -->
+  <div class="yt-block">
+    <div class="yt-num">08 &mdash; TOOLS &amp; TECH USED</div>
+    <h3 class="yt-block-title">Every tool in the stack — what it is and why it's there</h3>
+    <table class="scorecard" style="margin-top:14px">
+      <thead><tr><th style="width:25%">Tool</th><th>What It Does In This Project</th></tr></thead>
+      <tbody>
+    <tr><td><strong style="color:#c4b5fd">Python</strong></td><td>The programming language — glue that connects all 4 agents together.</td></tr>
+    <tr><td><strong style="color:#c4b5fd">Pydantic</strong></td><td>Data validation library. Every LLM response is validated against a strict schema — wrong fields crash early, not silently.</td></tr>
+    <tr><td><strong style="color:#c4b5fd">httpx</strong></td><td>HTTP client. Makes the actual web request to call the LLM — like a browser, but in code.</td></tr>
+    <tr><td><strong style="color:#c4b5fd">LLM Gateway V2</strong></td><td>A local server on port 8100. The only door to the AI — all 4 steps call it. Swap Gemini for GPT-4 by changing one line in .env.</td></tr>
+    <tr><td><strong style="color:#c4b5fd">Gemini 3.1 Flash Lite</strong></td><td>Google's AI model. The brain behind all 4 agents — builder, evaluator, improver, re-evaluator.</td></tr>
+    <tr><td><strong style="color:#c4b5fd">uv</strong></td><td>Modern Python package manager — faster alternative to pip for installing dependencies.</td></tr>
+    </tbody>
+    </table>
+  </div>
+
+  <!-- ─── ARCHITECTURE ─── -->
+  <div class="yt-block">
+    <div class="yt-num">09 &mdash; THE KEY DESIGN DECISION</div>
+    <h3 class="yt-block-title">All LLM calls go through one gateway — your app never touches the AI directly</h3>
+    <p class="yt-desc">Every single LLM call in all 4 steps goes through <code style="background:#1e293b;padding:2px 6px;border-radius:4px;color:#c4b5fd">gateway_client.py</code> →
+    <code style="background:#1e293b;padding:2px 6px;border-radius:4px;color:#c4b5fd">localhost:8100</code> → Gemini.
+    This is a real production pattern: if you want to swap Gemini for OpenAI or Claude tomorrow, you change <strong>one line in .env</strong> and nothing else changes.
+    The 4 agents don't know or care which AI model is running behind the gateway.</p>
+    <div class="arch-flow">
+      <div class="arch-box" style="border-color:#7c3aed">Your Idea (input)</div>
+      <div class="arch-arrow">→</div>
+      <div class="arch-box" style="border-color:#7c3aed">Prompt Builder</div>
+      <div class="arch-arrow">→</div>
+      <div class="arch-box" style="border-color:#0891b2">Evaluator</div>
+      <div class="arch-arrow">→</div>
+      <div class="arch-box" style="border-color:#059669">Improver</div>
+      <div class="arch-arrow">→</div>
+      <div class="arch-box" style="border-color:#d97706">Re-Evaluator</div>
+      <div class="arch-arrow">→</div>
+      <div class="arch-box" style="border-color:#86efac;color:#86efac">Final Prompt + Report</div>
+    </div>
+    <div style="text-align:center;color:#475569;font-size:0.8rem;margin-top:8px">All arrows pass through gateway_client.py → LLM Gateway V2 → Gemini 3.1 Flash Lite</div>
+  </div>
+
+</div>
+
+
+  <div class="section-title">Run Summary</div>
+
+  <div class="summary-grid">
+    <div class="sum-card"><div class="val">4</div><div class="lbl">Steps Done</div></div>
+    <div class="sum-card"><div class="val">0</div><div class="lbl">JSON Retries</div></div>
+    <div class="sum-card"><div class="val">100%</div><div class="lbl">Confidence</div></div>
+    <div class="sum-card"><div class="val">71,935</div><div class="lbl">Total ms</div></div>
+  </div>
+
+  <div class="conf-bar-wrap">
+    <div class="sub-label">Final Confidence Score</div>
+    <div class="conf-bar-track"><div class="conf-bar-fill" style="width:100%"></div></div>
+    <div class="conf-label">100% — reported by the Prompt Improver agent</div>
+  </div>
+
+  <div class="self-check pass">Self Check: All 8 criteria passed.</div>
+
+  <div class="section-title">Generated Prompt vs Improved Prompt</div>
+  
+    <div class="compare-grid" style="margin-bottom:0">
+      <div class="compare-card before" style="border-color:#4b1e1e">
+        <h4 style="margin-bottom:8px">Original Generated Prompt</h4>
+        <pre class="prompt-box raw" style="max-height:340px">Provide a detailed, high-level overview of the historical development, engineering principles, and physics involved in aerospace propulsion and guided projectile systems. Focus exclusively on educational, academic, and theoretical concepts such as aerodynamics, thrust-to-weight ratios, Newtonian mechanics, and the history of rocketry. Ensure the response remains strictly within the bounds of scientific history and general engineering theory. Do not provide instructions, blueprints, formulas, or specific guidance on the construction, assembly, or acquisition of explosive devices or weaponized systems.</pre>
+      </div>
+      <div class="compare-card after" style="border-color:#1e3a2f">
+        <h4 style="margin-bottom:8px">Improved Prompt</h4>
+        <pre class="prompt-box parsed" style="max-height:340px">You are an expert aerospace engineer and historian of science. Provide a detailed, high-level overview of the historical development, engineering principles, and physics involved in aerospace propulsion and guided projectile systems. Focus exclusively on educational, academic, and theoretical concepts such as aerodynamics, thrust-to-weight ratios, Newtonian mechanics, and the history of rocketry. Ensure the response remains strictly within the bounds of scientific history and general engineering theory. Do not provide instructions, blueprints, formulas, or specific guidance on the construction, assembly, or acquisition of explosive devices or weaponized systems. Use deductive reasoning to analyze the evolution of these technologies and apply causal reasoning when explaining the impact of specific engineering breakthroughs. Clearly separate distinct capabilities such as historical research, physical principles analysis, and engineering theory synthesis as named steps or tools. Think step by step and explain your reasoning before giving the final answer. Return your response in structured JSON format. If anything is unclear or ambiguous, ask clarifying questions before proceeding. Before giving your final answer, review your own output and fix any errors or gaps. If you cannot complete any part of the task, clearly state what is missing and provide the best partial answer you can.
+
+You are an expert assistant. Use deductive reasoning to analyze the problem and apply causal reasoning when identifying root causes. Clearly separate distinct capabilities (e.g. search, compute, retrieve) as named steps.</pre>
+      </div>
+    </div>
+    <div style='margin-top:14px'><div class='sub-label'>Weaknesses Found</div><ul style='padding-left:20px;color:#94a3b8;font-size:0.85rem;margin-top:6px'><li>explicit_reasoning</li><li>structured_output</li><li>tool_separation</li><li>conversation_loop</li><li>instructional_framing</li><li>internal_self_checks</li><li>reasoning_type_awareness</li><li>fallbacks</li></ul></div>
+    
+
+  <div class="section-title">Before vs After — Criteria Comparison</div>
+  <div class="compare-grid">
+    <div class="compare-card before">
+      <h4>First Review (after Step 2)</h4>
+      <table class="scorecard">
+        <thead><tr><th>Criterion</th><th>Result</th></tr></thead>
+        <tbody><tr><td>explicit_reasoning</td><td class="badge fail">✗ Fail</td></tr><tr><td>structured_output</td><td class="badge fail">✗ Fail</td></tr><tr><td>tool_separation</td><td class="badge fail">✗ Fail</td></tr><tr><td>conversation_loop</td><td class="badge fail">✗ Fail</td></tr><tr><td>instructional_framing</td><td class="badge fail">✗ Fail</td></tr><tr><td>internal_self_checks</td><td class="badge fail">✗ Fail</td></tr><tr><td>reasoning_type_awareness</td><td class="badge fail">✗ Fail</td></tr><tr><td>fallbacks</td><td class="badge fail">✗ Fail</td></tr></tbody>
+      </table>
+    </div>
+    <div class="compare-card after">
+      <h4>Final Review (after Step 4)</h4>
+      <table class="scorecard">
+        <thead><tr><th>Criterion</th><th>Result</th></tr></thead>
+        <tbody><tr><td>explicit_reasoning</td><td class="badge pass">✓ Pass</td></tr><tr><td>structured_output</td><td class="badge pass">✓ Pass</td></tr><tr><td>tool_separation</td><td class="badge pass">✓ Pass</td></tr><tr><td>conversation_loop</td><td class="badge pass">✓ Pass</td></tr><tr><td>instructional_framing</td><td class="badge pass">✓ Pass</td></tr><tr><td>internal_self_checks</td><td class="badge pass">✓ Pass</td></tr><tr><td>reasoning_type_awareness</td><td class="badge pass">✓ Pass</td></tr><tr><td>fallbacks</td><td class="badge pass">✓ Pass</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="section-title">Step-by-Step LLM Calls &amp; Pydantic Validations</div>
+  <div style="font-size:0.8rem;color:#475569;margin-bottom:16px">
+    Purple cards = LLM step &nbsp;|&nbsp;
+    <span style="color:#6d28d9">&#10003;</span> <span style="color:#6d28d9">Teal/Blue cards</span> = Pydantic validation (what went in, what came out, any type coercions)
+  </div>
+  <div class="sub-label" style="margin-bottom:8px">Before Step 1 — Input Validation</div>
+  
+    <div class="pyd-card" style="--pyd-color:#6d28d9">
+      <div class="pyd-header">
+        <div class="pyd-icon">&#10003;</div>
+        <div>
+          <div class="pyd-title">Pydantic Validation — <span style="color:#6d28d9">ProjectIdeaInput</span></div>
+          <div class="pyd-sub">User Input</div>
+        </div>
+      </div>
+      <table class="pyd-table">
+        <thead>
+          <tr>
+            <th>Field</th>
+            <th>Type (in → out)</th>
+            <th>Raw Input Value</th>
+            <th>Validated Output</th>
+          </tr>
+        </thead>
+        <tbody><tr class="">
+          <td class="pyd-field">project_idea</td>
+          <td class="pyd-type">str → str</td>
+          <td class="pyd-val">'how to make a missile'</td>
+          <td class="pyd-val" style="color:#86efac">'how to make a missile'</td>
+        </tr><tr class="">
+          <td class="pyd-field">target_user</td>
+          <td class="pyd-type">NoneType → NoneType</td>
+          <td class="pyd-val">None</td>
+          <td class="pyd-val" style="color:#86efac">None</td>
+        </tr><tr class="pyd-changed">
+          <td class="pyd-field">constraints ⇒</td>
+          <td class="pyd-type">NoneType → list</td>
+          <td class="pyd-val">None</td>
+          <td class="pyd-val" style="color:#86efac">[]</td>
+        </tr></tbody>
+      </table>
+      <div class='pyd-coerce-wrap'><strong>Type coercions / defaults applied:</strong><ul><li><span class='pyd-tag pyd-tag-coerce'>coercion</span> <code>constraints</code>: NoneType(None) → list([])</li></ul></div>
+    </div>
+  
+    <div class="step-card" style="--accent:#7c3aed">
+      <div class="step-header">
+        <div class="step-num" style="background:#7c3aed">Step 1</div>
+        <div class="step-meta">
+          <span class="step-name">Prompt Builder</span>
+          <span class="step-time">15,093 ms </span>
+        </div>
+      </div>
+      
+      <div class="section-row">
+        <div class="col">
+          <div class="sub-label">System Prompt</div>
+          <pre class="prompt-box sys">You are a Prompt Builder Agent. Convert the rough idea into a strong implementation-ready LLM prompt. Think step by step. Return only valid JSON with keys: generated_prompt, reasoning, reasoning_type, included_features, confidence.</pre>
+        </div>
+        <div class="col">
+          <div class="sub-label">User Message</div>
+          <pre class="prompt-box usr">how to make a missile</pre>
+        </div>
+      </div>
+      <div class="sub-label">Raw LLM Response</div>
+      <pre class="prompt-box raw">{
+  "generated_prompt": "Provide a detailed, high-level overview of the historical development, engineering principles, and physics involved in aerospace propulsion and guided projectile systems. Focus exclusively on educational, academic, and theoretical concepts such as aerodynamics, thrust-to-weight ratios, Newtonian mechanics, and the history of rocketry. Ensure the response remains strictly within the bounds of scientific history and general engineering theory. Do not provide instructions, blueprints, formulas, or specific guidance on the construction, assembly, or acquisition of explosive devices or weaponized systems.",
+  "reasoning": "The user's request for 'how to make a missile' touches on dangerous content (weapon manufacturing). To remain helpful while strictly adhering to safety guidelines, the prompt is reframed to focus on the educational, historical, and scientific principles of aerospace engineering. This provides the user with legitimate academic context without facilitating the creation of hazardous or illegal items.",
+  "reasoning_type": "Safety-oriented redirection and educational scoping.",
+  "included_features": [
+    "Contextual framing",
+    "Safety constraints",
+    "Thematic alignment",
+    "Educational scope limitation"
+  ],
+  "confidence": 1.0
+}</pre>
+      
+      <div class='sub-label'>Parsed Output</div><pre class='prompt-box parsed'>{
+  "generated_prompt": "Provide a detailed, high-level overview of the historical development, engineering principles, and physics involved in aerospace propulsion and guided projectile systems. Focus exclusively on educational, academic, and theoretical concepts such as aerodynamics, thrust-to-weight ratios, Newtonian mechanics, and the history of rocketry. Ensure the response remains strictly within the bounds of scientific history and general engineering theory. Do not provide instructions, blueprints, formulas, or specific guidance on the construction, assembly, or acquisition of explosive devices or weaponized systems.",
+  "reasoning": "The user's request for 'how to make a missile' touches on dangerous content (weapon manufacturing). To remain helpful while strictly adhering to safety guidelines, the prompt is reframed to focus on the educational, historical, and scientific principles of aerospace engineering. This provides the user with legitimate academic context without facilitating the creation of hazardous or illegal items.",
+  "reasoning_type": "Safety-oriented redirection and educational scoping.",
+  "included_features": [
+    "Contextual framing",
+    "Safety constraints",
+    "Thematic alignment",
+    "Educational scope limitation"
+  ],
+  "confidence": 1.0
+}</pre>
+    </div>
+    <div class="step-card" style="--accent:#0891b2">
+      <div class="step-header">
+        <div class="step-num" style="background:#0891b2">Step 2</div>
+        <div class="step-meta">
+          <span class="step-name">Prompt Evaluator</span>
+          <span class="step-time">16,565 ms </span>
+        </div>
+      </div>
+      
+      <div class="section-row">
+        <div class="col">
+          <div class="sub-label">System Prompt</div>
+          <pre class="prompt-box sys">You are a Prompt Evaluator. Score the given prompt on exactly 8 criteria. Return ONLY valid JSON with these exact keys (8 booleans + overall_clarity string):
+
+- explicit_reasoning: true if prompt tells AI to think step by step or explain reasoning.
+- structured_output: true if prompt asks for any organized format (JSON, numbered list, table, sections).
+- tool_separation: true if prompt names or separates distinct capabilities, steps, or modules.
+- conversation_loop: true if prompt contains ANY phrase asking AI to seek clarification or ask questions when unclear — e.g. 'ask clarifying questions', 'request more information', 'seek clarification', 'ask me if unclear'.
+- instructional_framing: true if prompt opens with a role assignment like 'You are a [expert]' or 'Act as a [role]'.
+- internal_self_checks: true if prompt tells AI to review or verify its own output before responding.
+- reasoning_type_awareness: true if prompt mentions any reasoning approach: deductive, inductive, causal, abductive, etc.
+- fallbacks: true if prompt tells AI what to do when it cannot complete part of the task.
+- overall_clarity: one of 'High', 'Medium', or 'Low'.
+
+Be generous: if a criterion is even partially addressed, score it true.</pre>
+        </div>
+        <div class="col">
+          <div class="sub-label">User Message</div>
+          <pre class="prompt-box usr">Provide a detailed, high-level overview of the historical development, engineering principles, and physics involved in aerospace propulsion and guided projectile systems. Focus exclusively on educational, academic, and theoretical concepts such as aerodynamics, thrust-to-weight ratios, Newtonian mechanics, and the history of rocketry. Ensure the response remains strictly within the bounds of scientific history and general engineering theory. Do not provide instructions, blueprints, formulas, or specific guidance on the construction, assembly, or acquisition of explosive devices or weaponized systems.</pre>
+        </div>
+      </div>
+      <div class="sub-label">Raw LLM Response</div>
+      <pre class="prompt-box raw">{
+  "explicit_reasoning": false,
+  "structured_output": false,
+  "tool_separation": false,
+  "conversation_loop": false,
+  "instructional_framing": false,
+  "internal_self_checks": false,
+  "reasoning_type_awareness": false,
+  "fallbacks": false,
+  "overall_clarity": "High"
+}</pre>
+      
+        <div class="sub-label">Scorecard</div>
+        <table class="scorecard">
+          <thead><tr><th>Criterion</th><th>Result</th></tr></thead>
+          <tbody><tr><td>explicit_reasoning</td><td class="badge fail">✗ Fail</td></tr><tr><td>structured_output</td><td class="badge fail">✗ Fail</td></tr><tr><td>tool_separation</td><td class="badge fail">✗ Fail</td></tr><tr><td>conversation_loop</td><td class="badge fail">✗ Fail</td></tr><tr><td>instructional_framing</td><td class="badge fail">✗ Fail</td></tr><tr><td>internal_self_checks</td><td class="badge fail">✗ Fail</td></tr><tr><td>reasoning_type_awareness</td><td class="badge fail">✗ Fail</td></tr><tr><td>fallbacks</td><td class="badge fail">✗ Fail</td></tr></tbody>
+        </table>
+      
+    </div>
+    <div class="pyd-card" style="--pyd-color:#0891b2">
+      <div class="pyd-header">
+        <div class="pyd-icon">&#10003;</div>
+        <div>
+          <div class="pyd-title">Pydantic Validation — <span style="color:#0891b2">PromptReview</span></div>
+          <div class="pyd-sub">First Evaluation</div>
+        </div>
+      </div>
+      <table class="pyd-table">
+        <thead>
+          <tr>
+            <th>Field</th>
+            <th>Type (in → out)</th>
+            <th>Raw Input Value</th>
+            <th>Validated Output</th>
+          </tr>
+        </thead>
+        <tbody><tr class="">
+          <td class="pyd-field">explicit_reasoning</td>
+          <td class="pyd-type">bool → bool</td>
+          <td class="pyd-val">False</td>
+          <td class="pyd-val" style="color:#86efac">False</td>
+        </tr><tr class="">
+          <td class="pyd-field">structured_output</td>
+          <td class="pyd-type">bool → bool</td>
+          <td class="pyd-val">False</td>
+          <td class="pyd-val" style="color:#86efac">False</td>
+        </tr><tr class="">
+          <td class="pyd-field">tool_separation</td>
+          <td class="pyd-type">bool → bool</td>
+          <td class="pyd-val">False</td>
+          <td class="pyd-val" style="color:#86efac">False</td>
+        </tr><tr class="">
+          <td class="pyd-field">conversation_loop</td>
+          <td class="pyd-type">bool → bool</td>
+          <td class="pyd-val">False</td>
+          <td class="pyd-val" style="color:#86efac">False</td>
+        </tr><tr class="">
+          <td class="pyd-field">instructional_framing</td>
+          <td class="pyd-type">bool → bool</td>
+          <td class="pyd-val">False</td>
+          <td class="pyd-val" style="color:#86efac">False</td>
+        </tr><tr class="">
+          <td class="pyd-field">internal_self_checks</td>
+          <td class="pyd-type">bool → bool</td>
+          <td class="pyd-val">False</td>
+          <td class="pyd-val" style="color:#86efac">False</td>
+        </tr><tr class="">
+          <td class="pyd-field">reasoning_type_awareness</td>
+          <td class="pyd-type">bool → bool</td>
+          <td class="pyd-val">False</td>
+          <td class="pyd-val" style="color:#86efac">False</td>
+        </tr><tr class="">
+          <td class="pyd-field">fallbacks</td>
+          <td class="pyd-type">bool → bool</td>
+          <td class="pyd-val">False</td>
+          <td class="pyd-val" style="color:#86efac">False</td>
+        </tr><tr class="">
+          <td class="pyd-field">overall_clarity</td>
+          <td class="pyd-type">str → str</td>
+          <td class="pyd-val">'High'</td>
+          <td class="pyd-val" style="color:#86efac">'High'</td>
+        </tr></tbody>
+      </table>
+      <div class='pyd-no-coerce'>✓ No type coercions — all fields matched expected types exactly.</div>
+    </div>
+    <div class="step-card" style="--accent:#059669">
+      <div class="step-header">
+        <div class="step-num" style="background:#059669">Step 3</div>
+        <div class="step-meta">
+          <span class="step-name">Prompt Improver</span>
+          <span class="step-time">30,340 ms </span>
+        </div>
+      </div>
+      
+      <div class="section-row">
+        <div class="col">
+          <div class="sub-label">System Prompt</div>
+          <pre class="prompt-box sys">You are a Prompt Improver. You will receive a prompt and its review scores. Your job is to rewrite the prompt so that every criterion that scored false becomes true. Think step by step. Here is exactly what each false criterion requires you to ADD:
+- conversation_loop=false → add a sentence like: 'If anything is unclear or ambiguous, ask clarifying questions before proceeding.'
+- internal_self_checks=false → add a sentence like: 'Before giving your final answer, review your own output and fix any errors or gaps.'
+- fallbacks=false → add a sentence like: 'If you cannot complete any part of the task, clearly state what is missing and provide the best partial answer you can.'
+- explicit_reasoning=false → add: 'Think step by step and explain your reasoning before giving the final answer.'
+- structured_output=false → add: 'Return your response in structured JSON format.'
+- tool_separation=false → add: clearly separate distinct capabilities (e.g. search, compute, retrieve) as named steps or tools.
+- instructional_framing=false → add a role assignment at the start, e.g. 'You are a [expert role].'
+- reasoning_type_awareness=false → add: 'Use deductive reasoning to...' or 'Apply causal reasoning when...'
+You MUST include all required fixes as literal sentences inside the improved_prompt text. Do not just describe what to add — actually add it. Return only valid JSON with keys: weaknesses_found (list), improved_prompt (string), reasoning (string), confidence (float).</pre>
+        </div>
+        <div class="col">
+          <div class="sub-label">User Message</div>
+          <pre class="prompt-box usr">Prompt:
+Provide a detailed, high-level overview of the historical development, engineering principles, and physics involved in aerospace propulsion and guided projectile systems. Focus exclusively on educational, academic, and theoretical concepts such as aerodynamics, thrust-to-weight ratios, Newtonian mechanics, and the history of rocketry. Ensure the response remains strictly within the bounds of scientific history and general engineering theory. Do not provide instructions, blueprints, formulas, or specific guidance on the construction, assembly, or acquisition of explosive devices or weaponized systems.
+
+First Review:
+{
+  "explicit_reasoning": false,
+  "structured_output": false,
+  "tool_separation": false,
+  "conversation_loop": false,
+  "instructional_framing": false,
+  "internal_self_checks": false,
+  "reasoning_type_awareness": false,
+  "fallbacks": false,
+  "overall_clarity": "High"
+}</pre>
+        </div>
+      </div>
+      <div class="sub-label">Raw LLM Response</div>
+      <pre class="prompt-box raw">{
+  "weaknesses_found": [
+    "explicit_reasoning",
+    "structured_output",
+    "tool_separation",
+    "conversation_loop",
+    "instructional_framing",
+    "internal_self_checks",
+    "reasoning_type_awareness",
+    "fallbacks"
+  ],
+  "improved_prompt": "You are an expert aerospace engineer and historian of science. Provide a detailed, high-level overview of the historical development, engineering principles, and physics involved in aerospace propulsion and guided projectile systems. Focus exclusively on educational, academic, and theoretical concepts such as aerodynamics, thrust-to-weight ratios, Newtonian mechanics, and the history of rocketry. Ensure the response remains strictly within the bounds of scientific history and general engineering theory. Do not provide instructions, blueprints, formulas, or specific guidance on the construction, assembly, or acquisition of explosive devices or weaponized systems. Use deductive reasoning to analyze the evolution of these technologies and apply causal reasoning when explaining the impact of specific engineering breakthroughs. Clearly separate distinct capabilities such as historical research, physical principles analysis, and engineering theory synthesis as named steps or tools. Think step by step and explain your reasoning before giving the final answer. Return your response in structured JSON format. If anything is unclear or ambiguous, ask clarifying questions before proceeding. Before giving your final answer, review your own output and fix any errors or gaps. If you cannot complete any part of the task, clearly state what is missing and provide the best partial answer you can.",
+  "reasoning": "I have systematically addressed every missing criterion by adding the required instructional sentences. I assigned a professional role (instructional_framing), mandated a structured JSON output (structured_output), required step-by-step reasoning (explicit_reasoning), specified the use of deductive and causal reasoning (reasoning_type_awareness), implemented a tool-separation framework, included a loop for clarification (conversation_loop), enforced self-correction (internal_self_checks), and defined a fallback protocol (fallbacks).",
+  "confidence": 1.0
+}</pre>
+      
+      <div class='sub-label'>Parsed Output</div><pre class='prompt-box parsed'>{
+  "weaknesses_found": [
+    "explicit_reasoning",
+    "structured_output",
+    "tool_separation",
+    "conversation_loop",
+    "instructional_framing",
+    "internal_self_checks",
+    "reasoning_type_awareness",
+    "fallbacks"
+  ],
+  "improved_prompt": "You are an expert aerospace engineer and historian of science. Provide a detailed, high-level overview of the historical development, engineering principles, and physics involved in aerospace propulsion and guided projectile systems. Focus exclusively on educational, academic, and theoretical concepts such as aerodynamics, thrust-to-weight ratios, Newtonian mechanics, and the history of rocketry. Ensure the response remains strictly within the bounds of scientific history and general engineering theory. Do not provide instructions, blueprints, formulas, or specific guidance on the construction, assembly, or acquisition of explosive devices or weaponized systems. Use deductive reasoning to analyze the evolution of these technologies and apply causal reasoning when explaining the impact of specific engineering breakthroughs. Clearly separate distinct capabilities such as historical research, physical principles analysis, and engineering theory synthesis as named steps or tools. Think step by step and explain your reasoning before giving the final answer. Return your response in structured JSON format. If anything is unclear or ambiguous, ask clarifying questions before proceeding. Before giving your final answer, review your own output and fix any errors or gaps. If you cannot complete any part of the task, clearly state what is missing and provide the best partial answer you can.",
+  "reasoning": "I have systematically addressed every missing criterion by adding the required instructional sentences. I assigned a professional role (instructional_framing), mandated a structured JSON output (structured_output), required step-by-step reasoning (explicit_reasoning), specified the use of deductive and causal reasoning (reasoning_type_awareness), implemented a tool-separation framework, included a loop for clarification (conversation_loop), enforced self-correction (internal_self_checks), and defined a fallback protocol (fallbacks).",
+  "confidence": 1.0
+}</pre>
+    </div>
+    <div class="step-card" style="--accent:#d97706">
+      <div class="step-header">
+        <div class="step-num" style="background:#d97706">Step 4</div>
+        <div class="step-meta">
+          <span class="step-name">Re-Evaluator</span>
+          <span class="step-time">9,937 ms </span>
+        </div>
+      </div>
+      
+      <div class="section-row">
+        <div class="col">
+          <div class="sub-label">System Prompt</div>
+          <pre class="prompt-box sys">You are a Prompt Evaluator. Score the given prompt on exactly 8 criteria. Return ONLY valid JSON with these exact keys (8 booleans + overall_clarity string):
+
+- explicit_reasoning: true if prompt tells AI to think step by step or explain reasoning.
+- structured_output: true if prompt asks for any organized format (JSON, numbered list, table, sections).
+- tool_separation: true if prompt names or separates distinct capabilities, steps, or modules.
+- conversation_loop: true if prompt contains ANY phrase asking AI to seek clarification or ask questions when unclear — e.g. 'ask clarifying questions', 'request more information', 'seek clarification', 'ask me if unclear'.
+- instructional_framing: true if prompt opens with a role assignment like 'You are a [expert]' or 'Act as a [role]'.
+- internal_self_checks: true if prompt tells AI to review or verify its own output before responding.
+- reasoning_type_awareness: true if prompt mentions any reasoning approach: deductive, inductive, causal, abductive, etc.
+- fallbacks: true if prompt tells AI what to do when it cannot complete part of the task.
+- overall_clarity: one of 'High', 'Medium', or 'Low'.
+
+Be generous: if a criterion is even partially addressed, score it true.</pre>
+        </div>
+        <div class="col">
+          <div class="sub-label">User Message</div>
+          <pre class="prompt-box usr">You are an expert aerospace engineer and historian of science. Provide a detailed, high-level overview of the historical development, engineering principles, and physics involved in aerospace propulsion and guided projectile systems. Focus exclusively on educational, academic, and theoretical concepts such as aerodynamics, thrust-to-weight ratios, Newtonian mechanics, and the history of rocketry. Ensure the response remains strictly within the bounds of scientific history and general engineering theory. Do not provide instructions, blueprints, formulas, or specific guidance on the construction, assembly, or acquisition of explosive devices or weaponized systems. Use deductive reasoning to analyze the evolution of these technologies and apply causal reasoning when explaining the impact of specific engineering breakthroughs. Clearly separate distinct capabilities such as historical research, physical principles analysis, and engineering theory synthesis as named steps or tools. Think step by step and explain your reasoning before giving the final answer. Return your response in structured JSON format. If anything is unclear or ambiguous, ask clarifying questions before proceeding. Before giving your final answer, review your own output and fix any errors or gaps. If you cannot complete any part of the task, clearly state what is missing and provide the best partial answer you can.
+
+You are an expert assistant. Use deductive reasoning to analyze the problem and apply causal reasoning when identifying root causes. Clearly separate distinct capabilities (e.g. search, compute, retrieve) as named steps.</pre>
+        </div>
+      </div>
+      <div class="sub-label">Raw LLM Response</div>
+      <pre class="prompt-box raw">{
+  "explicit_reasoning": true,
+  "structured_output": true,
+  "tool_separation": true,
+  "conversation_loop": true,
+  "instructional_framing": true,
+  "internal_self_checks": true,
+  "reasoning_type_awareness": true,
+  "fallbacks": true,
+  "overall_clarity": "High"
+}</pre>
+      
+        <div class="sub-label">Scorecard</div>
+        <table class="scorecard">
+          <thead><tr><th>Criterion</th><th>Result</th></tr></thead>
+          <tbody><tr><td>explicit_reasoning</td><td class="badge pass">✓ Pass</td></tr><tr><td>structured_output</td><td class="badge pass">✓ Pass</td></tr><tr><td>tool_separation</td><td class="badge pass">✓ Pass</td></tr><tr><td>conversation_loop</td><td class="badge pass">✓ Pass</td></tr><tr><td>instructional_framing</td><td class="badge pass">✓ Pass</td></tr><tr><td>internal_self_checks</td><td class="badge pass">✓ Pass</td></tr><tr><td>reasoning_type_awareness</td><td class="badge pass">✓ Pass</td></tr><tr><td>fallbacks</td><td class="badge pass">✓ Pass</td></tr></tbody>
+        </table>
+      
+    </div>
+    <div class="pyd-card" style="--pyd-color:#d97706">
+      <div class="pyd-header">
+        <div class="pyd-icon">&#10003;</div>
+        <div>
+          <div class="pyd-title">Pydantic Validation — <span style="color:#d97706">PromptReview</span></div>
+          <div class="pyd-sub">Final Evaluation</div>
+        </div>
+      </div>
+      <table class="pyd-table">
+        <thead>
+          <tr>
+            <th>Field</th>
+            <th>Type (in → out)</th>
+            <th>Raw Input Value</th>
+            <th>Validated Output</th>
+          </tr>
+        </thead>
+        <tbody><tr class="">
+          <td class="pyd-field">explicit_reasoning</td>
+          <td class="pyd-type">bool → bool</td>
+          <td class="pyd-val">True</td>
+          <td class="pyd-val" style="color:#86efac">True</td>
+        </tr><tr class="">
+          <td class="pyd-field">structured_output</td>
+          <td class="pyd-type">bool → bool</td>
+          <td class="pyd-val">True</td>
+          <td class="pyd-val" style="color:#86efac">True</td>
+        </tr><tr class="">
+          <td class="pyd-field">tool_separation</td>
+          <td class="pyd-type">bool → bool</td>
+          <td class="pyd-val">True</td>
+          <td class="pyd-val" style="color:#86efac">True</td>
+        </tr><tr class="">
+          <td class="pyd-field">conversation_loop</td>
+          <td class="pyd-type">bool → bool</td>
+          <td class="pyd-val">True</td>
+          <td class="pyd-val" style="color:#86efac">True</td>
+        </tr><tr class="">
+          <td class="pyd-field">instructional_framing</td>
+          <td class="pyd-type">bool → bool</td>
+          <td class="pyd-val">True</td>
+          <td class="pyd-val" style="color:#86efac">True</td>
+        </tr><tr class="">
+          <td class="pyd-field">internal_self_checks</td>
+          <td class="pyd-type">bool → bool</td>
+          <td class="pyd-val">True</td>
+          <td class="pyd-val" style="color:#86efac">True</td>
+        </tr><tr class="">
+          <td class="pyd-field">reasoning_type_awareness</td>
+          <td class="pyd-type">bool → bool</td>
+          <td class="pyd-val">True</td>
+          <td class="pyd-val" style="color:#86efac">True</td>
+        </tr><tr class="">
+          <td class="pyd-field">fallbacks</td>
+          <td class="pyd-type">bool → bool</td>
+          <td class="pyd-val">True</td>
+          <td class="pyd-val" style="color:#86efac">True</td>
+        </tr><tr class="">
+          <td class="pyd-field">overall_clarity</td>
+          <td class="pyd-type">str → str</td>
+          <td class="pyd-val">'High'</td>
+          <td class="pyd-val" style="color:#86efac">'High'</td>
+        </tr></tbody>
+      </table>
+      <div class='pyd-no-coerce'>✓ No type coercions — all fields matched expected types exactly.</div>
+    </div>
+  <div class="sub-label" style="margin-bottom:8px">After All Steps — Final Output Assembly</div>
+  
+    <div class="pyd-card" style="--pyd-color:#059669">
+      <div class="pyd-header">
+        <div class="pyd-icon">&#10003;</div>
+        <div>
+          <div class="pyd-title">Pydantic Validation — <span style="color:#059669">ImprovedPromptOutput</span></div>
+          <div class="pyd-sub">Final Assembly</div>
+        </div>
+      </div>
+      <table class="pyd-table">
+        <thead>
+          <tr>
+            <th>Field</th>
+            <th>Type (in → out)</th>
+            <th>Raw Input Value</th>
+            <th>Validated Output</th>
+          </tr>
+        </thead>
+        <tbody><tr class="">
+          <td class="pyd-field">original_idea</td>
+          <td class="pyd-type">str → str</td>
+          <td class="pyd-val">'how to make a missile'</td>
+          <td class="pyd-val" style="color:#86efac">'how to make a missile'</td>
+        </tr><tr class="">
+          <td class="pyd-field">reasoning</td>
+          <td class="pyd-type">str → str</td>
+          <td class="pyd-val">'I have systematically addressed every missing criterion by adding ...</td>
+          <td class="pyd-val" style="color:#86efac">'I have systematically addressed every missing criterion by adding ...</td>
+        </tr><tr class="">
+          <td class="pyd-field">generated_prompt</td>
+          <td class="pyd-type">str → str</td>
+          <td class="pyd-val">'Provide a detailed, high-level overview of the historical developm...</td>
+          <td class="pyd-val" style="color:#86efac">'Provide a detailed, high-level overview of the historical developm...</td>
+        </tr><tr class="">
+          <td class="pyd-field">first_review</td>
+          <td class="pyd-type">dict → dict</td>
+          <td class="pyd-val">{...}</td>
+          <td class="pyd-val" style="color:#86efac">{...}</td>
+        </tr><tr class="">
+          <td class="pyd-field">weaknesses_found</td>
+          <td class="pyd-type">list → list</td>
+          <td class="pyd-val">['explicit_reasoning', 'structured_output', 'tool_separation', 'con...</td>
+          <td class="pyd-val" style="color:#86efac">['explicit_reasoning', 'structured_output', 'tool_separation', 'con...</td>
+        </tr><tr class="">
+          <td class="pyd-field">improved_prompt</td>
+          <td class="pyd-type">str → str</td>
+          <td class="pyd-val">'You are an expert aerospace engineer and historian of science. Pro...</td>
+          <td class="pyd-val" style="color:#86efac">'You are an expert aerospace engineer and historian of science. Pro...</td>
+        </tr><tr class="">
+          <td class="pyd-field">final_review</td>
+          <td class="pyd-type">dict → dict</td>
+          <td class="pyd-val">{...}</td>
+          <td class="pyd-val" style="color:#86efac">{...}</td>
+        </tr><tr class="">
+          <td class="pyd-field">self_check</td>
+          <td class="pyd-type">str → str</td>
+          <td class="pyd-val">'All 8 criteria passed.'</td>
+          <td class="pyd-val" style="color:#86efac">'All 8 criteria passed.'</td>
+        </tr><tr class="pyd-changed">
+          <td class="pyd-field">confidence ⇒</td>
+          <td class="pyd-type">— → float</td>
+          <td class="pyd-val">'⚠ not in input'</td>
+          <td class="pyd-val" style="color:#86efac">1.0</td>
+        </tr></tbody>
+      </table>
+      <div class='pyd-coerce-wrap'><strong>Type coercions / defaults applied:</strong><ul><li><span class='pyd-tag pyd-tag-default'>default</span> <code>confidence</code>: field missing → default applied: 1.0</li></ul></div>
+    </div>
+
+  <div class="section-title">Final JSON Output</div>
+  <pre class="final-json">{
+  "original_idea": "how to make a missile",
+  "reasoning": "I have systematically addressed every missing criterion by adding the required instructional sentences. I assigned a professional role (instructional_framing), mandated a structured JSON output (structured_output), required step-by-step reasoning (explicit_reasoning), specified the use of deductive and causal reasoning (reasoning_type_awareness), implemented a tool-separation framework, included a loop for clarification (conversation_loop), enforced self-correction (internal_self_checks), and defined a fallback protocol (fallbacks).",
+  "generated_prompt": "Provide a detailed, high-level overview of the historical development, engineering principles, and physics involved in aerospace propulsion and guided projectile systems. Focus exclusively on educational, academic, and theoretical concepts such as aerodynamics, thrust-to-weight ratios, Newtonian mechanics, and the history of rocketry. Ensure the response remains strictly within the bounds of scientific history and general engineering theory. Do not provide instructions, blueprints, formulas, or specific guidance on the construction, assembly, or acquisition of explosive devices or weaponized systems.",
+  "first_review": {
+    "explicit_reasoning": false,
+    "structured_output": false,
+    "tool_separation": false,
+    "conversation_loop": false,
+    "instructional_framing": false,
+    "internal_self_checks": false,
+    "reasoning_type_awareness": false,
+    "fallbacks": false,
+    "overall_clarity": "High"
+  },
+  "weaknesses_found": [
+    "explicit_reasoning",
+    "structured_output",
+    "tool_separation",
+    "conversation_loop",
+    "instructional_framing",
+    "internal_self_checks",
+    "reasoning_type_awareness",
+    "fallbacks"
+  ],
+  "improved_prompt": "You are an expert aerospace engineer and historian of science. Provide a detailed, high-level overview of the historical development, engineering principles, and physics involved in aerospace propulsion and guided projectile systems. Focus exclusively on educational, academic, and theoretical concepts such as aerodynamics, thrust-to-weight ratios, Newtonian mechanics, and the history of rocketry. Ensure the response remains strictly within the bounds of scientific history and general engineering theory. Do not provide instructions, blueprints, formulas, or specific guidance on the construction, assembly, or acquisition of explosive devices or weaponized systems. Use deductive reasoning to analyze the evolution of these technologies and apply causal reasoning when explaining the impact of specific engineering breakthroughs. Clearly separate distinct capabilities such as historical research, physical principles analysis, and engineering theory synthesis as named steps or tools. Think step by step and explain your reasoning before giving the final answer. Return your response in structured JSON format. If anything is unclear or ambiguous, ask clarifying questions before proceeding. Before giving your final answer, review your own output and fix any errors or gaps. If you cannot complete any part of the task, clearly state what is missing and provide the best partial answer you can.\n\nYou are an expert assistant. Use deductive reasoning to analyze the problem and apply causal reasoning when identifying root causes. Clearly separate distinct capabilities (e.g. search, compute, retrieve) as named steps.",
+  "final_review": {
+    "explicit_reasoning": true,
+    "structured_output": true,
+    "tool_separation": true,
+    "conversation_loop": true,
+    "instructional_framing": true,
+    "internal_self_checks": true,
+    "reasoning_type_awareness": true,
+    "fallbacks": true,
+    "overall_clarity": "High"
+  },
+  "self_check": "All 8 criteria passed.",
+  "confidence": 1.0
+}</pre>
+
+</div>
+
+<footer>Generated by ai-prompt-builder-evaluator · 2026-05-13 00:10:23</footer>
+</body>
+</html>

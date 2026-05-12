@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Run Log — how to build a radar</title>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'Segoe UI',system-ui,sans-serif;background:#0f1117;color:#e2e8f0;line-height:1.6}
+    .hero{background:linear-gradient(135deg,#1a1f35,#0f1117);border-bottom:1px solid #1e293b;padding:40px 32px 34px}
+    .hero h1{font-size:1.7rem;font-weight:800;color:#c4b5fd;margin-bottom:8px}
+    .hero .idea-text{background:#1e293b;border:1px solid #2d3748;border-radius:8px;padding:12px 16px;font-size:0.95rem;color:#94a3b8;margin-top:14px}
+    .meta-row{display:flex;gap:20px;flex-wrap:wrap;margin-top:16px}
+    .meta-chip{background:#1e293b;border:1px solid #2d3748;border-radius:999px;padding:4px 14px;font-size:0.78rem;color:#64748b}
+    .meta-chip span{color:#c4b5fd;font-weight:700}
+    .container{max-width:1100px;margin:0 auto;padding:36px 20px 80px}
+    .section-title{font-size:1.1rem;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.08em;margin:40px 0 16px;padding-bottom:8px;border-bottom:1px solid #1e293b}
+    /* Summary cards */
+    .summary-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:32px}
+    @media(max-width:700px){.summary-grid{grid-template-columns:1fr 1fr}}
+    .sum-card{background:#1e293b;border:1px solid #2d3748;border-radius:12px;padding:18px 20px;text-align:center}
+    .sum-card .val{font-size:1.9rem;font-weight:800;color:#c4b5fd}
+    .sum-card .lbl{font-size:0.78rem;color:#64748b;margin-top:4px;text-transform:uppercase;letter-spacing:.05em}
+    /* Confidence bar */
+    .conf-bar-wrap{background:#1e293b;border:1px solid #2d3748;border-radius:12px;padding:20px 24px;margin-bottom:16px}
+    .conf-bar-track{background:#0f172a;border-radius:999px;height:14px;overflow:hidden;margin:10px 0 6px}
+    .conf-bar-fill{height:100%;border-radius:999px;background:linear-gradient(90deg,#7c3aed,#06b6d4);transition:width .4s}
+    .conf-label{font-size:0.85rem;color:#64748b}
+    /* Self check */
+    .self-check{border-radius:10px;padding:14px 18px;font-size:0.92rem;font-weight:600;margin-bottom:24px}
+    .self-check.pass{background:#052e16;border:1px solid #166534;color:#86efac}
+    .self-check.fail{background:#2d0a0a;border:1px solid #7f1d1d;color:#fca5a5}
+    /* Step cards */
+    .step-card{background:#1e293b;border:1px solid #2d3748;border-left:3px solid var(--accent);border-radius:12px;padding:22px 24px;margin-bottom:20px}
+    .step-header{display:flex;align-items:center;gap:14px;margin-bottom:18px}
+    .step-num{color:#fff;font-size:0.8rem;font-weight:800;border-radius:6px;padding:4px 12px;white-space:nowrap}
+    .step-name{font-size:1rem;font-weight:700;color:#e2e8f0}
+    .step-time{font-size:0.78rem;color:#64748b;margin-left:8px}
+    .retry-tag{background:#451a03;color:#fb923c;border:1px solid #92400e;border-radius:999px;padding:1px 8px;font-size:0.7rem;margin-left:6px}
+    .section-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
+    @media(max-width:650px){.section-row{grid-template-columns:1fr}}
+    .sub-label{font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#475569;margin:10px 0 5px}
+    .prompt-box{background:#0f172a;border:1px solid #1e293b;border-radius:8px;padding:14px;font-family:'Courier New',monospace;font-size:0.78rem;color:#cbd5e1;white-space:pre-wrap;word-break:break-word;max-height:280px;overflow-y:auto}
+    .prompt-box.sys{border-color:#7c3aed33}
+    .prompt-box.usr{border-color:#0891b233}
+    .prompt-box.raw{border-color:#334155;color:#94a3b8}
+    .prompt-box.parsed{border-color:#05966933;color:#86efac}
+    /* Scorecard */
+    .scorecard{width:100%;border-collapse:collapse;margin-top:6px;font-size:0.83rem}
+    .scorecard th{text-align:left;padding:6px 10px;color:#475569;font-weight:600;border-bottom:1px solid #1e293b}
+    .scorecard td{padding:7px 10px;border-bottom:1px solid #1e293b;color:#94a3b8}
+    .badge{font-weight:700;font-size:0.75rem;border-radius:6px;padding:2px 10px;text-align:center}
+    .badge.pass{background:#052e16;color:#86efac;border:1px solid #166534}
+    .badge.fail{background:#2d0a0a;color:#fca5a5;border:1px solid #7f1d1d}
+    /* Before/after */
+    .compare-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px}
+    @media(max-width:650px){.compare-grid{grid-template-columns:1fr}}
+    .compare-card{background:#0f172a;border:1px solid #1e293b;border-radius:10px;padding:16px 18px}
+    .compare-card h4{font-size:0.85rem;font-weight:700;margin-bottom:10px}
+    .compare-card.before h4{color:#f87171}
+    .compare-card.after h4{color:#86efac}
+    /* Final JSON */
+    .final-json{background:#0f172a;border:1px solid #1e293b;border-radius:10px;padding:20px;font-family:'Courier New',monospace;font-size:0.8rem;color:#86efac;white-space:pre-wrap;word-break:break-word;overflow-x:auto}
+    .error-box{background:#2d0a0a;border:1px solid #7f1d1d;border-radius:8px;padding:12px;color:#fca5a5;font-size:0.85rem;margin-bottom:14px}
+    footer{text-align:center;padding:24px;color:#334155;font-size:0.75rem;border-top:1px solid #1e293b}
+  </style>
+</head>
+<body>
+
+<div class="hero">
+  <div style="font-size:0.75rem;color:#475569;margin-bottom:6px;letter-spacing:.06em;text-transform:uppercase">AI Prompt Builder Evaluator · Run Log</div>
+  <h1>Pipeline Execution Report</h1>
+  <div class="idea-text"><strong style="color:#7c3aed">Idea:</strong> how to build a radar</div>
+  <div class="meta-row">
+    <div class="meta-chip">Run at <span>2026-05-12 17:26:58</span></div>
+    <div class="meta-chip">Total time <span>98,352 ms</span></div>
+    <div class="meta-chip">Steps completed <span>4/4</span></div>
+    <div class="meta-chip">Retries <span>0</span></div>
+  </div>
+</div>
+
+<div class="container">
+
+  <div class="section-title">Summary</div>
+
+  <div class="summary-grid">
+    <div class="sum-card"><div class="val">4</div><div class="lbl">Steps Done</div></div>
+    <div class="sum-card"><div class="val">0</div><div class="lbl">JSON Retries</div></div>
+    <div class="sum-card"><div class="val">100%</div><div class="lbl">Confidence</div></div>
+    <div class="sum-card"><div class="val">98,352</div><div class="lbl">Total ms</div></div>
+  </div>
+
+  <div class="conf-bar-wrap">
+    <div class="sub-label">Final Confidence Score</div>
+    <div class="conf-bar-track"><div class="conf-bar-fill" style="width:100%"></div></div>
+    <div class="conf-label">100% — reported by the Prompt Improver agent</div>
+  </div>
+
+  <div class="self-check fail">Self Check: Failed criteria: conversation_loop</div>
+
+  <div class="section-title">Generated Prompt → Improved Prompt</div>
+  
+    <div class="compare-grid" style="margin-bottom:0">
+      <div class="compare-card before" style="border-color:#4b1e1e">
+        <h4 style="margin-bottom:8px">Original Generated Prompt</h4>
+        <pre class="prompt-box raw" style="max-height:340px">Act as an expert Electrical Engineer specializing in RF (Radio Frequency) systems and signal processing. Provide a comprehensive, step-by-step guide on how to design and build a basic functional radar system (e.g., a Continuous Wave or FMCW radar). Include: 1) A breakdown of essential hardware components (Antenna, RF Front-end, Mixer, ADC, and Microcontroller/DSP). 2) A high-level explanation of the signal processing chain (Beat frequency calculation, FFT, and target detection). 3) Safety warnings regarding RF transmission and legal compliance with frequency regulations (e.g., FCC/ETSI). 4) Recommended low-cost platforms for prototyping (e.g., SDRs, specialized radar development kits). Use a structured, technical, yet accessible tone.</pre>
+      </div>
+      <div class="compare-card after" style="border-color:#1e3a2f">
+        <h4 style="margin-bottom:8px">Improved Prompt</h4>
+        <pre class="prompt-box parsed" style="max-height:340px">You are an expert Electrical Engineer specializing in RF (Radio Frequency) systems and signal processing. Provide a comprehensive, step-by-step guide on how to design and build a basic functional radar system (e.g., a Continuous Wave or FMCW radar). Include: 1) A breakdown of essential hardware components (Antenna, RF Front-end, Mixer, ADC, and Microcontroller/DSP). 2) A high-level explanation of the signal processing chain (Beat frequency calculation, FFT, and target detection). 3) Safety warnings regarding RF transmission and legal compliance with frequency regulations (e.g., FCC/ETSI). 4) Recommended low-cost platforms for prototyping (e.g., SDRs, specialized radar development kits). Use a structured, technical, yet accessible tone. Use deductive reasoning to analyze the technical requirements. Clearly separate distinct capabilities (e.g., search, compute, retrieve) as named steps or tools. Return your response in structured JSON format. Think step by step and explain your reasoning before giving the final answer. If anything is unclear or ambiguous, ask clarifying questions before proceeding. Before giving your final answer, review your own output and fix any errors or gaps. If you cannot complete any part of the task, clearly state what is missing and provide the best partial answer you can.</pre>
+      </div>
+    </div>
+    <div style='margin-top:14px'><div class='sub-label'>Weaknesses Found</div><ul style='padding-left:20px;color:#94a3b8;font-size:0.85rem;margin-top:6px'><li>conversation_loop</li><li>internal_self_checks</li><li>fallbacks</li></ul></div>
+    
+
+  <div class="section-title">Before vs After — Criteria Comparison</div>
+  <div class="compare-grid">
+    <div class="compare-card before">
+      <h4>First Review (after Step 2)</h4>
+      <table class="scorecard">
+        <thead><tr><th>Criterion</th><th>Result</th></tr></thead>
+        <tbody><tr><td>explicit_reasoning</td><td class="badge pass">✓ Pass</td></tr><tr><td>structured_output</td><td class="badge pass">✓ Pass</td></tr><tr><td>tool_separation</td><td class="badge pass">✓ Pass</td></tr><tr><td>conversation_loop</td><td class="badge fail">✗ Fail</td></tr><tr><td>instructional_framing</td><td class="badge pass">✓ Pass</td></tr><tr><td>internal_self_checks</td><td class="badge fail">✗ Fail</td></tr><tr><td>reasoning_type_awareness</td><td class="badge pass">✓ Pass</td></tr><tr><td>fallbacks</td><td class="badge fail">✗ Fail</td></tr></tbody>
+      </table>
+    </div>
+    <div class="compare-card after">
+      <h4>Final Review (after Step 4)</h4>
+      <table class="scorecard">
+        <thead><tr><th>Criterion</th><th>Result</th></tr></thead>
+        <tbody><tr><td>explicit_reasoning</td><td class="badge pass">✓ Pass</td></tr><tr><td>structured_output</td><td class="badge pass">✓ Pass</td></tr><tr><td>tool_separation</td><td class="badge pass">✓ Pass</td></tr><tr><td>conversation_loop</td><td class="badge fail">✗ Fail</td></tr><tr><td>instructional_framing</td><td class="badge pass">✓ Pass</td></tr><tr><td>internal_self_checks</td><td class="badge pass">✓ Pass</td></tr><tr><td>reasoning_type_awareness</td><td class="badge pass">✓ Pass</td></tr><tr><td>fallbacks</td><td class="badge pass">✓ Pass</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="section-title">Step-by-Step LLM Calls</div>
+  
+    <div class="step-card" style="--accent:#7c3aed">
+      <div class="step-header">
+        <div class="step-num" style="background:#7c3aed">Step 1</div>
+        <div class="step-meta">
+          <span class="step-name">Prompt Builder</span>
+          <span class="step-time">32,657 ms </span>
+        </div>
+      </div>
+      
+      <div class="section-row">
+        <div class="col">
+          <div class="sub-label">System Prompt</div>
+          <pre class="prompt-box sys">You are a Prompt Builder Agent. Convert the rough idea into a strong implementation-ready LLM prompt. Think step by step. Return only valid JSON with keys: generated_prompt, reasoning, reasoning_type, included_features, confidence.</pre>
+        </div>
+        <div class="col">
+          <div class="sub-label">User Message</div>
+          <pre class="prompt-box usr">how to build a radar</pre>
+        </div>
+      </div>
+      <div class="sub-label">Raw LLM Response</div>
+      <pre class="prompt-box raw">{
+  "generated_prompt": "Act as an expert Electrical Engineer specializing in RF (Radio Frequency) systems and signal processing. Provide a comprehensive, step-by-step guide on how to design and build a basic functional radar system (e.g., a Continuous Wave or FMCW radar). Include: 1) A breakdown of essential hardware components (Antenna, RF Front-end, Mixer, ADC, and Microcontroller/DSP). 2) A high-level explanation of the signal processing chain (Beat frequency calculation, FFT, and target detection). 3) Safety warnings regarding RF transmission and legal compliance with frequency regulations (e.g., FCC/ETSI). 4) Recommended low-cost platforms for prototyping (e.g., SDRs, specialized radar development kits). Use a structured, technical, yet accessible tone.",
+  "reasoning": "The user's request was broad ('how to build a radar'). To provide a useful response, the prompt needs to define the persona (RF Expert), the scope (hardware + software), and necessary constraints (safety and legal compliance). It transforms a vague query into an engineering-oriented instructional request.",
+  "reasoning_type": "Directive and Contextual Expansion",
+  "included_features": [
+    "Persona adoption",
+    "Technical constraints",
+    "Hardware/Software requirements",
+    "Safety and regulatory guidance",
+    "Step-by-step methodology"
+  ],
+  "confidence": 0.95
+}</pre>
+      
+      <div class='sub-label'>Parsed Output</div><pre class='prompt-box parsed'>{
+  "generated_prompt": "Act as an expert Electrical Engineer specializing in RF (Radio Frequency) systems and signal processing. Provide a comprehensive, step-by-step guide on how to design and build a basic functional radar system (e.g., a Continuous Wave or FMCW radar). Include: 1) A breakdown of essential hardware components (Antenna, RF Front-end, Mixer, ADC, and Microcontroller/DSP). 2) A high-level explanation of the signal processing chain (Beat frequency calculation, FFT, and target detection). 3) Safety warnings regarding RF transmission and legal compliance with frequency regulations (e.g., FCC/ETSI). 4) Recommended low-cost platforms for prototyping (e.g., SDRs, specialized radar development kits). Use a structured, technical, yet accessible tone.",
+  "reasoning": "The user's request was broad ('how to build a radar'). To provide a useful response, the prompt needs to define the persona (RF Expert), the scope (hardware + software), and necessary constraints (safety and legal compliance). It transforms a vague query into an engineering-oriented instructional request.",
+  "reasoning_type": "Directive and Contextual Expansion",
+  "included_features": [
+    "Persona adoption",
+    "Technical constraints",
+    "Hardware/Software requirements",
+    "Safety and regulatory guidance",
+    "Step-by-step methodology"
+  ],
+  "confidence": 0.95
+}</pre>
+    </div>
+    <div class="step-card" style="--accent:#0891b2">
+      <div class="step-header">
+        <div class="step-num" style="background:#0891b2">Step 2</div>
+        <div class="step-meta">
+          <span class="step-name">Prompt Evaluator</span>
+          <span class="step-time">37,458 ms </span>
+        </div>
+      </div>
+      
+      <div class="section-row">
+        <div class="col">
+          <div class="sub-label">System Prompt</div>
+          <pre class="prompt-box sys">You are a Prompt Evaluator. Score the prompt on 8 criteria. Return only valid JSON with keys: explicit_reasoning, structured_output, tool_separation, conversation_loop, instructional_framing, internal_self_checks, reasoning_type_awareness, fallbacks (all booleans), overall_clarity (string).</pre>
+        </div>
+        <div class="col">
+          <div class="sub-label">User Message</div>
+          <pre class="prompt-box usr">Act as an expert Electrical Engineer specializing in RF (Radio Frequency) systems and signal processing. Provide a comprehensive, step-by-step guide on how to design and build a basic functional radar system (e.g., a Continuous Wave or FMCW radar). Include: 1) A breakdown of essential hardware components (Antenna, RF Front-end, Mixer, ADC, and Microcontroller/DSP). 2) A high-level explanation of the signal processing chain (Beat frequency calculation, FFT, and target detection). 3) Safety warnings regarding RF transmission and legal compliance with frequency regulations (e.g., FCC/ETSI). 4) Recommended low-cost platforms for prototyping (e.g., SDRs, specialized radar development kits). Use a structured, technical, yet accessible tone.</pre>
+        </div>
+      </div>
+      <div class="sub-label">Raw LLM Response</div>
+      <pre class="prompt-box raw">{
+  "explicit_reasoning": true,
+  "structured_output": true,
+  "tool_separation": true,
+  "conversation_loop": false,
+  "instructional_framing": true,
+  "internal_self_checks": false,
+  "reasoning_type_awareness": true,
+  "fallbacks": false,
+  "overall_clarity": "High"
+}</pre>
+      
+        <div class="sub-label">Scorecard</div>
+        <table class="scorecard">
+          <thead><tr><th>Criterion</th><th>Result</th></tr></thead>
+          <tbody><tr><td>explicit_reasoning</td><td class="badge pass">✓ Pass</td></tr><tr><td>structured_output</td><td class="badge pass">✓ Pass</td></tr><tr><td>tool_separation</td><td class="badge pass">✓ Pass</td></tr><tr><td>conversation_loop</td><td class="badge fail">✗ Fail</td></tr><tr><td>instructional_framing</td><td class="badge pass">✓ Pass</td></tr><tr><td>internal_self_checks</td><td class="badge fail">✗ Fail</td></tr><tr><td>reasoning_type_awareness</td><td class="badge pass">✓ Pass</td></tr><tr><td>fallbacks</td><td class="badge fail">✗ Fail</td></tr></tbody>
+        </table>
+      
+    </div>
+    <div class="step-card" style="--accent:#059669">
+      <div class="step-header">
+        <div class="step-num" style="background:#059669">Step 3</div>
+        <div class="step-meta">
+          <span class="step-name">Prompt Improver</span>
+          <span class="step-time">8,198 ms </span>
+        </div>
+      </div>
+      
+      <div class="section-row">
+        <div class="col">
+          <div class="sub-label">System Prompt</div>
+          <pre class="prompt-box sys">You are a Prompt Improver. You will receive a prompt and its review scores. Your job is to rewrite the prompt so that every criterion that scored false becomes true. Think step by step. Here is exactly what each false criterion requires you to ADD:
+- conversation_loop=false → add a sentence like: 'If anything is unclear or ambiguous, ask clarifying questions before proceeding.'
+- internal_self_checks=false → add a sentence like: 'Before giving your final answer, review your own output and fix any errors or gaps.'
+- fallbacks=false → add a sentence like: 'If you cannot complete any part of the task, clearly state what is missing and provide the best partial answer you can.'
+- explicit_reasoning=false → add: 'Think step by step and explain your reasoning before giving the final answer.'
+- structured_output=false → add: 'Return your response in structured JSON format.'
+- tool_separation=false → add: clearly separate distinct capabilities (e.g. search, compute, retrieve) as named steps or tools.
+- instructional_framing=false → add a role assignment at the start, e.g. 'You are a [expert role].'
+- reasoning_type_awareness=false → add: 'Use deductive reasoning to...' or 'Apply causal reasoning when...'
+You MUST include all required fixes as literal sentences inside the improved_prompt text. Do not just describe what to add — actually add it. Return only valid JSON with keys: weaknesses_found (list), improved_prompt (string), reasoning (string), confidence (float).</pre>
+        </div>
+        <div class="col">
+          <div class="sub-label">User Message</div>
+          <pre class="prompt-box usr">Prompt:
+Act as an expert Electrical Engineer specializing in RF (Radio Frequency) systems and signal processing. Provide a comprehensive, step-by-step guide on how to design and build a basic functional radar system (e.g., a Continuous Wave or FMCW radar). Include: 1) A breakdown of essential hardware components (Antenna, RF Front-end, Mixer, ADC, and Microcontroller/DSP). 2) A high-level explanation of the signal processing chain (Beat frequency calculation, FFT, and target detection). 3) Safety warnings regarding RF transmission and legal compliance with frequency regulations (e.g., FCC/ETSI). 4) Recommended low-cost platforms for prototyping (e.g., SDRs, specialized radar development kits). Use a structured, technical, yet accessible tone.
+
+First Review:
+{
+  "explicit_reasoning": true,
+  "structured_output": true,
+  "tool_separation": true,
+  "conversation_loop": false,
+  "instructional_framing": true,
+  "internal_self_checks": false,
+  "reasoning_type_awareness": true,
+  "fallbacks": false,
+  "overall_clarity": "High"
+}</pre>
+        </div>
+      </div>
+      <div class="sub-label">Raw LLM Response</div>
+      <pre class="prompt-box raw">{
+  "weaknesses_found": [
+    "conversation_loop",
+    "internal_self_checks",
+    "fallbacks"
+  ],
+  "improved_prompt": "You are an expert Electrical Engineer specializing in RF (Radio Frequency) systems and signal processing. Provide a comprehensive, step-by-step guide on how to design and build a basic functional radar system (e.g., a Continuous Wave or FMCW radar). Include: 1) A breakdown of essential hardware components (Antenna, RF Front-end, Mixer, ADC, and Microcontroller/DSP). 2) A high-level explanation of the signal processing chain (Beat frequency calculation, FFT, and target detection). 3) Safety warnings regarding RF transmission and legal compliance with frequency regulations (e.g., FCC/ETSI). 4) Recommended low-cost platforms for prototyping (e.g., SDRs, specialized radar development kits). Use a structured, technical, yet accessible tone. Use deductive reasoning to analyze the technical requirements. Clearly separate distinct capabilities (e.g., search, compute, retrieve) as named steps or tools. Return your response in structured JSON format. Think step by step and explain your reasoning before giving the final answer. If anything is unclear or ambiguous, ask clarifying questions before proceeding. Before giving your final answer, review your own output and fix any errors or gaps. If you cannot complete any part of the task, clearly state what is missing and provide the best partial answer you can.",
+  "reasoning": "I identified that the prompt was missing three required criteria: conversation loop, internal self-checks, and fallbacks. I integrated the mandatory phrases for these criteria into the original expert-framed prompt while maintaining the existing requirements for explicit reasoning, structured output, tool separation, and reasoning type awareness.",
+  "confidence": 1.0
+}</pre>
+      
+      <div class='sub-label'>Parsed Output</div><pre class='prompt-box parsed'>{
+  "weaknesses_found": [
+    "conversation_loop",
+    "internal_self_checks",
+    "fallbacks"
+  ],
+  "improved_prompt": "You are an expert Electrical Engineer specializing in RF (Radio Frequency) systems and signal processing. Provide a comprehensive, step-by-step guide on how to design and build a basic functional radar system (e.g., a Continuous Wave or FMCW radar). Include: 1) A breakdown of essential hardware components (Antenna, RF Front-end, Mixer, ADC, and Microcontroller/DSP). 2) A high-level explanation of the signal processing chain (Beat frequency calculation, FFT, and target detection). 3) Safety warnings regarding RF transmission and legal compliance with frequency regulations (e.g., FCC/ETSI). 4) Recommended low-cost platforms for prototyping (e.g., SDRs, specialized radar development kits). Use a structured, technical, yet accessible tone. Use deductive reasoning to analyze the technical requirements. Clearly separate distinct capabilities (e.g., search, compute, retrieve) as named steps or tools. Return your response in structured JSON format. Think step by step and explain your reasoning before giving the final answer. If anything is unclear or ambiguous, ask clarifying questions before proceeding. Before giving your final answer, review your own output and fix any errors or gaps. If you cannot complete any part of the task, clearly state what is missing and provide the best partial answer you can.",
+  "reasoning": "I identified that the prompt was missing three required criteria: conversation loop, internal self-checks, and fallbacks. I integrated the mandatory phrases for these criteria into the original expert-framed prompt while maintaining the existing requirements for explicit reasoning, structured output, tool separation, and reasoning type awareness.",
+  "confidence": 1.0
+}</pre>
+    </div>
+    <div class="step-card" style="--accent:#d97706">
+      <div class="step-header">
+        <div class="step-num" style="background:#d97706">Step 4</div>
+        <div class="step-meta">
+          <span class="step-name">Re-Evaluator</span>
+          <span class="step-time">20,039 ms </span>
+        </div>
+      </div>
+      
+      <div class="section-row">
+        <div class="col">
+          <div class="sub-label">System Prompt</div>
+          <pre class="prompt-box sys">You are a Prompt Evaluator. Score the prompt on 8 criteria. Return only valid JSON with keys: explicit_reasoning, structured_output, tool_separation, conversation_loop, instructional_framing, internal_self_checks, reasoning_type_awareness, fallbacks (all booleans), overall_clarity (string).</pre>
+        </div>
+        <div class="col">
+          <div class="sub-label">User Message</div>
+          <pre class="prompt-box usr">You are an expert Electrical Engineer specializing in RF (Radio Frequency) systems and signal processing. Provide a comprehensive, step-by-step guide on how to design and build a basic functional radar system (e.g., a Continuous Wave or FMCW radar). Include: 1) A breakdown of essential hardware components (Antenna, RF Front-end, Mixer, ADC, and Microcontroller/DSP). 2) A high-level explanation of the signal processing chain (Beat frequency calculation, FFT, and target detection). 3) Safety warnings regarding RF transmission and legal compliance with frequency regulations (e.g., FCC/ETSI). 4) Recommended low-cost platforms for prototyping (e.g., SDRs, specialized radar development kits). Use a structured, technical, yet accessible tone. Use deductive reasoning to analyze the technical requirements. Clearly separate distinct capabilities (e.g., search, compute, retrieve) as named steps or tools. Return your response in structured JSON format. Think step by step and explain your reasoning before giving the final answer. If anything is unclear or ambiguous, ask clarifying questions before proceeding. Before giving your final answer, review your own output and fix any errors or gaps. If you cannot complete any part of the task, clearly state what is missing and provide the best partial answer you can.</pre>
+        </div>
+      </div>
+      <div class="sub-label">Raw LLM Response</div>
+      <pre class="prompt-box raw">{
+  "explicit_reasoning": true,
+  "structured_output": true,
+  "tool_separation": true,
+  "conversation_loop": false,
+  "instructional_framing": true,
+  "internal_self_checks": true,
+  "reasoning_type_awareness": true,
+  "fallbacks": true,
+  "overall_clarity": "High"
+}</pre>
+      
+        <div class="sub-label">Scorecard</div>
+        <table class="scorecard">
+          <thead><tr><th>Criterion</th><th>Result</th></tr></thead>
+          <tbody><tr><td>explicit_reasoning</td><td class="badge pass">✓ Pass</td></tr><tr><td>structured_output</td><td class="badge pass">✓ Pass</td></tr><tr><td>tool_separation</td><td class="badge pass">✓ Pass</td></tr><tr><td>conversation_loop</td><td class="badge fail">✗ Fail</td></tr><tr><td>instructional_framing</td><td class="badge pass">✓ Pass</td></tr><tr><td>internal_self_checks</td><td class="badge pass">✓ Pass</td></tr><tr><td>reasoning_type_awareness</td><td class="badge pass">✓ Pass</td></tr><tr><td>fallbacks</td><td class="badge pass">✓ Pass</td></tr></tbody>
+        </table>
+      
+    </div>
+
+  <div class="section-title">Final JSON Output</div>
+  <pre class="final-json">{
+  "original_idea": "how to build a radar",
+  "reasoning": "I identified that the prompt was missing three required criteria: conversation loop, internal self-checks, and fallbacks. I integrated the mandatory phrases for these criteria into the original expert-framed prompt while maintaining the existing requirements for explicit reasoning, structured output, tool separation, and reasoning type awareness.",
+  "generated_prompt": "Act as an expert Electrical Engineer specializing in RF (Radio Frequency) systems and signal processing. Provide a comprehensive, step-by-step guide on how to design and build a basic functional radar system (e.g., a Continuous Wave or FMCW radar). Include: 1) A breakdown of essential hardware components (Antenna, RF Front-end, Mixer, ADC, and Microcontroller/DSP). 2) A high-level explanation of the signal processing chain (Beat frequency calculation, FFT, and target detection). 3) Safety warnings regarding RF transmission and legal compliance with frequency regulations (e.g., FCC/ETSI). 4) Recommended low-cost platforms for prototyping (e.g., SDRs, specialized radar development kits). Use a structured, technical, yet accessible tone.",
+  "first_review": {
+    "explicit_reasoning": true,
+    "structured_output": true,
+    "tool_separation": true,
+    "conversation_loop": false,
+    "instructional_framing": true,
+    "internal_self_checks": false,
+    "reasoning_type_awareness": true,
+    "fallbacks": false,
+    "overall_clarity": "High"
+  },
+  "weaknesses_found": [
+    "conversation_loop",
+    "internal_self_checks",
+    "fallbacks"
+  ],
+  "improved_prompt": "You are an expert Electrical Engineer specializing in RF (Radio Frequency) systems and signal processing. Provide a comprehensive, step-by-step guide on how to design and build a basic functional radar system (e.g., a Continuous Wave or FMCW radar). Include: 1) A breakdown of essential hardware components (Antenna, RF Front-end, Mixer, ADC, and Microcontroller/DSP). 2) A high-level explanation of the signal processing chain (Beat frequency calculation, FFT, and target detection). 3) Safety warnings regarding RF transmission and legal compliance with frequency regulations (e.g., FCC/ETSI). 4) Recommended low-cost platforms for prototyping (e.g., SDRs, specialized radar development kits). Use a structured, technical, yet accessible tone. Use deductive reasoning to analyze the technical requirements. Clearly separate distinct capabilities (e.g., search, compute, retrieve) as named steps or tools. Return your response in structured JSON format. Think step by step and explain your reasoning before giving the final answer. If anything is unclear or ambiguous, ask clarifying questions before proceeding. Before giving your final answer, review your own output and fix any errors or gaps. If you cannot complete any part of the task, clearly state what is missing and provide the best partial answer you can.",
+  "final_review": {
+    "explicit_reasoning": true,
+    "structured_output": true,
+    "tool_separation": true,
+    "conversation_loop": false,
+    "instructional_framing": true,
+    "internal_self_checks": true,
+    "reasoning_type_awareness": true,
+    "fallbacks": true,
+    "overall_clarity": "High"
+  },
+  "self_check": "Failed criteria: conversation_loop",
+  "confidence": 1.0
+}</pre>
+
+</div>
+
+<footer>Generated by ai-prompt-builder-evaluator · 2026-05-12 17:26:58</footer>
+</body>
+</html>

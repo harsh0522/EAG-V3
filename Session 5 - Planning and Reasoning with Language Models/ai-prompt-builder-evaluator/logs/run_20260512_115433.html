@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Run Log — Build a CLI tool that reviews Python code for security issue</title>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'Segoe UI',system-ui,sans-serif;background:#0f1117;color:#e2e8f0;line-height:1.6}
+    .hero{background:linear-gradient(135deg,#1a1f35,#0f1117);border-bottom:1px solid #1e293b;padding:40px 32px 34px}
+    .hero h1{font-size:1.7rem;font-weight:800;color:#c4b5fd;margin-bottom:8px}
+    .hero .idea-text{background:#1e293b;border:1px solid #2d3748;border-radius:8px;padding:12px 16px;font-size:0.95rem;color:#94a3b8;margin-top:14px}
+    .meta-row{display:flex;gap:20px;flex-wrap:wrap;margin-top:16px}
+    .meta-chip{background:#1e293b;border:1px solid #2d3748;border-radius:999px;padding:4px 14px;font-size:0.78rem;color:#64748b}
+    .meta-chip span{color:#c4b5fd;font-weight:700}
+    .container{max-width:1100px;margin:0 auto;padding:36px 20px 80px}
+    .section-title{font-size:1.1rem;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.08em;margin:40px 0 16px;padding-bottom:8px;border-bottom:1px solid #1e293b}
+    /* Summary cards */
+    .summary-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:32px}
+    @media(max-width:700px){.summary-grid{grid-template-columns:1fr 1fr}}
+    .sum-card{background:#1e293b;border:1px solid #2d3748;border-radius:12px;padding:18px 20px;text-align:center}
+    .sum-card .val{font-size:1.9rem;font-weight:800;color:#c4b5fd}
+    .sum-card .lbl{font-size:0.78rem;color:#64748b;margin-top:4px;text-transform:uppercase;letter-spacing:.05em}
+    /* Confidence bar */
+    .conf-bar-wrap{background:#1e293b;border:1px solid #2d3748;border-radius:12px;padding:20px 24px;margin-bottom:16px}
+    .conf-bar-track{background:#0f172a;border-radius:999px;height:14px;overflow:hidden;margin:10px 0 6px}
+    .conf-bar-fill{height:100%;border-radius:999px;background:linear-gradient(90deg,#7c3aed,#06b6d4);transition:width .4s}
+    .conf-label{font-size:0.85rem;color:#64748b}
+    /* Self check */
+    .self-check{border-radius:10px;padding:14px 18px;font-size:0.92rem;font-weight:600;margin-bottom:24px}
+    .self-check.pass{background:#052e16;border:1px solid #166534;color:#86efac}
+    .self-check.fail{background:#2d0a0a;border:1px solid #7f1d1d;color:#fca5a5}
+    /* Step cards */
+    .step-card{background:#1e293b;border:1px solid #2d3748;border-left:3px solid var(--accent);border-radius:12px;padding:22px 24px;margin-bottom:20px}
+    .step-header{display:flex;align-items:center;gap:14px;margin-bottom:18px}
+    .step-num{color:#fff;font-size:0.8rem;font-weight:800;border-radius:6px;padding:4px 12px;white-space:nowrap}
+    .step-name{font-size:1rem;font-weight:700;color:#e2e8f0}
+    .step-time{font-size:0.78rem;color:#64748b;margin-left:8px}
+    .retry-tag{background:#451a03;color:#fb923c;border:1px solid #92400e;border-radius:999px;padding:1px 8px;font-size:0.7rem;margin-left:6px}
+    .section-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
+    @media(max-width:650px){.section-row{grid-template-columns:1fr}}
+    .sub-label{font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#475569;margin:10px 0 5px}
+    .prompt-box{background:#0f172a;border:1px solid #1e293b;border-radius:8px;padding:14px;font-family:'Courier New',monospace;font-size:0.78rem;color:#cbd5e1;white-space:pre-wrap;word-break:break-word;max-height:280px;overflow-y:auto}
+    .prompt-box.sys{border-color:#7c3aed33}
+    .prompt-box.usr{border-color:#0891b233}
+    .prompt-box.raw{border-color:#334155;color:#94a3b8}
+    .prompt-box.parsed{border-color:#05966933;color:#86efac}
+    /* Scorecard */
+    .scorecard{width:100%;border-collapse:collapse;margin-top:6px;font-size:0.83rem}
+    .scorecard th{text-align:left;padding:6px 10px;color:#475569;font-weight:600;border-bottom:1px solid #1e293b}
+    .scorecard td{padding:7px 10px;border-bottom:1px solid #1e293b;color:#94a3b8}
+    .badge{font-weight:700;font-size:0.75rem;border-radius:6px;padding:2px 10px;text-align:center}
+    .badge.pass{background:#052e16;color:#86efac;border:1px solid #166534}
+    .badge.fail{background:#2d0a0a;color:#fca5a5;border:1px solid #7f1d1d}
+    /* Before/after */
+    .compare-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px}
+    @media(max-width:650px){.compare-grid{grid-template-columns:1fr}}
+    .compare-card{background:#0f172a;border:1px solid #1e293b;border-radius:10px;padding:16px 18px}
+    .compare-card h4{font-size:0.85rem;font-weight:700;margin-bottom:10px}
+    .compare-card.before h4{color:#f87171}
+    .compare-card.after h4{color:#86efac}
+    /* Final JSON */
+    .final-json{background:#0f172a;border:1px solid #1e293b;border-radius:10px;padding:20px;font-family:'Courier New',monospace;font-size:0.8rem;color:#86efac;white-space:pre-wrap;word-break:break-word;overflow-x:auto}
+    .error-box{background:#2d0a0a;border:1px solid #7f1d1d;border-radius:8px;padding:12px;color:#fca5a5;font-size:0.85rem;margin-bottom:14px}
+    footer{text-align:center;padding:24px;color:#334155;font-size:0.75rem;border-top:1px solid #1e293b}
+  </style>
+</head>
+<body>
+
+<div class="hero">
+  <div style="font-size:0.75rem;color:#475569;margin-bottom:6px;letter-spacing:.06em;text-transform:uppercase">AI Prompt Builder Evaluator · Run Log</div>
+  <h1>Pipeline Execution Report</h1>
+  <div class="idea-text"><strong style="color:#7c3aed">Idea:</strong> Build a CLI tool that reviews Python code for security issues</div>
+  <div class="meta-row">
+    <div class="meta-chip">Run at <span>2026-05-12 11:54:33</span></div>
+    <div class="meta-chip">Total time <span>50,352 ms</span></div>
+    <div class="meta-chip">Steps completed <span>4/4</span></div>
+    <div class="meta-chip">Retries <span>0</span></div>
+  </div>
+</div>
+
+<div class="container">
+
+  <div class="section-title">Summary</div>
+
+  <div class="summary-grid">
+    <div class="sum-card"><div class="val">4</div><div class="lbl">Steps Done</div></div>
+    <div class="sum-card"><div class="val">0</div><div class="lbl">JSON Retries</div></div>
+    <div class="sum-card"><div class="val">95%</div><div class="lbl">Confidence</div></div>
+    <div class="sum-card"><div class="val">50,352</div><div class="lbl">Total ms</div></div>
+  </div>
+
+  <div class="conf-bar-wrap">
+    <div class="sub-label">Final Confidence Score</div>
+    <div class="conf-bar-track"><div class="conf-bar-fill" style="width:95%"></div></div>
+    <div class="conf-label">95% — reported by the Prompt Improver agent</div>
+  </div>
+
+  <div class="self-check fail">Self Check: Failed criteria: conversation_loop, internal_self_checks, fallbacks</div>
+
+  <div class="section-title">Before vs After — Criteria Comparison</div>
+  <div class="compare-grid">
+    <div class="compare-card before">
+      <h4>First Review (after Step 2)</h4>
+      <table class="scorecard">
+        <thead><tr><th>Criterion</th><th>Result</th></tr></thead>
+        <tbody><tr><td>explicit_reasoning</td><td class="badge pass">✓ Pass</td></tr><tr><td>structured_output</td><td class="badge pass">✓ Pass</td></tr><tr><td>tool_separation</td><td class="badge pass">✓ Pass</td></tr><tr><td>conversation_loop</td><td class="badge fail">✗ Fail</td></tr><tr><td>instructional_framing</td><td class="badge pass">✓ Pass</td></tr><tr><td>internal_self_checks</td><td class="badge fail">✗ Fail</td></tr><tr><td>reasoning_type_awareness</td><td class="badge pass">✓ Pass</td></tr><tr><td>fallbacks</td><td class="badge fail">✗ Fail</td></tr></tbody>
+      </table>
+    </div>
+    <div class="compare-card after">
+      <h4>Final Review (after Step 4)</h4>
+      <table class="scorecard">
+        <thead><tr><th>Criterion</th><th>Result</th></tr></thead>
+        <tbody><tr><td>explicit_reasoning</td><td class="badge pass">✓ Pass</td></tr><tr><td>structured_output</td><td class="badge pass">✓ Pass</td></tr><tr><td>tool_separation</td><td class="badge pass">✓ Pass</td></tr><tr><td>conversation_loop</td><td class="badge fail">✗ Fail</td></tr><tr><td>instructional_framing</td><td class="badge pass">✓ Pass</td></tr><tr><td>internal_self_checks</td><td class="badge fail">✗ Fail</td></tr><tr><td>reasoning_type_awareness</td><td class="badge pass">✓ Pass</td></tr><tr><td>fallbacks</td><td class="badge fail">✗ Fail</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="section-title">Step-by-Step LLM Calls</div>
+  
+    <div class="step-card" style="--accent:#7c3aed">
+      <div class="step-header">
+        <div class="step-num" style="background:#7c3aed">Step 1</div>
+        <div class="step-meta">
+          <span class="step-name">Prompt Builder</span>
+          <span class="step-time">12,082 ms </span>
+        </div>
+      </div>
+      
+      <div class="section-row">
+        <div class="col">
+          <div class="sub-label">System Prompt</div>
+          <pre class="prompt-box sys">You are a Prompt Builder Agent. Convert the rough idea into a strong implementation-ready LLM prompt. Think step by step. Return only valid JSON with keys: generated_prompt, reasoning, reasoning_type, included_features, confidence.</pre>
+        </div>
+        <div class="col">
+          <div class="sub-label">User Message</div>
+          <pre class="prompt-box usr">Build a CLI tool that reviews Python code for security issues</pre>
+        </div>
+      </div>
+      <div class="sub-label">Raw LLM Response</div>
+      <pre class="prompt-box raw">{
+  "generated_prompt": "Act as a Senior Security Engineer specializing in Python development. Your task is to design a CLI tool that performs static analysis on Python code to identify security vulnerabilities (e.g., SQL injection, insecure deserialization, hardcoded secrets, and command injection). \n\n1. Architecture: Design a modular architecture that includes a file scanner, a rule engine based on AST (Abstract Syntax Tree) parsing, and a report generator.\n2. Implementation: Provide the core Python code for the CLI using `argparse` and `ast` modules. Include a sample rule set for detecting at least three common security vulnerabilities.\n3. Output: The CLI should output a color-coded summary (using `rich` or `colorama`) indicating the file name, line number, issue severity, and a brief remediation suggestion.\n4. Constraints: Ensure the tool handles directory recursion and ignores hidden files (e.g., .git, .venv). Provide a sample 'main.py' entry point and instructions on how to extend the rule engine.",
+  "reasoning": "To build a functional security tool, the prompt must define the technical stack (AST parsing), functional requirements (recursion, filtering), and output formatting (color-coded reporting). By specifying the role (Senior Security Engineer), the model is encouraged to provide production-grade code snippets and best practices.",
+  "reasoning_type": "Role-based architectural decomposition",
+  "included_features": [
+    "CLI Argument Parsing",
+    "AST-based Static Analysis",
+    "Directory Traversal",
+    "Severity-based Reporting",
+    "Extensible Rule Engine"
+  ],
+  "confidence": 0.95
+}</pre>
+      
+      <div class='sub-label'>Parsed Output</div><pre class='prompt-box parsed'>{
+  "generated_prompt": "Act as a Senior Security Engineer specializing in Python development. Your task is to design a CLI tool that performs static analysis on Python code to identify security vulnerabilities (e.g., SQL injection, insecure deserialization, hardcoded secrets, and command injection). \n\n1. Architecture: Design a modular architecture that includes a file scanner, a rule engine based on AST (Abstract Syntax Tree) parsing, and a report generator.\n2. Implementation: Provide the core Python code for the CLI using `argparse` and `ast` modules. Include a sample rule set for detecting at least three common security vulnerabilities.\n3. Output: The CLI should output a color-coded summary (using `rich` or `colorama`) indicating the file name, line number, issue severity, and a brief remediation suggestion.\n4. Constraints: Ensure the tool handles directory recursion and ignores hidden files (e.g., .git, .venv). Provide a sample 'main.py' entry point and instructions on how to extend the rule engine.",
+  "reasoning": "To build a functional security tool, the prompt must define the technical stack (AST parsing), functional requirements (recursion, filtering), and output formatting (color-coded reporting). By specifying the role (Senior Security Engineer), the model is encouraged to provide production-grade code snippets and best practices.",
+  "reasoning_type": "Role-based architectural decomposition",
+  "included_features": [
+    "CLI Argument Parsing",
+    "AST-based Static Analysis",
+    "Directory Traversal",
+    "Severity-based Reporting",
+    "Extensible Rule Engine"
+  ],
+  "confidence": 0.95
+}</pre>
+    </div>
+    <div class="step-card" style="--accent:#0891b2">
+      <div class="step-header">
+        <div class="step-num" style="background:#0891b2">Step 2</div>
+        <div class="step-meta">
+          <span class="step-name">Prompt Evaluator</span>
+          <span class="step-time">8,472 ms </span>
+        </div>
+      </div>
+      
+      <div class="section-row">
+        <div class="col">
+          <div class="sub-label">System Prompt</div>
+          <pre class="prompt-box sys">You are a Prompt Evaluator. Score the prompt on 8 criteria. Return only valid JSON with keys: explicit_reasoning, structured_output, tool_separation, conversation_loop, instructional_framing, internal_self_checks, reasoning_type_awareness, fallbacks (all booleans), overall_clarity (string).</pre>
+        </div>
+        <div class="col">
+          <div class="sub-label">User Message</div>
+          <pre class="prompt-box usr">Act as a Senior Security Engineer specializing in Python development. Your task is to design a CLI tool that performs static analysis on Python code to identify security vulnerabilities (e.g., SQL injection, insecure deserialization, hardcoded secrets, and command injection). 
+
+1. Architecture: Design a modular architecture that includes a file scanner, a rule engine based on AST (Abstract Syntax Tree) parsing, and a report generator.
+2. Implementation: Provide the core Python code for the CLI using `argparse` and `ast` modules. Include a sample rule set for detecting at least three common security vulnerabilities.
+3. Output: The CLI should output a color-coded summary (using `rich` or `colorama`) indicating the file name, line number, issue severity, and a brief remediation suggestion.
+4. Constraints: Ensure the tool handles directory recursion and ignores hidden files (e.g., .git, .venv). Provide a sample 'main.py' entry point and instructions on how to extend the rule engine.</pre>
+        </div>
+      </div>
+      <div class="sub-label">Raw LLM Response</div>
+      <pre class="prompt-box raw">{
+  "explicit_reasoning": true,
+  "structured_output": true,
+  "tool_separation": true,
+  "conversation_loop": false,
+  "instructional_framing": true,
+  "internal_self_checks": false,
+  "reasoning_type_awareness": true,
+  "fallbacks": false,
+  "overall_clarity": "Excellent"
+}</pre>
+      
+        <div class="sub-label">Scorecard</div>
+        <table class="scorecard">
+          <thead><tr><th>Criterion</th><th>Result</th></tr></thead>
+          <tbody><tr><td>explicit_reasoning</td><td class="badge pass">✓ Pass</td></tr><tr><td>structured_output</td><td class="badge pass">✓ Pass</td></tr><tr><td>tool_separation</td><td class="badge pass">✓ Pass</td></tr><tr><td>conversation_loop</td><td class="badge fail">✗ Fail</td></tr><tr><td>instructional_framing</td><td class="badge pass">✓ Pass</td></tr><tr><td>internal_self_checks</td><td class="badge fail">✗ Fail</td></tr><tr><td>reasoning_type_awareness</td><td class="badge pass">✓ Pass</td></tr><tr><td>fallbacks</td><td class="badge fail">✗ Fail</td></tr></tbody>
+        </table>
+      
+    </div>
+    <div class="step-card" style="--accent:#059669">
+      <div class="step-header">
+        <div class="step-num" style="background:#059669">Step 3</div>
+        <div class="step-meta">
+          <span class="step-name">Prompt Improver</span>
+          <span class="step-time">11,350 ms </span>
+        </div>
+      </div>
+      
+      <div class="section-row">
+        <div class="col">
+          <div class="sub-label">System Prompt</div>
+          <pre class="prompt-box sys">You are a Prompt Improver. Fix all false criteria. Think step by step. Return only valid JSON with keys: weaknesses_found (list), improved_prompt (string), reasoning (string), confidence (float).</pre>
+        </div>
+        <div class="col">
+          <div class="sub-label">User Message</div>
+          <pre class="prompt-box usr">Prompt:
+Act as a Senior Security Engineer specializing in Python development. Your task is to design a CLI tool that performs static analysis on Python code to identify security vulnerabilities (e.g., SQL injection, insecure deserialization, hardcoded secrets, and command injection). 
+
+1. Architecture: Design a modular architecture that includes a file scanner, a rule engine based on AST (Abstract Syntax Tree) parsing, and a report generator.
+2. Implementation: Provide the core Python code for the CLI using `argparse` and `ast` modules. Include a sample rule set for detecting at least three common security vulnerabilities.
+3. Output: The CLI should output a color-coded summary (using `rich` or `colorama`) indicating the file name, line number, issue severity, and a brief remediation suggestion.
+4. Constraints: Ensure the tool handles directory recursion and ignores hidden files (e.g., .git, .venv). Provide a sample 'main.py' entry point and instructions on how to extend the rule engine.
+
+First Review:
+{
+  "explicit_reasoning": true,
+  "structured_output": true,
+  "tool_separation": true,
+  "conversation_loop": false,
+  "instructional_framing": true,
+  "internal_self_checks": false,
+  "reasoning_type_awareness": true,
+  "fallbacks": false,
+  "overall_clarity": "Excellent"
+}</pre>
+        </div>
+      </div>
+      <div class="sub-label">Raw LLM Response</div>
+      <pre class="prompt-box raw">{
+  "weaknesses_found": [
+    "The prompt asks for a full implementation of a complex security tool in a single response, which likely exceeds token limits and risks truncated or superficial code.",
+    "The prompt lacks specific guidance on the desired robustness of the AST parser (e.g., handling cross-file analysis or context-awareness), which is critical for security tools.",
+    "The requirement for a 'modular architecture' is vague; without specifying design patterns (e.g., Strategy or Visitor patterns), the resulting code may be monolithic.",
+    "The 'First Review' provided in the input is metadata, not part of the prompt instructions, and creates unnecessary noise."
+  ],
+  "improved_prompt": "Act as a Senior Security Engineer. Design and implement a modular Python CLI tool for static analysis of Python source code to detect security vulnerabilities. \n\n1. Architecture: Define a clean, object-oriented architecture using the Visitor pattern. Include separate modules for: 'Scanner' (file traversal), 'Engine' (AST-based analysis using the `ast` module), and 'Reporter' (output formatting).\n2. Implementation: Provide the core implementation for the CLI entry point using `argparse`. Implement an abstract base class for 'SecurityRules' and provide three concrete implementations for: (a) Hardcoded secrets (regex-based), (b) SQL injection (detecting raw string formatting in SQL queries), and (c) Command injection (detecting `os.system` or `subprocess.run` with unsanitized inputs).\n3. Output: Use the `rich` library to generate a formatted table output showing: File, Line, Severity, Issue, and Remediation.\n4. Constraints: Implement recursive directory scanning while explicitly ignoring hidden directories (e.g., .git, .venv) and non-python files.\n5. Extension: Include a brief 'How-to' section on how to add new rules to the engine. \n\nPlease focus on code quality, type hinting, and modularity over exhaustive rule coverage.",
+  "reasoning": "The improved prompt constrains the scope to ensure a high-quality, runnable example. By specifying the 'Visitor pattern' and 'Abstract base class', it forces a professional software engineering approach. It removes the unnecessary metadata review and clarifies the technical requirements to prevent the model from generating overly simplistic code.",
+  "confidence": 0.95
+}</pre>
+      
+      <div class='sub-label'>Parsed Output</div><pre class='prompt-box parsed'>{
+  "weaknesses_found": [
+    "The prompt asks for a full implementation of a complex security tool in a single response, which likely exceeds token limits and risks truncated or superficial code.",
+    "The prompt lacks specific guidance on the desired robustness of the AST parser (e.g., handling cross-file analysis or context-awareness), which is critical for security tools.",
+    "The requirement for a 'modular architecture' is vague; without specifying design patterns (e.g., Strategy or Visitor patterns), the resulting code may be monolithic.",
+    "The 'First Review' provided in the input is metadata, not part of the prompt instructions, and creates unnecessary noise."
+  ],
+  "improved_prompt": "Act as a Senior Security Engineer. Design and implement a modular Python CLI tool for static analysis of Python source code to detect security vulnerabilities. \n\n1. Architecture: Define a clean, object-oriented architecture using the Visitor pattern. Include separate modules for: 'Scanner' (file traversal), 'Engine' (AST-based analysis using the `ast` module), and 'Reporter' (output formatting).\n2. Implementation: Provide the core implementation for the CLI entry point using `argparse`. Implement an abstract base class for 'SecurityRules' and provide three concrete implementations for: (a) Hardcoded secrets (regex-based), (b) SQL injection (detecting raw string formatting in SQL queries), and (c) Command injection (detecting `os.system` or `subprocess.run` with unsanitized inputs).\n3. Output: Use the `rich` library to generate a formatted table output showing: File, Line, Severity, Issue, and Remediation.\n4. Constraints: Implement recursive directory scanning while explicitly ignoring hidden directories (e.g., .git, .venv) and non-python files.\n5. Extension: Include a brief 'How-to' section on how to add new rules to the engine. \n\nPlease focus on code quality, type hinting, and modularity over exhaustive rule coverage.",
+  "reasoning": "The improved prompt constrains the scope to ensure a high-quality, runnable example. By specifying the 'Visitor pattern' and 'Abstract base class', it forces a professional software engineering approach. It removes the unnecessary metadata review and clarifies the technical requirements to prevent the model from generating overly simplistic code.",
+  "confidence": 0.95
+}</pre>
+    </div>
+    <div class="step-card" style="--accent:#d97706">
+      <div class="step-header">
+        <div class="step-num" style="background:#d97706">Step 4</div>
+        <div class="step-meta">
+          <span class="step-name">Re-Evaluator</span>
+          <span class="step-time">18,448 ms </span>
+        </div>
+      </div>
+      
+      <div class="section-row">
+        <div class="col">
+          <div class="sub-label">System Prompt</div>
+          <pre class="prompt-box sys">You are a Prompt Evaluator. Score the prompt on 8 criteria. Return only valid JSON with keys: explicit_reasoning, structured_output, tool_separation, conversation_loop, instructional_framing, internal_self_checks, reasoning_type_awareness, fallbacks (all booleans), overall_clarity (string).</pre>
+        </div>
+        <div class="col">
+          <div class="sub-label">User Message</div>
+          <pre class="prompt-box usr">Act as a Senior Security Engineer. Design and implement a modular Python CLI tool for static analysis of Python source code to detect security vulnerabilities. 
+
+1. Architecture: Define a clean, object-oriented architecture using the Visitor pattern. Include separate modules for: 'Scanner' (file traversal), 'Engine' (AST-based analysis using the `ast` module), and 'Reporter' (output formatting).
+2. Implementation: Provide the core implementation for the CLI entry point using `argparse`. Implement an abstract base class for 'SecurityRules' and provide three concrete implementations for: (a) Hardcoded secrets (regex-based), (b) SQL injection (detecting raw string formatting in SQL queries), and (c) Command injection (detecting `os.system` or `subprocess.run` with unsanitized inputs).
+3. Output: Use the `rich` library to generate a formatted table output showing: File, Line, Severity, Issue, and Remediation.
+4. Constraints: Implement recursive directory scanning while explicitly ignoring hidden directories (e.g., .git, .venv) and non-python files.
+5. Extension: Include a brief 'How-to' section on how to add new rules to the engine. 
+
+Please focus on code quality, type hinting, and modularity over exhaustive rule coverage.</pre>
+        </div>
+      </div>
+      <div class="sub-label">Raw LLM Response</div>
+      <pre class="prompt-box raw">{
+  "explicit_reasoning": true,
+  "structured_output": true,
+  "tool_separation": true,
+  "conversation_loop": false,
+  "instructional_framing": true,
+  "internal_self_checks": false,
+  "reasoning_type_awareness": true,
+  "fallbacks": false,
+  "overall_clarity": "The prompt is highly specific, providing clear architectural requirements, library preferences, and functional constraints, which makes it an excellent blueprint for a complex code generation task."
+}</pre>
+      
+        <div class="sub-label">Scorecard</div>
+        <table class="scorecard">
+          <thead><tr><th>Criterion</th><th>Result</th></tr></thead>
+          <tbody><tr><td>explicit_reasoning</td><td class="badge pass">✓ Pass</td></tr><tr><td>structured_output</td><td class="badge pass">✓ Pass</td></tr><tr><td>tool_separation</td><td class="badge pass">✓ Pass</td></tr><tr><td>conversation_loop</td><td class="badge fail">✗ Fail</td></tr><tr><td>instructional_framing</td><td class="badge pass">✓ Pass</td></tr><tr><td>internal_self_checks</td><td class="badge fail">✗ Fail</td></tr><tr><td>reasoning_type_awareness</td><td class="badge pass">✓ Pass</td></tr><tr><td>fallbacks</td><td class="badge fail">✗ Fail</td></tr></tbody>
+        </table>
+      
+    </div>
+
+  <div class="section-title">Final JSON Output</div>
+  <pre class="final-json">{
+  "original_idea": "Build a CLI tool that reviews Python code for security issues",
+  "reasoning": "The improved prompt constrains the scope to ensure a high-quality, runnable example. By specifying the 'Visitor pattern' and 'Abstract base class', it forces a professional software engineering approach. It removes the unnecessary metadata review and clarifies the technical requirements to prevent the model from generating overly simplistic code.",
+  "generated_prompt": "Act as a Senior Security Engineer specializing in Python development. Your task is to design a CLI tool that performs static analysis on Python code to identify security vulnerabilities (e.g., SQL injection, insecure deserialization, hardcoded secrets, and command injection). \n\n1. Architecture: Design a modular architecture that includes a file scanner, a rule engine based on AST (Abstract Syntax Tree) parsing, and a report generator.\n2. Implementation: Provide the core Python code for the CLI using `argparse` and `ast` modules. Include a sample rule set for detecting at least three common security vulnerabilities.\n3. Output: The CLI should output a color-coded summary (using `rich` or `colorama`) indicating the file name, line number, issue severity, and a brief remediation suggestion.\n4. Constraints: Ensure the tool handles directory recursion and ignores hidden files (e.g., .git, .venv). Provide a sample 'main.py' entry point and instructions on how to extend the rule engine.",
+  "first_review": {
+    "explicit_reasoning": true,
+    "structured_output": true,
+    "tool_separation": true,
+    "conversation_loop": false,
+    "instructional_framing": true,
+    "internal_self_checks": false,
+    "reasoning_type_awareness": true,
+    "fallbacks": false,
+    "overall_clarity": "Excellent"
+  },
+  "weaknesses_found": [
+    "The prompt asks for a full implementation of a complex security tool in a single response, which likely exceeds token limits and risks truncated or superficial code.",
+    "The prompt lacks specific guidance on the desired robustness of the AST parser (e.g., handling cross-file analysis or context-awareness), which is critical for security tools.",
+    "The requirement for a 'modular architecture' is vague; without specifying design patterns (e.g., Strategy or Visitor patterns), the resulting code may be monolithic.",
+    "The 'First Review' provided in the input is metadata, not part of the prompt instructions, and creates unnecessary noise."
+  ],
+  "improved_prompt": "Act as a Senior Security Engineer. Design and implement a modular Python CLI tool for static analysis of Python source code to detect security vulnerabilities. \n\n1. Architecture: Define a clean, object-oriented architecture using the Visitor pattern. Include separate modules for: 'Scanner' (file traversal), 'Engine' (AST-based analysis using the `ast` module), and 'Reporter' (output formatting).\n2. Implementation: Provide the core implementation for the CLI entry point using `argparse`. Implement an abstract base class for 'SecurityRules' and provide three concrete implementations for: (a) Hardcoded secrets (regex-based), (b) SQL injection (detecting raw string formatting in SQL queries), and (c) Command injection (detecting `os.system` or `subprocess.run` with unsanitized inputs).\n3. Output: Use the `rich` library to generate a formatted table output showing: File, Line, Severity, Issue, and Remediation.\n4. Constraints: Implement recursive directory scanning while explicitly ignoring hidden directories (e.g., .git, .venv) and non-python files.\n5. Extension: Include a brief 'How-to' section on how to add new rules to the engine. \n\nPlease focus on code quality, type hinting, and modularity over exhaustive rule coverage.",
+  "final_review": {
+    "explicit_reasoning": true,
+    "structured_output": true,
+    "tool_separation": true,
+    "conversation_loop": false,
+    "instructional_framing": true,
+    "internal_self_checks": false,
+    "reasoning_type_awareness": true,
+    "fallbacks": false,
+    "overall_clarity": "The prompt is highly specific, providing clear architectural requirements, library preferences, and functional constraints, which makes it an excellent blueprint for a complex code generation task."
+  },
+  "self_check": "Failed criteria: conversation_loop, internal_self_checks, fallbacks",
+  "confidence": 0.95
+}</pre>
+
+</div>
+
+<footer>Generated by ai-prompt-builder-evaluator · 2026-05-12 11:54:33</footer>
+</body>
+</html>
