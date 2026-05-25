@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EAGV3 S6 — Agentic Dashboard</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <div id="header">
+    <h1>⚡ EAGV3 S6 — Agentic Architecture</h1>
+    <span class="meta">run: <code id="run-id">—</code></span>
+    <span id="query-display">waiting for query...</span>
+    <span class="meta">⏱ <span id="elapsed">0s</span></span>
+    <span id="status-dot" title="Connected"></span>
+    <a href="/static/explain.html" target="_blank" style="margin-left:auto;font-size:0.75rem;color:#8b949e;text-decoration:none;padding:0.2rem 0.6rem;border:1px solid #30363d;border-radius:4px">📖 Code Guide</a>
+  </div>
+
+  <div id="controls">
+    <label>Replay run:</label>
+    <select id="replay-select"><option value="">— live —</option></select>
+    <button id="replay-btn">▶ Replay</button>
+    <button id="clear-btn" style="margin-left:auto">🗑 Clear display</button>
+  </div>
+
+  <div id="main">
+    <div class="col">
+      <div class="col-header">🧠 Memory</div>
+      <div class="col-body" id="col-memory"></div>
+    </div>
+    <div class="col">
+      <div class="col-header">👁 Perception</div>
+      <div class="col-body" id="col-perception"></div>
+    </div>
+    <div class="col">
+      <div class="col-header">🎯 Decision</div>
+      <div class="col-body" id="col-decision"></div>
+    </div>
+    <div class="col">
+      <div class="col-header">⚙ Action</div>
+      <div class="col-body" id="col-action"></div>
+    </div>
+  </div>
+
+  <div id="artifact-strip">
+    <div class="col-header">📦 Artifacts <span id="art-count" style="color:var(--purple);font-family:var(--mono)">(0)</span></div>
+    <div id="artifact-list"></div>
+  </div>
+
+  <div id="bottom-panels">
+    <div class="panel">
+      <div class="panel-header">🌐 Gateway Calls</div>
+      <div class="panel-body">
+        <table id="gateway-table">
+          <thead><tr>
+            <th>Provider</th><th>Model</th><th>Tier</th>
+            <th>In</th><th>Out</th><th>ms</th><th>Reason?</th>
+          </tr></thead>
+          <tbody id="gateway-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-header">💾 Memory State</div>
+      <div class="panel-body">
+        <table id="memory-table">
+          <thead><tr>
+            <th>Kind</th><th>Descriptor</th><th>Keywords</th><th>Art?</th>
+          </tr></thead>
+          <tbody id="memory-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-header">✅ Pydantic Events</div>
+      <div class="panel-body">
+        <table id="pydantic-table">
+          <thead><tr><th>Model</th><th>Valid</th><th>Errors</th></tr></thead>
+          <tbody id="pydantic-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Run Log — full-width terminal-style event timeline -->
+  <div id="log-section">
+    <div class="log-header">
+      📋 Run Log
+      <span class="log-legend">
+        <span class="leg-mem">■ memory</span> keyword search &amp; persistence
+        <span class="leg-perc">■ perception</span> Gemini decomposes query → goal list
+        <span class="leg-dec">■ decision</span> LLM picks tool call or produces answer
+        <span class="leg-act">■ action</span> MCP tool dispatched over stdio
+        <span class="leg-art">■ artifact</span> blob stored in content-addressable store
+        <span class="leg-guard">■ guarded</span> art: handle blocked before tool dispatch
+      </span>
+      <button id="log-clear-btn" style="margin-left:auto;font-size:10px;padding:2px 8px">Clear Log</button>
+    </div>
+    <div id="log-body"></div>
+  </div>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>

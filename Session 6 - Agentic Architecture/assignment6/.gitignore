@@ -1,0 +1,11 @@
+state/
+logs/
+.env
+.venv/
+__pycache__/
+*.pyc
+.uv/
+dist/
+build/
+sandbox/
+*.db

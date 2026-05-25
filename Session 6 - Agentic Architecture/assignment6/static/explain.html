@@ -1,0 +1,896 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EAGV3 S6 — Code Explained</title>
+  <style>
+    :root {
+      --bg: #0d1117;
+      --bg2: #161b22;
+      --bg3: #21262d;
+      --border: #30363d;
+      --text: #c9d1d9;
+      --muted: #8b949e;
+      --accent: #58a6ff;
+      --green: #3fb950;
+      --yellow: #e3b341;
+      --red: #f85149;
+      --purple: #bc8cff;
+      --orange: #ff9a3c;
+      --cyan: #39d353;
+      --mono: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; line-height: 1.6; }
+
+    /* ── Layout ── */
+    #sidebar {
+      position: fixed; top: 0; left: 0; width: 260px; height: 100vh;
+      background: var(--bg2); border-right: 1px solid var(--border);
+      overflow-y: auto; padding: 1rem;
+    }
+    #content { margin-left: 260px; padding: 2rem 3rem; max-width: 1100px; }
+
+    /* ── Sidebar ── */
+    #sidebar h2 { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); margin-bottom: 0.75rem; }
+    #sidebar a { display: block; padding: 0.3rem 0.5rem; border-radius: 6px; color: var(--text); text-decoration: none; font-size: 0.85rem; }
+    #sidebar a:hover { background: var(--bg3); color: var(--accent); }
+    #sidebar .section-label { margin-top: 1.25rem; margin-bottom: 0.25rem; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--yellow); }
+
+    /* ── Headers ── */
+    h1 { font-size: 1.75rem; font-weight: 700; color: var(--accent); margin-bottom: 0.25rem; }
+    h2.section { font-size: 1.25rem; font-weight: 600; color: var(--accent); margin: 2.5rem 0 0.75rem; border-bottom: 1px solid var(--border); padding-bottom: 0.4rem; }
+    h3 { font-size: 1rem; font-weight: 600; color: var(--yellow); margin: 1.5rem 0 0.5rem; }
+    h4 { font-size: 0.9rem; font-weight: 600; color: var(--purple); margin: 1rem 0 0.3rem; }
+    .subtitle { color: var(--muted); font-size: 0.9rem; margin-bottom: 1.5rem; }
+
+    /* ── Cards ── */
+    .card { background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; padding: 1.25rem; margin: 1rem 0; }
+    .card.highlight { border-color: var(--accent); }
+    .card.warn { border-left: 4px solid var(--yellow); }
+    .card.green-card { border-left: 4px solid var(--green); }
+    .card.red-card { border-left: 4px solid var(--red); }
+
+    /* ── QA boxes ── */
+    .qa { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; margin: 1rem 0; }
+    .qa-item { background: var(--bg3); border: 1px solid var(--border); border-radius: 8px; padding: 1rem; }
+    .qa-q { font-size: 0.8rem; color: var(--muted); margin-bottom: 0.5rem; }
+    .qa-a { font-weight: 600; font-size: 1rem; }
+    .qa-a.yes { color: var(--green); }
+    .qa-a.no { color: var(--red); }
+    .qa-detail { font-size: 0.8rem; color: var(--muted); margin-top: 0.4rem; }
+
+    /* ── Flow ── */
+    .flow { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; margin: 1rem 0; font-family: var(--mono); font-size: 0.85rem; }
+    .flow-box { background: var(--bg3); border: 1px solid var(--border); border-radius: 6px; padding: 0.4rem 0.8rem; }
+    .flow-box.mem { border-color: var(--yellow); color: var(--yellow); }
+    .flow-box.perc { border-color: var(--purple); color: var(--purple); }
+    .flow-box.dec { border-color: var(--accent); color: var(--accent); }
+    .flow-box.act { border-color: var(--green); color: var(--green); }
+    .flow-box.art { border-color: var(--orange); color: var(--orange); }
+    .flow-box.llm { border-color: var(--red); color: var(--red); }
+    .flow-arrow { color: var(--muted); }
+
+    /* ── Code ── */
+    pre { background: var(--bg3); border: 1px solid var(--border); border-radius: 6px; padding: 1rem; overflow-x: auto; font-family: var(--mono); font-size: 0.78rem; line-height: 1.5; margin: 0.5rem 0 1rem; }
+    code { font-family: var(--mono); font-size: 0.85em; background: var(--bg3); padding: 0.1em 0.3em; border-radius: 3px; color: var(--orange); }
+    pre code { background: none; padding: 0; color: var(--text); }
+
+    /* ── Tags ── */
+    .tag { display: inline-block; font-size: 0.7rem; font-weight: 600; padding: 0.15rem 0.5rem; border-radius: 4px; margin: 0 0.1rem; }
+    .tag.llm-gemini { background: #1a3a2e; color: #4ade80; border: 1px solid #3fb950; }
+    .tag.llm-groq { background: #1a2a3a; color: #7dd3fc; border: 1px solid #38bdf8; }
+    .tag.llm-auto { background: #2a1a3a; color: #c4b5fd; border: 1px solid #a78bfa; }
+    .tag.no-llm { background: #2a1a1a; color: #fca5a5; border: 1px solid #f87171; }
+    .tag.file { background: #1a1a2a; color: var(--muted); border: 1px solid var(--border); }
+    .tag.role { background: #2a2a1a; color: var(--yellow); border: 1px solid var(--yellow); }
+
+    /* ── File entries ── */
+    .file-entry { margin: 1.25rem 0; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+    .file-header { background: var(--bg3); padding: 0.75rem 1rem; display: flex; align-items: center; gap: 0.75rem; cursor: pointer; user-select: none; }
+    .file-header:hover { background: #2d333b; }
+    .file-name { font-family: var(--mono); font-size: 0.9rem; color: var(--accent); font-weight: 600; }
+    .file-desc { font-size: 0.82rem; color: var(--muted); margin-left: auto; }
+    .file-body { padding: 1rem 1.25rem; border-top: 1px solid var(--border); }
+    .file-body.hidden { display: none; }
+
+    /* ── Line annotations ── */
+    .annotated { margin: 0.75rem 0; }
+    .ann-line { display: flex; gap: 1rem; margin: 0.3rem 0; align-items: flex-start; }
+    .ann-code { font-family: var(--mono); font-size: 0.77rem; color: var(--text); background: var(--bg3); padding: 0.2rem 0.6rem; border-radius: 4px; flex-shrink: 0; min-width: 260px; white-space: pre; }
+    .ann-note { font-size: 0.82rem; color: var(--muted); padding-top: 0.15rem; }
+    .ann-note b { color: var(--text); }
+    .ann-note em { color: var(--green); font-style: normal; }
+    .ann-note .warn-note { color: var(--yellow); }
+    .ann-note .key { color: var(--accent); }
+
+    /* ── Table ── */
+    table { width: 100%; border-collapse: collapse; font-size: 0.82rem; margin: 0.5rem 0 1rem; }
+    th { background: var(--bg3); color: var(--muted); font-weight: 600; text-align: left; padding: 0.5rem 0.75rem; border: 1px solid var(--border); }
+    td { padding: 0.45rem 0.75rem; border: 1px solid var(--border); }
+    tr:nth-child(even) td { background: var(--bg2); }
+
+    p { margin: 0.5rem 0; }
+    ul, ol { margin: 0.5rem 0 0.5rem 1.5rem; }
+    li { margin: 0.25rem 0; font-size: 0.9rem; }
+    .spacer { height: 4rem; }
+    .muted { color: var(--muted); }
+    .back-link { font-size: 0.8rem; color: var(--muted); text-decoration: none; }
+    .back-link:hover { color: var(--accent); }
+    .dash-link { display: inline-block; margin-top: 0.5rem; padding: 0.3rem 0.8rem; background: var(--accent); color: #000; border-radius: 5px; font-size: 0.8rem; font-weight: 600; text-decoration: none; }
+  </style>
+</head>
+<body>
+
+<!-- ═══════════════════════════ SIDEBAR ═══════════════════════════ -->
+<nav id="sidebar">
+  <h2>EAGV3 S6 — Code Guide</h2>
+  <a href="/" style="display:inline-block;margin-bottom:0.5rem;font-size:0.75rem;color:var(--muted);">← Back to Dashboard</a>
+
+  <div class="section-label">Quick Answers</div>
+  <a href="#qa">LLM Usage per Role</a>
+
+  <div class="section-label">Architecture</div>
+  <a href="#overview">How it works</a>
+  <a href="#loop">The Main Loop</a>
+  <a href="#data-flow">Data Flow</a>
+
+  <div class="section-label">Folders</div>
+  <a href="#folder-prompts">prompts/</a>
+  <a href="#folder-static">static/</a>
+  <a href="#folder-state">state/</a>
+  <a href="#folder-logs">logs/</a>
+
+  <div class="section-label">Python Files</div>
+  <a href="#schemas">schemas.py</a>
+  <a href="#logger">logger.py</a>
+  <a href="#memory">memory.py</a>
+  <a href="#mcp">mcp_server.py</a>
+  <a href="#action">action.py</a>
+  <a href="#perception">perception.py</a>
+  <a href="#decision">decision.py</a>
+  <a href="#agent6">agent6.py</a>
+  <a href="#dashboard">dashboard.py</a>
+  <a href="#validate">validate.py</a>
+
+  <div class="section-label">Config Files</div>
+  <a href="#config">pyproject.toml / .env</a>
+</nav>
+
+<!-- ═══════════════════════════ CONTENT ═══════════════════════════ -->
+<main id="content">
+
+  <h1>⚡ EAGV3 Session 6 — Full Code Walkthrough</h1>
+  <p class="subtitle">Every file, every folder, every design decision — explained line by line.</p>
+  <a class="dash-link" href="/">Open Live Dashboard</a>
+
+  <!-- ─────────────── QUICK ANSWERS ─────────────── -->
+  <h2 class="section" id="qa">Your Questions — Direct Answers</h2>
+
+  <div class="qa">
+    <div class="qa-item">
+      <div class="qa-q">Can the agent use Gemini?</div>
+      <div class="qa-a yes">YES — Required</div>
+      <div class="qa-detail">
+        Perception is <em>pinned</em> to Gemini (<code>provider="g"</code>). Memory.remember is also pinned to Gemini.
+        Without <code>GEMINI_API_KEY</code> the agent cannot run.
+      </div>
+    </div>
+    <div class="qa-item">
+      <div class="qa-q">Can Decision use GROQ?</div>
+      <div class="qa-a yes">YES — Auto-routed</div>
+      <div class="qa-detail">
+        Decision sends <code>auto_route="decision"</code> to the Gateway. The Gateway picks the best provider from its pool — GROQ is in that pool. So yes, Decision can use GROQ (and Cerebras, NVIDIA, etc.).
+      </div>
+    </div>
+    <div class="qa-item">
+      <div class="qa-q">Does Action require an LLM?</div>
+      <div class="qa-a no">NO — Zero LLM calls</div>
+      <div class="qa-detail">
+        Action is pure MCP dispatch. It calls a tool over stdio, collapses the result, and optionally saves it as an artifact. No AI involved.
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h4>LLM Routing Summary</h4>
+    <table>
+      <tr>
+        <th>Role</th><th>LLM?</th><th>How routed</th><th>Provider</th><th>Why</th>
+      </tr>
+      <tr><td><span class="tag role">Memory.read</span></td><td style="color:var(--red)">No</td><td>—</td><td>—</td><td>Pure Python keyword overlap</td></tr>
+      <tr><td><span class="tag role">Memory.remember</span></td><td style="color:var(--green)">Yes</td><td><code>provider="g"</code></td><td><span class="tag llm-gemini">Gemini</span></td><td>Classify query into fact/preference/scratchpad</td></tr>
+      <tr><td><span class="tag role">Memory.relevant</span></td><td style="color:var(--green)">Yes (rare)</td><td><code>auto_route="memory"</code></td><td><span class="tag llm-auto">Auto (pool)</span></td><td>LLM-scored fallback when keyword search is weak</td></tr>
+      <tr><td><span class="tag role">Perception</span></td><td style="color:var(--green)">Yes</td><td><code>provider="g"</code></td><td><span class="tag llm-gemini">Gemini</span></td><td>Pinned — Gemini 3 loops at low temperature; needs reliability</td></tr>
+      <tr><td><span class="tag role">Decision</span></td><td style="color:var(--green)">Yes</td><td><code>auto_route="decision"</code></td><td><span class="tag llm-groq">GROQ</span> <span class="tag llm-auto">or pool</span></td><td>Auto-routed — gateway picks fastest/cheapest available</td></tr>
+      <tr><td><span class="tag role">Action</span></td><td style="color:var(--red)">No</td><td>—</td><td>—</td><td>Pure MCP tool dispatch over stdio</td></tr>
+    </table>
+  </div>
+
+  <!-- ─────────────── OVERVIEW ─────────────── -->
+  <h2 class="section" id="overview">Architecture Overview</h2>
+
+  <p>This is a <strong>four-role agentic loop</strong>. Instead of one big LLM call that "thinks and acts," the work is split into four specialist roles that each do one thing:</p>
+
+  <div class="flow">
+    <div class="flow-box mem">🧠 Memory</div>
+    <span class="flow-arrow">→</span>
+    <div class="flow-box perc">👁 Perception</div>
+    <span class="flow-arrow">→</span>
+    <div class="flow-box dec">🎯 Decision</div>
+    <span class="flow-arrow">→</span>
+    <div class="flow-box act">⚙ Action</div>
+    <span class="flow-arrow">→</span>
+    <div class="flow-box art">📦 Artifact</div>
+    <span class="flow-arrow">→ (loop back)</span>
+  </div>
+
+  <div class="card">
+    <table>
+      <tr><th>Role</th><th>Job</th><th>Input</th><th>Output</th></tr>
+      <tr><td><b>Memory</b></td><td>Remember facts across runs; retrieve relevant past results</td><td>query + history</td><td>List of MemoryItem hits</td></tr>
+      <tr><td><b>Perception</b></td><td>Decompose query into goals; track which are done; decide what artifact to attach</td><td>query + hits + history + prior_goals</td><td>Observation (list of Goals)</td></tr>
+      <tr><td><b>Decision</b></td><td>Look at one goal and decide: call a tool, or produce an answer</td><td>one Goal + hits + attached bytes</td><td>DecisionOutput (answer OR tool_call)</td></tr>
+      <tr><td><b>Action</b></td><td>Call the MCP tool; save large results as artifacts</td><td>ToolCall</td><td>(result_text, artifact_id or None)</td></tr>
+    </table>
+  </div>
+
+  <p>Everything flows through the <strong>LLM Gateway V3</strong> at <code>http://localhost:8101</code>. The gateway handles provider selection, fallbacks, caching, and reasoning routing. Your code never calls Gemini or GROQ directly.</p>
+
+  <!-- ─────────────── THE LOOP ─────────────── -->
+  <h2 class="section" id="loop">The Main Loop — How a Query Runs</h2>
+
+  <pre>
+for each query:
+  1. memory.remember(query)        ← classify and save any durable facts BEFORE the loop
+  2. open MCP server as subprocess
+  3. for iter = 1 to 14:
+       a. hits = memory.read(query, history)     ← keyword search, no LLM
+       b. obs  = perception.observe(...)          ← Gemini decomposes/updates goals
+       c. if ALL goals done → break
+       d. goal = first unfinished goal
+       e. if goal.attach_artifact_id → load bytes from ArtifactStore
+       f. out  = decision.next_step(goal, hits, attached_bytes, ...)   ← auto-routed LLM
+       g. if out.answer → record in history, continue
+       h. (result_text, art_id) = action.execute(out.tool_call)        ← MCP call, no LLM
+       i. memory.record_outcome(...)              ← save tool result to memory
+       j. record in history
+  4. extract final answer from history
+  </pre>
+
+  <div class="card warn">
+    <b>Key insight about termination:</b> The loop breaks when <em>Perception</em> marks all goals done.
+    Decision never says "I'm done." Only Perception, by examining history on each iteration, can declare a goal satisfied.
+    This is why Perception runs every single iteration even when there's nothing new to do.
+  </div>
+
+  <!-- ─────────────── DATA FLOW ─────────────── -->
+  <h2 class="section" id="data-flow">Data Flow — What Each Role Sees</h2>
+
+  <div class="card">
+    <h4>Iteration 2 of Query A (Shannon Wikipedia) — traced</h4>
+    <div class="annotated">
+      <div class="ann-line">
+        <div class="ann-code">hits = memory.read(query, history)</div>
+        <div class="ann-note"><b>Memory</b> returns 1 hit: the tool_outcome from iter 1 (fetch_url → art:09ff...). Pure Python, no LLM.</div>
+      </div>
+      <div class="ann-line">
+        <div class="ann-code">obs = perception.observe(..., hits, history, prior_goals)</div>
+        <div class="ann-note"><b>Perception</b> sees: "Fetch page: open | Extract facts: open". Sees the artifact in hits. Sets goal2.attach_artifact_index=0. Returns both goals, goal1 now done (history proves it).</div>
+      </div>
+      <div class="ann-line">
+        <div class="ann-code">blob = artifacts.get_bytes("art:09ff...")</div>
+        <div class="ann-note"><b>agent6.py</b> loads 263 KB of Wikipedia HTML from disk. This is the "attach" step.</div>
+      </div>
+      <div class="ann-line">
+        <div class="ann-code">out = decision.next_step(goal2, hits, [(art_id, blob)])</div>
+        <div class="ann-note"><b>Decision</b> sees 263 KB of raw text in ATTACHED ARTIFACTS. It reads the text, extracts birth/death dates, and returns an answer — no tool call needed.</div>
+      </div>
+      <div class="ann-line">
+        <div class="ann-code">history.append({kind:"answer", text:...})</div>
+        <div class="ann-note"><b>Loop</b> records the answer. Next iteration, Perception sees this in history and marks goal2 done. Loop exits.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─────────────── FOLDERS ─────────────── -->
+  <h2 class="section" id="folder-prompts">📁 prompts/ — What This Folder Does</h2>
+
+  <p>The <code>prompts/</code> folder contains the <em>system prompts</em> for the two roles that use LLMs: Perception and Decision.</p>
+
+  <div class="card green-card">
+    <h4>prompts/perception_system.md</h4>
+    <p><b>Who reads it:</b> <code>perception.py</code> loads it via <code>Path(...).read_text()</code> and sends it as the <code>system</code> field to the Gateway.</p>
+    <p><b>What it tells Gemini:</b></p>
+    <ul>
+      <li><em>Obligation 1:</em> If no prior goals exist, decompose the query into bounded goals.</li>
+      <li><em>Obligation 2:</em> Mark a goal done when history proves it's satisfied. Never un-done a goal.</li>
+      <li><em>Obligation 3:</em> For the first unfinished goal, pick which artifact to attach (by index).</li>
+      <li><em>Obligation 4:</em> Never reorder, never drop goals — just update done flags.</li>
+    </ul>
+    <p><b>Output schema:</b> The prompt specifies exactly <code>{"goals": [{"text", "done", "attach_artifact_index"}]}</code>. No id field — ids are assigned by the loop by position (g1, g2, …).</p>
+    <p><b>Why a file, not inline?</b> It's much easier to tune prompts when they're in plain text files. Change the file, re-run — no code change needed.</p>
+  </div>
+
+  <div class="card green-card">
+    <h4>prompts/decision_system.md</h4>
+    <p><b>Who reads it:</b> <code>decision.py</code> sends it as the system prompt to the Gateway with <code>auto_route="decision"</code>.</p>
+    <p><b>What it tells the LLM (GROQ or whichever provider is chosen):</b></p>
+    <ul>
+      <li><em>Rule 1:</em> Respond with exactly ONE thing — either an answer OR a tool call. Never both.</li>
+      <li><em>Rule 2:</em> <code>art:</code> strings are NOT file paths. Never pass them to a tool's <code>path</code> or <code>url</code> argument.</li>
+      <li><em>Rule 3:</em> Answers must be substantive. No "the page has been fetched" meta-answers.</li>
+    </ul>
+    <p><b>Why these rules?</b> These are the most common failure modes in agentic systems. Rule 1 prevents ambiguous output. Rule 2 prevents artifact handle leaks. Rule 3 prevents the agent from looping forever without making progress.</p>
+  </div>
+
+  <!-- ─────────────── STATIC FOLDER ─────────────── -->
+  <h2 class="section" id="folder-static">📁 static/ — What This Folder Does</h2>
+
+  <p>The <code>static/</code> folder is the live web dashboard — vanilla HTML, CSS, and JavaScript with no build step and no framework.</p>
+
+  <table>
+    <tr><th>File</th><th>Purpose</th></tr>
+    <tr><td><code>index.html</code></td><td>The dashboard page. Four columns (Memory, Perception, Decision, Action) + artifact strip + bottom panels (gateway calls, memory state, pydantic events). Served by <code>dashboard.py</code>.</td></tr>
+    <tr><td><code>app.js</code></td><td>All dashboard logic. Connects to the SSE stream (<code>/events</code>), parses events, and renders them into the right column/card. Also handles replay (load past run from <code>/api/runs/{id}</code>) and the clear button.</td></tr>
+    <tr><td><code>style.css</code></td><td>Dark-theme CSS for the dashboard. No external CSS framework.</td></tr>
+    <tr><td><code>explain.html</code></td><td>This page — the code walkthrough.</td></tr>
+  </table>
+
+  <div class="card warn">
+    <b>How events get to the browser:</b> <code>logger.py</code> calls <code>_SSE_QUEUE.put_nowait(line)</code> for every event.
+    <code>dashboard.py</code> has an SSE endpoint at <code>/events</code> that reads from this queue and sends each line to the browser as <code>data: {...}</code>.
+    <code>app.js</code> uses the browser's native <code>EventSource</code> API to receive them.
+    This all happens in real time — no polling.
+  </div>
+
+  <!-- ─────────────── STATE FOLDER ─────────────── -->
+  <h2 class="section" id="folder-state">📁 state/ — Persistent Storage (gitignored)</h2>
+
+  <p>The <code>state/</code> folder is created automatically on first run and gitignored. It contains everything that persists across agent runs.</p>
+
+  <table>
+    <tr><th>Path</th><th>What it stores</th><th>Written by</th></tr>
+    <tr><td><code>state/memory.json</code></td><td>All MemoryItem records — facts, preferences, tool outcomes. JSON array. Loaded lazily, written atomically after each mutation.</td><td>Memory.remember(), Memory.record_outcome()</td></tr>
+    <tr><td><code>state/artifacts/&lt;sha&gt;.bin</code></td><td>Raw bytes of a fetched page or large tool result. Named by SHA-256 of content (first 16 chars).</td><td>ArtifactStore.put()</td></tr>
+    <tr><td><code>state/artifacts/&lt;sha&gt;.json</code></td><td>Metadata: id, content_type, size_bytes, source, descriptor, created_at.</td><td>ArtifactStore.put()</td></tr>
+  </table>
+
+  <div class="card green-card">
+    <b>Why Query C (Mom's birthday) works across restarts:</b> When you type "My mom's birthday is 15 May 2026", the loop calls <code>memory.remember(query)</code> BEFORE the first iteration. Gemini classifies it as <code>kind="fact"</code> with <code>keywords=["mom","birthday","may","2026"]</code>. That gets written to <code>state/memory.json</code>. On run 2, when you ask "When is mom's birthday?", <code>memory.read()</code> tokenizes the query → ["mom","birthday"] → matches the stored fact → returns it as a hit. Perception sees the hit and can answer directly.
+  </div>
+
+  <!-- ─────────────── LOGS FOLDER ─────────────── -->
+  <h2 class="section" id="folder-logs">📁 logs/ — Run History (gitignored)</h2>
+
+  <p>One JSONL file per run: <code>logs/run-&lt;run_id&gt;.jsonl</code>. Every event emitted by <code>logger.py</code> is appended here as one JSON line.</p>
+  <p>The dashboard's <b>Replay</b> dropdown loads these files via <code>GET /api/runs/{run_id}</code> and re-streams the events through the same rendering code — so you can re-watch any past run without re-running the agent.</p>
+
+  <!-- ════════════════ PYTHON FILES ════════════════ -->
+  <h2 class="section" id="schemas">📄 schemas.py — Pydantic Contracts</h2>
+
+  <p>The "language" that the four roles speak to each other. Every boundary between roles is a typed Pydantic model. No raw dicts passed between roles.</p>
+
+  <div class="file-entry">
+    <div class="file-header" onclick="toggle(this)">
+      <span class="file-name">schemas.py</span>
+      <span class="tag file">6 models</span>
+      <span class="file-desc">All Pydantic v2 data contracts</span>
+    </div>
+    <div class="file-body">
+      <div class="annotated">
+        <div class="ann-line">
+          <div class="ann-code">class MemoryItem(BaseModel):</div>
+          <div class="ann-note"><b>What gets stored in state/memory.json.</b> Has <code>kind</code> (fact/preference/tool_outcome/scratchpad), <code>keywords</code> for search, <code>descriptor</code> (human-readable), <code>value</code> (structured data), and optionally <code>artifact_id</code> pointing to a stored file.</div>
+        </div>
+        <div class="ann-line">
+          <div class="ann-code">class Artifact(BaseModel):</div>
+          <div class="ann-note"><b>Metadata for a stored file.</b> The id looks like <code>art:09ff0a67fe264eb9</code>. The actual bytes live in <code>state/artifacts/09ff0a67fe264eb9.bin</code>.</div>
+        </div>
+        <div class="ann-line">
+          <div class="ann-code">class Goal(BaseModel):
+  id: str           # "g1", "g2", ...
+  text: str
+  done: bool
+  attach_artifact_id: str | None</div>
+          <div class="ann-note"><b>One task for the agent.</b> The <code>id</code> is assigned by position in the loop (not by the LLM). <code>done</code> is set by Perception. <code>attach_artifact_id</code> tells the loop which artifact to load and pass to Decision.</div>
+        </div>
+        <div class="ann-line">
+          <div class="ann-code">class Observation(BaseModel):
+  goals: list[Goal]</div>
+          <div class="ann-note"><b>Output of Perception.</b> Just a list of goals. The loop iterates over these to find the first undone one.</div>
+        </div>
+        <div class="ann-line">
+          <div class="ann-code">class DecisionOutput(BaseModel):
+  answer: str | None = None
+  tool_call: ToolCall | None = None
+
+  @model_validator(mode="after")
+  def exactly_one(self):</div>
+          <div class="ann-note"><b>Output of Decision — enforces the one-or-the-other contract.</b> The <code>model_validator</code> runs after construction and raises a <code>ValueError</code> if both or neither are set. This is caught by <code>log_construct()</code> and logged as a pydantic error.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─────────────── logger.py ─────────────── -->
+  <h2 class="section" id="logger">📄 logger.py — Structured Event Logger</h2>
+
+  <p>The single source of truth for all observability. Every role calls <code>logger.py</code> functions. Never <code>print()</code> directly from roles.</p>
+
+  <div class="file-entry">
+    <div class="file-header" onclick="toggle(this)">
+      <span class="file-name">logger.py</span>
+      <span class="tag file">3 sinks</span>
+      <span class="file-desc">stdout + JSONL file + SSE queue</span>
+    </div>
+    <div class="file-body">
+      <div class="annotated">
+        <div class="ann-line">
+          <div class="ann-code">_SSE_QUEUE: asyncio.Queue | None</div>
+          <div class="ann-note"><b>The bridge to the browser.</b> <code>agent6.py</code> calls <code>log.set_sse_queue(q)</code> at startup, wiring the dashboard's queue into the logger.</div>
+        </div>
+        <div class="ann-line">
+          <div class="ann-code">def _emit(event: dict):
+  # 1. stdout — human readable
+  # 2. JSONL file
+  # 3. SSE queue (put_nowait)</div>
+          <div class="ann-note"><b>Every logged event goes to all 3 places simultaneously.</b> <code>put_nowait</code> is non-blocking — if the queue is full (2048 items), the event is silently dropped rather than blocking the agent.</div>
+        </div>
+        <div class="ann-line">
+          <div class="ann-code">def log_construct(model_cls, **data):
+  try:
+    obj = model_cls(**data)
+    pydantic_ok(...)
+    return obj
+  except ValidationError as e:
+    pydantic_err(...)
+    raise</div>
+          <div class="ann-note"><b>Pydantic boundary hook.</b> Wraps model construction so every success/failure appears in the dashboard's Pydantic panel. <code>decision.py</code> uses this to build <code>DecisionOutput</code>.</div>
+        </div>
+      </div>
+      <h4>Event types logged</h4>
+      <table>
+        <tr><th>Function</th><th>role</th><th>event</th><th>When called</th></tr>
+        <tr><td><code>run_start()</code></td><td>loop</td><td>run_start</td><td>Top of run()</td></tr>
+        <tr><td><code>iter_start()</code></td><td>loop</td><td>iter_start</td><td>Top of each iteration</td></tr>
+        <tr><td><code>memory_remember()</code></td><td>memory</td><td>remember</td><td>After pre-loop classify</td></tr>
+        <tr><td><code>memory_read()</code></td><td>memory</td><td>read</td><td>After keyword search</td></tr>
+        <tr><td><code>perception()</code></td><td>perception</td><td>observe</td><td>After Gemini returns</td></tr>
+        <tr><td><code>attach()</code></td><td>loop</td><td>attach</td><td>When artifact is loaded</td></tr>
+        <tr><td><code>attach_dropped()</code></td><td>loop</td><td>attach_dropped</td><td>When art id not found</td></tr>
+        <tr><td><code>decision()</code></td><td>decision</td><td>next_step</td><td>After LLM returns</td></tr>
+        <tr><td><code>action()</code></td><td>action</td><td>execute</td><td>After MCP tool call</td></tr>
+        <tr><td><code>action_guarded()</code></td><td>action</td><td>guarded</td><td>When art: leaked as path</td></tr>
+        <tr><td><code>artifact_put()</code></td><td>artifacts</td><td>put</td><td>When large result saved</td></tr>
+        <tr><td><code>memory_record_outcome()</code></td><td>memory</td><td>record_outcome</td><td>After every action</td></tr>
+        <tr><td><code>pydantic_ok()</code></td><td>pydantic</td><td>construct</td><td>Successful model build</td></tr>
+        <tr><td><code>pydantic_err()</code></td><td>pydantic</td><td>error</td><td>ValidationError caught</td></tr>
+        <tr><td><code>run_end()</code></td><td>loop</td><td>run_end</td><td>After loop exits</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <!-- ─────────────── memory.py ─────────────── -->
+  <h2 class="section" id="memory">📄 memory.py — Memory Service + ArtifactStore</h2>
+
+  <p>Two classes in one file: <code>Memory</code> (reads/writes <code>state/memory.json</code>) and <code>ArtifactStore</code> (reads/writes <code>state/artifacts/</code>).</p>
+
+  <div class="file-entry">
+    <div class="file-header" onclick="toggle(this)">
+      <span class="file-name">memory.py — Memory class</span>
+      <span class="tag llm-gemini">Gemini for remember()</span>
+      <span class="tag no-llm">No LLM for read()</span>
+    </div>
+    <div class="file-body">
+      <h4>Memory.read() — Pure Python keyword search</h4>
+      <div class="annotated">
+        <div class="ann-line">
+          <div class="ann-code">q_tokens = _tokenize(query)
+for h in history[-5:]:
+  q_tokens |= _tokenize(h.get("result_descriptor",""))</div>
+          <div class="ann-note"><b>Build a token set from the query PLUS recent history.</b> This means if you just fetched a page about "Shannon", those tokens get added, improving recall for follow-up goals.</div>
+        </div>
+        <div class="ann-line">
+          <div class="ann-code">overlap = len(q_tokens & item_tokens)
+if overlap > 0:
+  scored.append((overlap, item))</div>
+          <div class="ann-note"><b>Simple overlap scoring.</b> Count shared lowercase tokens. No TF-IDF, no embeddings, no semantic similarity. Intentionally "dumb" so you can see exactly what memory retrieves and why.</div>
+        </div>
+      </div>
+
+      <h4>Memory.remember() — Gemini classifies the query</h4>
+      <div class="annotated">
+        <div class="ann-line">
+          <div class="ann-code">resp = await _gateway_call(
+  messages=[...],
+  provider="g",        # ← Gemini
+  response_format={"type": "json_object"},
+)</div>
+          <div class="ann-note"><b>Calls Gemini</b> with a prompt asking: "Is there any durable fact/preference in this text? Return JSON {kind, keywords, descriptor, value} or {} if nothing durable." The keywords list is what makes future searches work.</div>
+        </div>
+        <div class="ann-line">
+          <div class="ann-code">if not parsed or not parsed.get("kind"):
+  return None</div>
+          <div class="ann-note"><b>Returns None if the query has no durable content.</b> For example "What is 2+2?" — no fact to remember. The loop handles None gracefully (logs "no durable content" and continues).</div>
+        </div>
+      </div>
+
+      <h4>Memory.record_outcome() — No LLM</h4>
+      <div class="annotated">
+        <div class="ann-line">
+          <div class="ann-code">keywords = list({tool_call.name} | args_tokens)[:8]
+descriptor = f"{tool_call.name}({_args_repr(...)}) -> {artifact_id}"
+item = MemoryItem(kind="tool_outcome", ...)</div>
+          <div class="ann-note"><b>Called after EVERY action.</b> Saves what tool was called and what it produced (or what artifact it created). These records are what Perception sees in MEMORY HITS on the next iteration — enabling it to say "fetch_url already ran, mark that goal done."</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="file-entry">
+    <div class="file-header" onclick="toggle(this)">
+      <span class="file-name">memory.py — ArtifactStore class</span>
+      <span class="tag no-llm">No LLM</span>
+    </div>
+    <div class="file-body">
+      <div class="annotated">
+        <div class="ann-line">
+          <div class="ann-code">sha = hashlib.sha256(blob).hexdigest()[:16]
+art_id = f"art:{sha}"
+bin_path = _ARTIFACTS_DIR / f"{sha}.bin"</div>
+          <div class="ann-note"><b>Content-addressable storage.</b> The same bytes always produce the same handle. If you fetch the same URL twice, the second call is a no-op (idempotent). The 16-char SHA prefix is enough to avoid collisions for hundreds of artifacts.</div>
+        </div>
+        <div class="ann-line">
+          <div class="ann-code">def _atomic_write(path: Path, data: Any):
+  tmp = path.with_suffix(".tmp")
+  tmp.write_text(...)
+  tmp.replace(path)     # atomic rename</div>
+          <div class="ann-note"><b>Atomic writes prevent corruption.</b> If the process crashes mid-write, you get the old file rather than a half-written one. <code>rename()</code> is atomic on POSIX systems.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─────────────── mcp_server.py ─────────────── -->
+  <h2 class="section" id="mcp">📄 mcp_server.py — The 9-Tool MCP Server</h2>
+
+  <p>A standalone Python process that the agent spawns as a <em>subprocess</em> and communicates with over stdio. The agent never calls these functions directly — it sends JSON requests over the MCP protocol, and the server responds.</p>
+
+  <div class="file-entry">
+    <div class="file-header" onclick="toggle(this)">
+      <span class="file-name">mcp_server.py</span>
+      <span class="tag no-llm">No LLM — pure tool execution</span>
+    </div>
+    <div class="file-body">
+      <table>
+        <tr><th>Tool</th><th>What it does</th><th>Notes</th></tr>
+        <tr><td><code>web_search</code></td><td>Search the web</td><td>Tavily first (API key needed), DuckDuckGo fallback</td></tr>
+        <tr><td><code>fetch_url</code></td><td>Download a URL as clean markdown</td><td>crawl4ai (headless Chrome) → httpx fallback</td></tr>
+        <tr><td><code>get_time</code></td><td>Current time in any timezone</td><td>Uses Python's zoneinfo</td></tr>
+        <tr><td><code>currency_convert</code></td><td>Convert between currencies</td><td>Free exchange rate API, no key needed</td></tr>
+        <tr><td><code>read_file</code></td><td>Read a file from sandbox/</td><td>Path traversal protection via _sandbox()</td></tr>
+        <tr><td><code>list_dir</code></td><td>List files in sandbox/</td><td>Same sandbox protection</td></tr>
+        <tr><td><code>create_file</code></td><td>Create a new file in sandbox/</td><td>Errors if file already exists</td></tr>
+        <tr><td><code>update_file</code></td><td>Overwrite a file in sandbox/</td><td>Creates parent dirs automatically</td></tr>
+        <tr><td><code>edit_file</code></td><td>Replace text in a file</td><td>Replaces first occurrence only</td></tr>
+      </table>
+
+      <div class="annotated" style="margin-top:1rem">
+        <div class="ann-line">
+          <div class="ann-code">SANDBOX = Path(__file__).parent / "sandbox"
+
+def _sandbox(path: str) -> Path:
+  resolved = (SANDBOX / path.lstrip("/")).resolve()
+  if not str(resolved).startswith(str(SANDBOX.resolve())):
+    raise ValueError(f"Path {path!r} escapes sandbox")</div>
+          <div class="ann-note"><b>Security: sandbox all file operations.</b> If the LLM tries to write to <code>../../.env</code> or <code>/etc/passwd</code>, this catches it. <code>.resolve()</code> expands symlinks and <code>..</code> before checking the prefix.</div>
+        </div>
+        <div class="ann-line">
+          <div class="ann-code">try:
+  loop = _aio.get_event_loop()
+  if loop.is_running():
+    with ThreadPoolExecutor() as pool:
+      future = pool.submit(_aio.run, _crawl())
+      return future.result(timeout=120)</div>
+          <div class="ann-note"><b>Async event loop conflict fix.</b> crawl4ai is async, but the MCP server runs in the agent's already-running event loop. You can't call <code>asyncio.run()</code> inside a running loop. Solution: run it in a separate thread where the event loop is not yet running.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─────────────── action.py ─────────────── -->
+  <h2 class="section" id="action">📄 action.py — Pure Dispatch (No LLM)</h2>
+
+  <span class="tag no-llm" style="margin-bottom:0.5rem;display:inline-block">NO LLM CALLS</span>
+  <p>The simplest role. Takes one ToolCall, calls the MCP server, handles the result. About 50 lines of real logic.</p>
+
+  <div class="file-entry">
+    <div class="file-header" onclick="toggle(this)">
+      <span class="file-name">action.py</span>
+      <span class="tag no-llm">No LLM</span>
+      <span class="file-desc">MCP dispatch + artifact threshold</span>
+    </div>
+    <div class="file-body">
+      <div class="annotated">
+        <div class="ann-line">
+          <div class="ann-code">_PATH_KEYS = re.compile(r"^(path|url|file|location)$")
+
+for key, val in tool_call.arguments.items():
+  if _PATH_KEYS.match(key) and val.startswith("art:"):
+    log.action_guarded(...)
+    return ("error: artifact handles are not paths/urls...", None)</div>
+          <div class="ann-note"><b>Artifact-handle guard.</b> If Decision (despite being told not to) passes an <code>art:</code> string as a <code>url</code> argument, this catches it before the MCP call. Logged as "guarded" — visible as a red warning in the dashboard's Action column.</div>
+        </div>
+        <div class="ann-line">
+          <div class="ann-code">result = await session.call_tool(tool_call.name,
+                               arguments=tool_call.arguments)</div>
+          <div class="ann-note"><b>The actual MCP call.</b> Sends a JSON-RPC request over stdio to the running <code>mcp_server.py</code> process and awaits the response.</div>
+        </div>
+        <div class="ann-line">
+          <div class="ann-code">ARTIFACT_THRESHOLD_BYTES = 4096
+
+if len(text.encode("utf-8")) > ARTIFACT_THRESHOLD_BYTES:
+  art_id = self.artifacts.put(text.encode("utf-8"), ...)
+  return (f"[artifact {art_id}, {n} bytes] preview: {text[:300]}", art_id)</div>
+          <div class="ann-note"><b>Large results become artifacts.</b> Anything over 4 KB is saved to disk and referenced by handle. This keeps the history and prompt sizes small — Decision only sees the full bytes when Perception explicitly attaches them.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─────────────── perception.py ─────────────── -->
+  <h2 class="section" id="perception">📄 perception.py — The Orchestrator Role</h2>
+
+  <span class="tag llm-gemini" style="margin-bottom:0.5rem;display:inline-block">PINNED TO GEMINI</span>
+  <p>Perception runs every single iteration. It decides what's been accomplished and what needs to happen next.</p>
+
+  <div class="file-entry">
+    <div class="file-header" onclick="toggle(this)">
+      <span class="file-name">perception.py</span>
+      <span class="tag llm-gemini">provider="g" (Gemini)</span>
+      <span class="file-desc">Goal decomposition + progress tracking</span>
+    </div>
+    <div class="file-body">
+      <div class="annotated">
+        <div class="ann-line">
+          <div class="ann-code">hits_lines = []
+for i, h in enumerate(hits):
+  line = f"[{i}] kind={h.kind} descriptor={h.descriptor!r}"
+  if h.artifact_id:
+    line += f" artifact_index={i}"</div>
+          <div class="ann-note"><b>Build the MEMORY HITS section.</b> Only hits WITH an artifact get an <code>artifact_index=N</code> label. That number is what the model emits back as <code>attach_artifact_index</code>. The loop then maps the integer back to the real art: handle.</div>
+        </div>
+        <div class="ann-line">
+          <div class="ann-code">response_format={
+  "type": "json_schema",
+  "schema": _OUTPUT_SCHEMA,
+  "name": "Observation",
+  "strict": True,
+}</div>
+          <div class="ann-note"><b>Structured output.</b> The gateway forces Gemini to return valid JSON matching the schema. No regex parsing needed. The schema has NO <code>id</code> field — ids are assigned by the loop afterward.</div>
+        </div>
+        <div class="ann-line">
+          <div class="ann-code">_SYNTHESIS_KEYWORDS = {"synthesise","synthesize",
+                        "extract","list","compare","decide"}
+
+if words & _SYNTHESIS_KEYWORDS:
+  artifact_hits = [h for h in hits if h.artifact_id]
+  if artifact_hits and first_open.attach_artifact_id is None:
+    first_open.attach_artifact_id = artifact_hits[-1].artifact_id</div>
+          <div class="ann-note"><b>Force-attach safety net.</b> For Query D (asyncio synthesis), the model might forget to set <code>attach_artifact_index</code>. This code runs AFTER parsing and overrides: if the goal contains synthesis keywords AND there are artifact hits AND the model didn't attach one — force-attach the most recent artifact. This is what makes Query D reliably work.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─────────────── decision.py ─────────────── -->
+  <h2 class="section" id="decision">📄 decision.py — One Goal, One Answer</h2>
+
+  <span class="tag llm-auto" style="margin-bottom:0.5rem;display:inline-block">AUTO-ROUTED (GROQ, Cerebras, etc.)</span>
+  <p>Decision receives one goal and has exactly two possible outputs: call a tool, or produce an answer. The DecisionOutput Pydantic model enforces this — exactly one field must be set.</p>
+
+  <div class="file-entry">
+    <div class="file-header" onclick="toggle(this)">
+      <span class="file-name">decision.py</span>
+      <span class="tag llm-auto">auto_route="decision"</span>
+      <span class="file-desc">Tool call or answer, never both</span>
+    </div>
+    <div class="file-body">
+      <div class="annotated">
+        <div class="ann-line">
+          <div class="ann-code">art_section = ""
+if attached:
+  for art_id, blob in attached:
+    text = blob.decode("utf-8", errors="replace")
+    if len(text) > 32 * 1024:
+      text = text[:32768] + "\n[...truncated...]"
+    art_section += f"--- {art_id} ({len(blob)} bytes) ---\n{text}\n--- end ---"</div>
+          <div class="ann-note"><b>Inject artifact bytes into the prompt.</b> When Perception sets <code>attach_artifact_id</code>, the loop loads the .bin file and passes bytes here. Decision sees up to 32 KB of raw text in its prompt. This is how it can answer "what is Shannon's birth date?" without re-fetching the page.</div>
+        </div>
+        <div class="ann-line">
+          <div class="ann-code">resp = await _gateway_call(
+  ...,
+  auto_route="decision",
+  tools=mcp_tools,
+  tool_choice="auto",
+)</div>
+          <div class="ann-note"><b>auto_route="decision" + tools.</b> The gateway routes to its decision-tier pool (GROQ, Cerebras, etc.). The tool list is passed so the LLM can call any of the 9 MCP tools. <code>tool_choice="auto"</code> means it can also choose NOT to call a tool and just answer.</div>
+        </div>
+        <div class="ann-line">
+          <div class="ann-code">tool_calls = resp.get("tool_calls", [])
+if tool_calls:
+  out = log.log_construct(DecisionOutput,
+    tool_call=ToolCall(name=..., arguments=...))
+else:
+  out = log.log_construct(DecisionOutput, answer=resp.get("text"))</div>
+          <div class="ann-note"><b>Parse into DecisionOutput via log_construct.</b> If the response has tool_calls, wrap the first one. Otherwise treat the text response as an answer. <code>log_construct</code> validates through Pydantic AND emits a pydantic event to the dashboard.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─────────────── agent6.py ─────────────── -->
+  <h2 class="section" id="agent6">📄 agent6.py — The Orchestrator</h2>
+
+  <p>The main entry point. Starts the dashboard, opens the MCP server, and runs the query loop.</p>
+
+  <div class="file-entry">
+    <div class="file-header" onclick="toggle(this)">
+      <span class="file-name">agent6.py</span>
+      <span class="tag file">Entry point</span>
+      <span class="file-desc">Loop + REPL + gateway lifecycle</span>
+    </div>
+    <div class="file-body">
+      <div class="annotated">
+        <div class="ann-line">
+          <div class="ann-code">from dotenv import load_dotenv
+from pathlib import Path
+load_dotenv(Path(__file__).parent / ".env")
+# MUST be first — before any other import</div>
+          <div class="ann-note"><b>Load .env FIRST.</b> The gateway and provider SDKs read environment variables at import time. If you load the .env after importing them, the keys won't be seen. This is why these two lines are at the very top before any other imports.</div>
+        </div>
+        <div class="ann-line">
+          <div class="ann-code">def ensure_gateway():
+  try:
+    r = httpx.get(f"{GATEWAY_URL}/v1/providers", timeout=3)
+    if r.status_code == 200:
+      return   # already running
+  except: pass
+  # Start it as a subprocess
+  _gateway_proc = subprocess.Popen([python, "main.py"], ...)</div>
+          <div class="ann-note"><b>Auto-start the gateway if needed.</b> If you start agent6.py before starting the gateway manually, it automatically launches it. Polls for 30 seconds before giving up.</div>
+        </div>
+        <div class="ann-line">
+          <div class="ann-code">async with mcp_session() as session:
+  # StdioServerParameters: command=python, args=["mcp_server.py"]
+  # mcp_server.py runs as a SUBPROCESS</div>
+          <div class="ann-note"><b>MCP over stdio.</b> The agent spawns <code>mcp_server.py</code> as a child process. They communicate by writing JSON to each other's stdin/stdout. The <code>ClientSession</code> handles all the protocol details. When the context manager exits, the subprocess is killed cleanly.</div>
+        </div>
+        <div class="ann-line">
+          <div class="ann-code">classified = await memory.remember(query,
+    source="user_query", run_id=run_id)
+log.memory_remember(classified)
+# ← This happens BEFORE iter 1</div>
+          <div class="ann-note"><b>Durable-memory contract.</b> The user's query is classified for facts BEFORE the loop starts. This is what makes Query C work — "My mom's birthday is 15 May 2026" gets saved as a fact with keywords ["mom","birthday","may","2026"] even before the loop tries to do anything with it.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─────────────── dashboard.py ─────────────── -->
+  <h2 class="section" id="dashboard">📄 dashboard.py — FastAPI Server at :8102</h2>
+
+  <div class="file-entry">
+    <div class="file-header" onclick="toggle(this)">
+      <span class="file-name">dashboard.py</span>
+      <span class="tag file">FastAPI + SSE</span>
+    </div>
+    <div class="file-body">
+      <table>
+        <tr><th>Endpoint</th><th>What it does</th></tr>
+        <tr><td><code>GET /</code></td><td>Serves <code>static/index.html</code> — the dashboard</td></tr>
+        <tr><td><code>GET /static/*</code></td><td>Serves app.js, style.css, explain.html</td></tr>
+        <tr><td><code>GET /events</code></td><td>Server-Sent Events stream. Reads from <code>sse_queue</code> and sends each line to the browser. 15-second heartbeat ping if no events.</td></tr>
+        <tr><td><code>GET /api/state</code></td><td>Returns current <code>state/memory.json</code> + artifact metadata list. Used by the Memory State panel.</td></tr>
+        <tr><td><code>GET /api/runs</code></td><td>Lists past run IDs from <code>logs/run-*.jsonl</code>. Used to populate the Replay dropdown.</td></tr>
+        <tr><td><code>GET /api/runs/{run_id}</code></td><td>Returns all events from a past run's JSONL file. Used by the Replay button.</td></tr>
+      </table>
+      <div class="annotated" style="margin-top:0.75rem">
+        <div class="ann-line">
+          <div class="ann-code">sse_queue: asyncio.Queue = asyncio.Queue(maxsize=2048)
+app = FastAPI(...)
+return app, sse_queue</div>
+          <div class="ann-note"><b>Queue is the bridge.</b> <code>create_app()</code> creates both the FastAPI app and the queue, returns both. <code>agent6.py</code> takes the queue and passes it to <code>logger.py</code> via <code>log.set_sse_queue(q)</code>. From then on, every logged event flows through the queue to every connected browser.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─────────────── validate.py ─────────────── -->
+  <h2 class="section" id="validate">📄 validate.py — Test Runner</h2>
+
+  <p>Runs all four reference queries non-interactively and checks assertions. <code>uv run python validate.py</code> is the final check before submitting.</p>
+
+  <div class="file-entry">
+    <div class="file-header" onclick="toggle(this)">
+      <span class="file-name">validate.py + validation.json</span>
+      <span class="tag file">Test suite</span>
+    </div>
+    <div class="file-body">
+      <p>For each query in <code>validation.json</code>, the validator:</p>
+      <ol>
+        <li>Optionally cleans <code>state/</code> if <code>"clean_state_before": true</code></li>
+        <li>Calls <code>await run(query)</code> from agent6.py</li>
+        <li>Checks: <code>must_contain</code> strings in the final answer</li>
+        <li>Checks: <code>must_not_contain_any</code> strings NOT in the answer</li>
+        <li>Checks: <code>max_iterations</code> — iteration count must not exceed this</li>
+        <li>Checks: <code>memory_assertions</code> — right kinds/counts in state/memory.json</li>
+        <li>Checks: <code>artifact_assertions</code> — right number/size of artifacts</li>
+        <li>For Query C: runs the follow-up WITHOUT cleaning state first</li>
+      </ol>
+      <table>
+        <tr><th>Query</th><th>Name</th><th>Max iters</th><th>Key assertions</th></tr>
+        <tr><td>A</td><td>Shannon Wikipedia</td><td>6</td><td>must contain "1916", "2001", "information theory" + 1 artifact ≥ 50KB</td></tr>
+        <tr><td>B</td><td>Tokyo weekend</td><td>12</td><td>must contain "weather", "recommend" + 1 of museum/park/aquarium/garden/indoor/outdoor</td></tr>
+        <tr><td>C</td><td>Mom's birthday</td><td>8 + 4</td><td>Run 1: fact with "mom"+"birthday" in memory. Run 2: must contain "15", "May", "2026"</td></tr>
+        <tr><td>D</td><td>Asyncio synthesis</td><td>14</td><td>must contain numbered list + "asyncio" + ≥3 artifacts + ≥4 tool_outcome records</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <!-- ─────────────── CONFIG ─────────────── -->
+  <h2 class="section" id="config">⚙️ Config Files — pyproject.toml and .env</h2>
+
+  <div class="card">
+    <h4>pyproject.toml</h4>
+    <p>Uses <code>uv</code> — no pip, no venv activation needed. <code>uv sync</code> installs everything. <code>uv run python agent6.py</code> runs with the managed venv.</p>
+    <p>Key dependencies: <code>mcp</code> (stdio client), <code>pydantic</code> (v2 contracts), <code>httpx</code> (async HTTP), <code>fastapi</code> + <code>uvicorn</code> + <code>sse-starlette</code> (dashboard), <code>crawl4ai</code> (URL fetching), <code>tavily-python</code> (web search), <code>duckduckgo-search</code> (fallback search).</p>
+  </div>
+
+  <div class="card warn">
+    <h4>.env — Your API Keys</h4>
+    <p>You have 4 keys. Here is exactly what each one is used for:</p>
+    <table>
+      <tr><th>Variable</th><th>Value you have</th><th>Used by</th><th>Required?</th></tr>
+      <tr><td><code>TAVILY_API_KEY</code></td><td>tvly-dev-…</td><td><code>mcp_server.py</code> → <code>web_search</code> tool</td><td>Strongly recommended (DDG fallback is flaky)</td></tr>
+      <tr><td><code>GEMINI_API_KEY</code></td><td>AIzaSy…</td><td>Gateway → Perception + Memory.remember</td><td><b>REQUIRED</b> — agent cannot run without it</td></tr>
+      <tr><td><code>GROQ_API_KEY</code></td><td>gsk_…</td><td>Gateway router pool → Decision + Memory.relevant</td><td>Strongly recommended</td></tr>
+      <tr><td><code>CEREBRAS_API_KEY</code></td><td>csk-…</td><td>Gateway router pool → Decision + Memory.relevant</td><td>Strongly recommended</td></tr>
+    </table>
+    <p>You also need <code>GOOGLE_API_KEY</code> set to the same value as <code>GEMINI_API_KEY</code> (some gateway internals read this name instead). Add this line to your .env:</p>
+    <pre>GOOGLE_API_KEY=AIzaSyB4WZsEbcklGUdhYdiQgODqQD54LoxvlJk</pre>
+    <p>The .env file should be at: <code>Session 6 - Agentic Architecture/assignment6/.env</code></p>
+  </div>
+
+  <!-- ─────────────── FAILURE DEFENSES ─────────────── -->
+  <h2 class="section" id="defenses">🛡 Built-in Failure Defenses</h2>
+
+  <table>
+    <tr><th>Failure mode</th><th>Defense</th><th>Where</th></tr>
+    <tr><td>Decision returns "the page was fetched, how would you like to proceed?"</td><td>Rule 3 in decision_system.md: substantive answers required</td><td>prompts/decision_system.md</td></tr>
+    <tr><td>Perception drops a goal between iterations</td><td>Obligation 4: preserve goal order; prior_goals passed in every iteration</td><td>prompts/perception_system.md + perception.py</td></tr>
+    <tr><td>Perception hallucinates an artifact id</td><td>Indexed artifact references + <code>artifacts.exists()</code> guard → logged as attach_dropped</td><td>perception.py + agent6.py</td></tr>
+    <tr><td>Decision passes art: handle as a tool argument</td><td>Rule 2 in decision_system.md + runtime guard in action.py → logged as guarded</td><td>prompts/decision_system.md + action.py</td></tr>
+    <tr><td>Query C run 2 returns nothing</td><td>memory.remember() extracts keywords at write time; memory.read() matches on keywords AND tokenized descriptor</td><td>memory.py</td></tr>
+    <tr><td>Query D refuses to synthesize / forgets to attach artifact</td><td>Force-attach safety net: if goal has synthesis keywords AND artifact hits exist → force-attach</td><td>perception.py (after model parse)</td></tr>
+    <tr><td>Loop runs forever</td><td>MAX_ITERATIONS = 14 global cap; validate.py also checks per-query max_iterations</td><td>agent6.py + validate.py</td></tr>
+    <tr><td>Corrupted state/ file</td><td>Atomic writes (write .tmp → rename) prevent half-written files</td><td>memory.py _atomic_write()</td></tr>
+  </table>
+
+  <div class="spacer"></div>
+
+</main>
+
+<script>
+  function toggle(header) {
+    const body = header.nextElementSibling;
+    body.classList.toggle("hidden");
+  }
+  // Start all file bodies expanded
+  document.querySelectorAll(".file-body").forEach(b => b.classList.remove("hidden"));
+</script>
+
+</body>
+</html>

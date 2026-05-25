@@ -1,0 +1,62 @@
+{
+  "queries": [
+    {
+      "id": "A",
+      "name": "shannon_wikipedia",
+      "query": "Fetch https://en.wikipedia.org/wiki/Claude_Shannon and tell me his birth date, death date, and three key contributions to information theory.",
+      "expected_iterations": 3,
+      "max_iterations": 6,
+      "clean_state_before": true,
+      "must_contain": ["1916", "2001", "information theory"],
+      "must_not_contain_any": ["I cannot", "as an AI"],
+      "memory_assertions": [
+        { "kind": "tool_outcome", "min_count": 1, "must_have_artifact_id": true }
+      ],
+      "artifact_assertions": [
+        { "min_count": 1, "min_size_bytes": 50000 }
+      ]
+    },
+    {
+      "id": "B",
+      "name": "tokyo_weekend",
+      "query": "Find family-friendly things to do in Tokyo this weekend, check the weather forecast, and recommend the best activity given the weather.",
+      "expected_iterations": 6,
+      "max_iterations": 12,
+      "clean_state_before": true,
+      "must_contain_any_of": ["museum", "park", "aquarium", "garden", "indoor", "outdoor"],
+      "must_contain": ["weather", "recommend"],
+      "memory_assertions": [{ "kind": "tool_outcome", "min_count": 2 }]
+    },
+    {
+      "id": "C",
+      "name": "mom_birthday_durable",
+      "query": "My mom's birthday is 15 May 2026. Remember that and give me a calendar reminder for two weeks before and on the day.",
+      "expected_iterations": 4,
+      "max_iterations": 8,
+      "clean_state_before": true,
+      "must_contain_any_of": ["created", "noted", "saved", "remember", "reminder"],
+      "memory_assertions": [
+        { "kind": "fact", "descriptor_contains": ["mom", "birthday"], "min_count": 1 }
+      ],
+      "follow_up": {
+        "query": "When is mom's birthday?",
+        "preserve_state": true,
+        "expected_iterations": 2,
+        "max_iterations": 4,
+        "must_contain": ["15", "May", "2026"]
+      }
+    },
+    {
+      "id": "D",
+      "name": "asyncio_synthesis",
+      "query": "Search for 'Python asyncio best practices', read the top 3 results, and give me a short numbered list of the advice they agree on.",
+      "expected_iterations": 6,
+      "max_iterations": 14,
+      "clean_state_before": true,
+      "must_contain_any_of": ["1.", "2.", "3.", "•", "asyncio.run", "TaskGroup", "gather"],
+      "must_contain": ["asyncio"],
+      "memory_assertions": [{ "kind": "tool_outcome", "min_count": 4 }],
+      "artifact_assertions": [{ "min_count": 3 }]
+    }
+  ]
+}
