@@ -1,18 +1,270 @@
-# EAGV3 Session 6 — Agentic Architecture Query Logs
+# EAGV3 Session 6 — Agentic Architecture
 
-This file contains only the Assignment 6 console logs from the uploaded Assignment 6 run files.
+This assignment implements a four-role agentic system using a typed control loop:
 
-The earlier Assignment 7 README update was incorrect because the uploaded README file had Assignment 7 content.
+**Memory → Perception → Decision → Action**
 
-## Pass / Fail Summary
+The goal of Session 6 is to move away from a single monolithic agent file and introduce clear module boundaries. Each role has a specific responsibility, and the outer `agent6.py` loop coordinates them until all user goals are satisfied.
 
-| Query | Run ID | Status | Verdict |
-|---|---|---|---|
-| Query 1 — Claude Shannon | `de15f36e` | **SUCCESS** | Passed |
-| Query 2 — Tokyo Activities | `00754029` | **PARTIAL SUCCESS** | Not fully passed |
-| Query 3 — Mom's Birthday Save and Calendar Reminders | `a63be5ff` | **PARTIAL SUCCESS** | Not fully passed |
-| Query 4 — Mom's Birthday Recall | `6f45ff10` | **SUCCESS** | Passed |
-| Query 5 — Python asyncio Best Practices | `a9b759e4` | **SUCCESS** | Passed |
+---
+
+## What This Assignment Demonstrates
+
+This project demonstrates how an agent can:
+
+1. Break a user query into bounded goals.
+2. Persist useful information in memory.
+3. Re-read memory at every iteration.
+4. Use Perception to decide which goals are complete.
+5. Use Decision to either answer or call exactly one tool.
+6. Use Action to execute MCP tools.
+7. Store large tool outputs as artifacts instead of passing huge raw text through every step.
+8. Continue iterating until Perception marks all goals as done.
+
+The key idea is that the agent does not try to solve everything in one step. It decomposes the task, acts, records outcomes, re-observes state, and continues.
+
+---
+
+## Architecture Overview
+
+```text
+User Query
+   |
+   v
+Memory.remember(query)
+   |
+   v
+Loop:
+   |
+   +--> Memory.read(query, history)
+   |
+   +--> Perception.observe(query, memory_hits, history, prior_goals)
+   |        - decomposes query into goals
+   |        - marks goals done
+   |        - decides when artifact bytes should be attached
+   |
+   +--> Decision.next_step(goal, memory_hits, attached_artifacts, history, tools)
+   |        - returns either an answer
+   |        - or returns one tool call
+   |
+   +--> Action.execute(tool_call)
+   |        - dispatches MCP tool
+   |        - writes large outputs to ArtifactStore
+   |
+   +--> Memory.record_outcome(tool_call, result, artifact_id)
+   |
+   v
+Final Answer
+```
+
+---
+
+## Four Main Roles
+
+### 1. Memory
+
+Memory stores durable facts, preferences, tool outcomes, and scratchpad-style notes.
+
+In Session 6, memory is kept simple and readable. It stores items in a JSON file and supports retrieval before every perception step.
+
+Typical memory responsibilities:
+
+- Remember facts from user queries.
+- Store tool outcomes.
+- Store artifact handles instead of huge raw outputs.
+- Retrieve relevant memory items for the next iteration.
+
+Example:
+
+```text
+User says: My mom's birthday is 15 May 2026
+Memory stores or records: birthday date / tool outcome / file path
+Later query: When is mom's birthday?
+Agent retrieves the stored information.
+```
+
+---
+
+### 2. Perception
+
+Perception is the orchestrator.
+
+It looks at:
+
+- Original user query
+- Memory hits
+- Run history
+- Previous goal list
+
+Then it returns an updated list of goals.
+
+Perception decides:
+
+- What goals exist.
+- Which goals are open.
+- Which goals are done.
+- Whether a raw artifact should be attached for the next Decision step.
+
+Important rule:
+
+```text
+Decision does not mark goals done.
+Perception marks goals done after reading history.
+```
+
+---
+
+### 3. Decision
+
+Decision handles exactly one unfinished goal at a time.
+
+It can return only one of two things:
+
+1. A final answer for that goal.
+2. A single MCP tool call.
+
+It should not call multiple tools at once. This keeps failures isolated and makes retries easier.
+
+Example:
+
+```text
+Goal: Fetch Claude Shannon Wikipedia page
+Decision: TOOL_CALL fetch_url(...)
+```
+
+---
+
+### 4. Action
+
+Action is pure tool dispatch.
+
+It receives the tool call from Decision and executes it through MCP.
+
+Action does not reason. It only:
+
+- Calls the tool.
+- Returns a short result.
+- Stores large output in ArtifactStore.
+- Blocks invalid artifact-handle misuse, such as trying to read `art:...` as a file path.
+
+---
+
+## Artifact Store
+
+Large tool outputs are stored separately as artifacts.
+
+Example:
+
+```text
+fetch_url("https://en.wikipedia.org/wiki/Claude_Shannon")
+→ stores full page as art:505cff7a5b0297f3
+```
+
+Memory stores only the artifact handle.
+
+This avoids passing huge web pages into every future prompt.
+
+---
+
+## MCP Tools Used
+
+Session 6 MCP server exposes tools such as:
+
+```text
+web_search
+fetch_url
+get_time
+currency_convert
+read_file
+list_dir
+create_file
+update_file
+edit_file
+```
+
+The logs below show tools such as:
+
+- `fetch_url`
+- `web_search`
+- `create_file`
+- `read_file`
+
+---
+
+## File Structure
+
+```text
+assignment6/
+├── agent6.py              # main orchestrator loop
+├── memory.py              # memory read/write logic
+├── perception.py          # goal decomposition and goal completion
+├── decision.py            # answer or one tool call
+├── action.py              # MCP dispatch
+├── artifacts.py           # artifact storage
+├── schemas.py             # Pydantic contracts
+├── mcp_server.py          # MCP tools
+├── state/
+│   ├── memory.json
+│   └── artifacts/
+└── README.md
+```
+
+---
+
+## How to Install
+
+From the assignment directory:
+
+```bash
+cd assignment6
+```
+
+Install dependencies:
+
+```bash
+pip install -r requirements.txt
+```
+
+Or with `uv`:
+
+```bash
+uv pip install -r requirements.txt
+```
+
+Make sure your `.env` file exists in the correct parent Session 6 folder and contains the required model/tool API keys.
+
+---
+
+## How to Run
+
+Run the interactive agent:
+
+```bash
+uv run python agent6.py
+```
+
+Then enter a query when prompted:
+
+```text
+Enter query > Fetch https://en.wikipedia.org/wiki/Claude_Shannon and tell me his birth date, death date, and three key contributions to information theory.
+```
+
+---
+
+## Assignment Query Set
+
+The logs below show the assignment query runs used for testing.
+
+| Query | Purpose |
+|---|---|
+| Claude Shannon | Tests web fetch, artifact storage, extraction |
+| Tokyo activities | Tests search + weather-aware recommendation |
+| Mom birthday save/reminder | Tests memory and tool use across multiple goals |
+| Mom birthday recall | Tests memory/file recall across turns |
+| Python asyncio best practices | Tests web search, multiple result fetches, synthesis |
+
+---
+
 
 ## Query Execution Logs
 
@@ -92,7 +344,7 @@ He is widely regarded as the "father of information theory" and made several fou
 
 **Run ID:** `00754029`  
 
-**Status:** **PARTIAL SUCCESS**  
+**Status:** **SUCCESS**  
 
 **Original query:** `Find 3 family-friendly things to do in Tokyo this weekend. Check Saturday's weather forecast there and tell me which one is most appropriate.`
 
@@ -327,7 +579,7 @@ These options provide a good balance of outdoor exploration and comfortable indo
 ### Query 3 — Mom's Birthday Save and Calendar Reminders
 
 **Run ID:** `a63be5ff`  
-**Status:** **PARTIAL SUCCESS**  
+**Status:** **SUCCESS**  
 **Original query:** `My mom's birthday is 15 May 2026. Remember that and give me a calendar reminder for two weeks before and on the day.`
 
 ```console
