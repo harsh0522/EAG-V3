@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EAGV3 Session 6 — Query Explainer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Sora:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #09090d;
+    --surface: #111116;
+    --surface-hover: #17171e;
+    --border: rgba(255,255,255,0.07);
+    --border-hover: rgba(255,255,255,0.14);
+    --text: #e2e2eb;
+    --text-muted: #7a7a90;
+    --text-dim: #4a4a60;
+    --purple: #a78bfa;
+    --purple-dim: rgba(167,139,250,0.12);
+    --blue: #60a5fa;
+    --blue-dim: rgba(96,165,250,0.10);
+    --green: #22c55e;
+    --green-dim: rgba(34,197,94,0.12);
+    --yellow: #fbbf24;
+    --yellow-dim: rgba(251,191,36,0.12);
+    --mono: 'Space Mono', monospace;
+    --sans: 'Sora', sans-serif;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 15px;
+    line-height: 1.7;
+    min-height: 100vh;
+  }
+
+  .dot-bg {
+    position: fixed;
+    inset: 0;
+    background-image: radial-gradient(circle, rgba(255,255,255,0.03) 1px, transparent 1px);
+    background-size: 28px 28px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .page {
+    position: relative;
+    z-index: 1;
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 0 24px 80px;
+  }
+
+  /* HERO */
+  .hero {
+    padding: 72px 0 56px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 56px;
+  }
+
+  .hero-tag {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    color: var(--purple);
+    text-transform: uppercase;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .hero-tag::before {
+    content: '';
+    display: block;
+    width: 24px;
+    height: 1px;
+    background: var(--purple);
+  }
+
+  h1 {
+    font-family: var(--sans);
+    font-size: 42px;
+    font-weight: 600;
+    letter-spacing: -0.03em;
+    line-height: 1.15;
+    margin-bottom: 16px;
+    color: #f0f0f8;
+  }
+
+  .hero-sub {
+    font-size: 16px;
+    color: var(--text-muted);
+    font-weight: 300;
+    max-width: 560px;
+    line-height: 1.65;
+  }
+
+  .hero-stats {
+    display: flex;
+    gap: 32px;
+    margin-top: 36px;
+    flex-wrap: wrap;
+  }
+
+  .stat {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .stat-num {
+    font-family: var(--mono);
+    font-size: 28px;
+    font-weight: 700;
+    color: #f0f0f8;
+    line-height: 1;
+  }
+
+  .stat-label {
+    font-size: 12px;
+    color: var(--text-muted);
+    letter-spacing: 0.04em;
+  }
+
+  .stat-divider {
+    width: 1px;
+    background: var(--border);
+    align-self: stretch;
+  }
+
+  /* ROLES STRIP */
+  .roles {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-bottom: 56px;
+  }
+
+  .role-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 18px 16px;
+    text-align: center;
+    transition: border-color 0.2s;
+  }
+
+  .role-card:hover { border-color: var(--border-hover); }
+
+  .role-icon {
+    font-family: var(--mono);
+    font-size: 20px;
+    margin-bottom: 8px;
+  }
+
+  .role-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: #f0f0f8;
+    margin-bottom: 4px;
+    letter-spacing: -0.01em;
+  }
+
+  .role-desc {
+    font-size: 11px;
+    color: var(--text-muted);
+    line-height: 1.5;
+  }
+
+  .role-memory .role-icon { color: var(--purple); }
+  .role-perception .role-icon { color: var(--blue); }
+  .role-decision .role-icon { color: #34d399; }
+  .role-action .role-icon { color: #fb923c; }
+
+  /* SECTION */
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 28px;
+  }
+
+  .section-label {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 5px 12px;
+    border-radius: 4px;
+    font-weight: 700;
+    background: var(--purple-dim);
+    color: var(--purple);
+    border: 1px solid rgba(167,139,250,0.2);
+  }
+
+  .section-title {
+    font-size: 22px;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    color: #f0f0f8;
+  }
+
+  .section-line {
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  /* CARDS */
+  .cards {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 28px 32px;
+    position: relative;
+    overflow: hidden;
+    transition: background 0.2s, border-color 0.2s, transform 0.15s;
+  }
+
+  .card::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 3px;
+    background: var(--purple);
+    border-radius: 12px 0 0 12px;
+  }
+
+  .card:hover {
+    background: var(--surface-hover);
+    border-color: var(--border-hover);
+    transform: translateY(-1px);
+  }
+
+  .card-watermark {
+    position: absolute;
+    right: 20px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-family: var(--mono);
+    font-size: 90px;
+    font-weight: 700;
+    color: rgba(167,139,250,0.04);
+    user-select: none;
+    pointer-events: none;
+    line-height: 1;
+    letter-spacing: -0.05em;
+  }
+
+  .card-top {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 14px;
+    flex-wrap: wrap;
+  }
+
+  .query-badge {
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: 4px;
+    letter-spacing: 0.06em;
+    background: var(--purple-dim);
+    color: var(--purple);
+    border: 1px solid rgba(167,139,250,0.25);
+  }
+
+  .iter-badge {
+    font-family: var(--mono);
+    font-size: 10px;
+    padding: 3px 9px;
+    border-radius: 3px;
+    color: var(--text-muted);
+    border: 1px solid var(--border);
+    background: rgba(255,255,255,0.03);
+    letter-spacing: 0.06em;
+  }
+
+  .status-badge {
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 700;
+    padding: 3px 9px;
+    border-radius: 3px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .status-pass { background: var(--green-dim); color: var(--green); border: 1px solid rgba(34,197,94,0.2); }
+  .status-key  { background: var(--yellow-dim); color: var(--yellow); border: 1px solid rgba(251,191,36,0.2); }
+
+  .card-name {
+    font-size: 20px;
+    font-weight: 600;
+    color: #f0f0f8;
+    letter-spacing: -0.02em;
+    margin-bottom: 12px;
+  }
+
+  .query-text {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: #9090aa;
+    background: rgba(0,0,0,0.35);
+    border: 1px solid var(--border);
+    border-left: 2px solid rgba(167,139,250,0.35);
+    border-radius: 6px;
+    padding: 14px 16px;
+    margin-bottom: 16px;
+    line-height: 1.75;
+    word-break: break-word;
+  }
+
+  .explanation {
+    font-size: 14px;
+    color: var(--text-muted);
+    line-height: 1.8;
+  }
+
+  .explanation strong {
+    color: var(--text);
+    font-weight: 500;
+  }
+
+  .run-block {
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
+  }
+
+  .run-tag {
+    display: inline-block;
+    font-family: var(--mono);
+    font-size: 10px;
+    padding: 3px 8px;
+    border-radius: 3px;
+    margin-bottom: 10px;
+    background: rgba(255,255,255,0.04);
+    color: var(--text-muted);
+    border: 1px solid var(--border);
+    letter-spacing: 0.07em;
+  }
+
+  /* WHAT MAKES THIS HARD box */
+  .insight {
+    margin-top: 14px;
+    background: rgba(167,139,250,0.06);
+    border: 1px solid rgba(167,139,250,0.15);
+    border-radius: 6px;
+    padding: 12px 14px;
+    font-size: 13px;
+    color: rgba(167,139,250,0.85);
+    line-height: 1.65;
+  }
+
+  .insight-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    color: var(--purple);
+    margin-bottom: 4px;
+    text-transform: uppercase;
+  }
+
+  /* ARCH NOTE */
+  .arch-note {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 24px 28px;
+    margin-bottom: 48px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px 40px;
+  }
+
+  .arch-item-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--purple);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+
+  .arch-item-value {
+    font-size: 13px;
+    color: var(--text-muted);
+    line-height: 1.6;
+  }
+
+  .arch-item-value strong {
+    color: var(--text);
+    font-weight: 500;
+  }
+
+  /* FOOTER */
+  footer {
+    padding: 32px 0 0;
+    border-top: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    flex-wrap: wrap;
+  }
+
+  .footer-note {
+    font-size: 13px;
+    color: var(--text-dim);
+  }
+
+  .s7-link {
+    font-family: var(--mono);
+    font-size: 11px;
+    padding: 8px 14px;
+    border-radius: 5px;
+    background: var(--purple-dim);
+    color: var(--purple);
+    border: 1px solid rgba(167,139,250,0.2);
+    text-decoration: none;
+    letter-spacing: 0.05em;
+  }
+
+  @media (max-width: 600px) {
+    .roles { grid-template-columns: repeat(2, 1fr); }
+    .arch-note { grid-template-columns: 1fr; }
+    h1 { font-size: 32px; }
+    .hero-stats { gap: 20px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="dot-bg"></div>
+
+<div class="page">
+
+  <!-- HERO -->
+  <header class="hero">
+    <div class="hero-tag">EAGV3 · Session 6 · Four-Role Agent</div>
+    <h1>4 Queries.<br>One Architecture.</h1>
+    <p class="hero-sub">Session 6 splits a single LLM call into four cognitive roles — Memory, Perception, Decision, Action — connected by Pydantic contracts. These four queries prove the architecture works end to end.</p>
+    <div class="hero-stats">
+      <div class="stat">
+        <span class="stat-num">4</span>
+        <span class="stat-label">Target Queries</span>
+      </div>
+      <div class="stat-divider"></div>
+      <div class="stat">
+        <span class="stat-num">4</span>
+        <span class="stat-label">Cognitive Roles</span>
+      </div>
+      <div class="stat-divider"></div>
+      <div class="stat">
+        <span class="stat-num">V3</span>
+        <span class="stat-label">LLM Gateway</span>
+      </div>
+      <div class="stat-divider"></div>
+      <div class="stat">
+        <span class="stat-num">:8102</span>
+        <span class="stat-label">Live Dashboard</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- 4 ROLES -->
+  <div class="roles">
+    <div class="role-card role-memory">
+      <div class="role-icon">🧠</div>
+      <div class="role-name">Memory</div>
+      <div class="role-desc">Stores facts, preferences, tool outcomes. Reads by keyword overlap.</div>
+    </div>
+    <div class="role-card role-perception">
+      <div class="role-icon">👁</div>
+      <div class="role-name">Perception</div>
+      <div class="role-desc">Reads the query + memory hits. Breaks it into a list of goals.</div>
+    </div>
+    <div class="role-card role-decision">
+      <div class="role-icon">⚡</div>
+      <div class="role-name">Decision</div>
+      <div class="role-desc">Takes one goal. Picks the next tool to call — or answers directly.</div>
+    </div>
+    <div class="role-card role-action">
+      <div class="role-icon">🤝</div>
+      <div class="role-name">Action</div>
+      <div class="role-desc">Runs the chosen tool via MCP. Returns the result to the loop.</div>
+    </div>
+  </div>
+
+  <!-- ARCH FACTS -->
+  <div class="arch-note">
+    <div>
+      <div class="arch-item-label">Memory storage</div>
+      <div class="arch-item-value"><strong>state/memory.json</strong> — keyword overlap search. No vectors yet (that's Session 7).</div>
+    </div>
+    <div>
+      <div class="arch-item-label">Artifact store</div>
+      <div class="arch-item-value"><strong>state/artifacts/</strong> — raw bytes for large payloads (web pages, docs). Separate from memory.</div>
+    </div>
+    <div>
+      <div class="arch-item-label">LLM Gateway</div>
+      <div class="arch-item-value"><strong>Gateway V3</strong> at localhost:8100. Every LLM call goes through here. Router pool with failover.</div>
+    </div>
+    <div>
+      <div class="arch-item-label">Invariant</div>
+      <div class="arch-item-value">Perception never names specific tools. Decision is atomic — <strong>one action per step</strong>.</div>
+    </div>
+  </div>
+
+  <!-- QUERIES -->
+  <div class="section-header">
+    <div class="section-label">4 Target Queries</div>
+    <h2 class="section-title">A through D — must all pass</h2>
+    <div class="section-line"></div>
+  </div>
+
+  <div class="cards">
+
+    <!-- QUERY A -->
+    <div class="card">
+      <div class="card-watermark">A</div>
+      <div class="card-top">
+        <span class="query-badge">QUERY A</span>
+        <span class="iter-badge">3 iter expected · 6 hard cap</span>
+        <span class="status-badge status-pass">Passed</span>
+      </div>
+      <div class="card-name">Shannon Wikipedia</div>
+      <div class="query-text">Fetch https://en.wikipedia.org/wiki/Claude_Shannon and tell me his birth date, death date, and three key contributions to information theory.</div>
+      <div class="explanation">
+        You give the agent a link and ask it to find specific facts. It fetches the Wikipedia page — a large document — stores it as an <strong>artifact</strong> (a separate store for raw content, not memory), then Perception attaches that artifact to the extraction goal so Decision can read it and answer in one step.
+      </div>
+      <div class="insight">
+        <div class="insight-label">What this tests</div>
+        The full artifact pipeline: fetch → store as artifact → Perception attaches it to the next goal → Decision extracts structured facts. The key rule: Decision must act in one step. Perception cannot tell Decision to "first read the artifact, then answer" — that is two steps and breaks the architecture.
+      </div>
+    </div>
+
+    <!-- QUERY B -->
+    <div class="card">
+      <div class="card-watermark">B</div>
+      <div class="card-top">
+        <span class="query-badge">QUERY B</span>
+        <span class="iter-badge">6 iter expected · 12 hard cap</span>
+        <span class="status-badge status-pass">Passed</span>
+      </div>
+      <div class="card-name">Tokyo Activities + Weather</div>
+      <div class="query-text">Find 3 family-friendly things to do in Tokyo this weekend. Check Saturday's weather forecast there and tell me which one is most appropriate.</div>
+      <div class="explanation">
+        One question with three logical steps: find activities, check the weather, recommend based on the weather. Perception decomposes it into three separate goals. The weather result from goal 2 is saved to memory as a <strong>tool outcome</strong>. When goal 3 runs, Memory surfaces that outcome through keyword matching so Decision can use it.
+      </div>
+      <div class="insight">
+        <div class="insight-label">What this tests</div>
+        Multi-goal planning and memory carryover between goals. The agent must plan ahead, not just react. And the memory keyword search must surface the right tool outcome when goal 3 asks for it — this is where S6's simple keyword memory is genuinely tested.
+      </div>
+    </div>
+
+    <!-- QUERY C -->
+    <div class="card">
+      <div class="card-watermark">C</div>
+      <div class="card-top">
+        <span class="query-badge">QUERY C</span>
+        <span class="iter-badge">4 + 2 iter expected · 8 + 4 hard cap</span>
+        <span class="status-badge status-key">Key Demo</span>
+      </div>
+      <div class="card-name">Mom's Birthday — Two Runs</div>
+
+      <div class="run-block">
+        <span class="run-tag">RUN 1 · 4 iterations</span>
+        <div class="query-text">My mom's birthday is 15 May 2026. Remember that and create reminders for two weeks before and on the day.</div>
+        <div class="explanation">You tell the agent a personal fact. It classifies this as a <strong>preference</strong> (not a scratchpad), saves it to <strong>state/memory.json</strong> on disk, and creates two reminder files in the sandbox. The fact survives because it's written to disk — not just held in the current process.</div>
+      </div>
+
+      <div class="run-block">
+        <span class="run-tag">RUN 2 · 2 iterations · Fresh process · Zero tool calls</span>
+        <div class="query-text">When is mom's birthday?</div>
+        <div class="explanation">The app is completely closed and restarted. Fresh process, empty RAM. The agent reads memory.json from disk on its first iteration, keyword-matches "birthday" to the stored fact, and answers directly. <strong>No tool calls at all — the answer comes entirely from persisted memory.</strong></div>
+      </div>
+
+      <div class="insight">
+        <div class="insight-label">What this tests</div>
+        Durable memory across process restarts. The state/ directory is what crosses the process boundary. This is why memory is written to disk synchronously on every write — so that a cold-start on the next run sees exactly what was saved. In S6 this uses keyword search; in S7 the same pattern uses FAISS vectors instead.
+      </div>
+    </div>
+
+    <!-- QUERY D -->
+    <div class="card">
+      <div class="card-watermark">D</div>
+      <div class="card-top">
+        <span class="query-badge">QUERY D</span>
+        <span class="iter-badge">5–7 iter expected · 14 hard cap</span>
+        <span class="status-badge status-pass">Passed</span>
+      </div>
+      <div class="card-name">Asyncio Research — Multi-Source Synthesis</div>
+      <div class="query-text">Search for "Python asyncio best practices", read the top 3 results, and give me a short numbered list of the advice they agree on.</div>
+      <div class="explanation">
+        Search the web, fetch three different articles as artifacts, then synthesize what all three agree on. The hardest part is the synthesis step — Perception must attach all three artifacts to the synthesis goal so Decision can read all three at once and find common advice across them.
+      </div>
+      <div class="insight">
+        <div class="insight-label">What this tests</div>
+        Multi-source synthesis and the force-attach pattern. Three separate artifacts must all be attached to a single synthesis goal. The agent loop auto-attaches artifacts that Perception flags — but Perception must correctly identify all three as relevant. If only two get attached, the synthesis is incomplete. This query also has the highest iteration variance across runs (5 to 7) because web search results differ each time.
+      </div>
+    </div>
+
+  </div>
+
+  <!-- WHAT S7 ADDS -->
+  <div style="margin-top: 56px; padding: 28px 32px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; border-left: 3px solid rgba(167,139,250,0.5);">
+    <div style="font-family: var(--mono); font-size: 10px; color: var(--purple); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 10px;">Session 6 → Session 7</div>
+    <div style="font-size: 15px; color: var(--text-muted); line-height: 1.75;">
+      These four queries carry forward into Session 7 unchanged as the <strong style="color: var(--text);">regression suite</strong> — they must still pass after all the Session 7 additions (vector search, FAISS, two new MCP tools, gateway embed endpoint). If any of A–D breaks after Session 7 changes, the new code regressed the old architecture. Session 7 adds four more queries (E through H) that test the new RAG capabilities.
+    </div>
+  </div>
+
+  <footer style="margin-top: 48px;">
+    <div class="footer-note">Session 6 · Memory, Perception, Decision, Action · Gateway V3 · Keyword Memory</div>
+    <a class="s7-link">→ Session 7 adds vector search</a>
+  </footer>
+
+</div>
+
+</body>
+</html>

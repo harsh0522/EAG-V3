@@ -851,13 +851,13 @@ return app, sse_queue</div>
 
   <div class="card warn">
     <h4>.env — Your API Keys</h4>
-    <p>You have 4 keys. Here is exactly what each one is used for:</p>
+    <p>Keys are loaded from <code>assignment6/.env</code> — never hardcoded. Copy <code>.env.example</code> and fill in your values.</p>
     <table>
-      <tr><th>Variable</th><th>Value you have</th><th>Used by</th><th>Required?</th></tr>
-      <tr><td><code>TAVILY_API_KEY</code></td><td>tvly-dev-…</td><td><code>mcp_server.py</code> → <code>web_search</code> tool</td><td>Strongly recommended (DDG fallback is flaky)</td></tr>
-      <tr><td><code>GEMINI_API_KEY</code></td><td>AIzaSy…</td><td>Gateway → Perception + Memory.remember</td><td><b>REQUIRED</b> — agent cannot run without it</td></tr>
-      <tr><td><code>GROQ_API_KEY</code></td><td>gsk_…</td><td>Gateway router pool → Decision + Memory.relevant</td><td>Strongly recommended</td></tr>
-      <tr><td><code>CEREBRAS_API_KEY</code></td><td>csk-…</td><td>Gateway router pool → Decision + Memory.relevant</td><td>Strongly recommended</td></tr>
+      <tr><th>Variable</th><th>Used by</th><th>Required?</th></tr>
+      <tr><td><code>TAVILY_API_KEY</code></td><td><code>mcp_server.py</code> → <code>web_search</code> tool</td><td>Strongly recommended (DDG fallback is flaky)</td></tr>
+      <tr><td><code>GEMINI_API_KEY</code></td><td>Gateway → Perception + Memory.remember</td><td><b>REQUIRED</b> — agent cannot run without it</td></tr>
+      <tr><td><code>GROQ_API_KEY</code></td><td>Gateway router pool → Decision + Memory.relevant</td><td>Strongly recommended</td></tr>
+      <tr><td><code>CEREBRAS_API_KEY</code></td><td>Gateway router pool → Decision + Memory.relevant</td><td>Strongly recommended</td></tr>
     </table>
     <p>You also need <code>GOOGLE_API_KEY</code> set to the same value as <code>GEMINI_API_KEY</code> (some gateway internals read this name instead). Add this line to your .env:</p>
     <pre>GOOGLE_API_KEY=</pre>

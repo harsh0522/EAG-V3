@@ -178,14 +178,20 @@ class Memory:
     async def remember(self, raw_text: str, source: str, run_id: str,
                        goal_id: str | None = None) -> MemoryItem | None:
         prompt = (
-            "You are a memory classifier. Given raw text from an agent run, extract any durable "
-            "fact, preference, or scratchpad note worth remembering. "
+            "You are a memory classifier. Given raw text, extract any durable fact, preference, "
+            "or note worth remembering across sessions.\n"
             "Return JSON: {kind, keywords, descriptor, value} where:\n"
             "- kind: one of fact | preference | scratchpad (NOT tool_outcome)\n"
-            "- keywords: list of 3-8 lowercase search tokens\n"
-            "- descriptor: one concise sentence summarizing the memory\n"
-            "- value: dict of structured data extracted (dates, names, etc.)\n"
-            "If there is nothing durable to remember, return {}\n\n"
+            "- keywords: list of 3-8 lowercase search tokens — MUST include the key nouns "
+            "(names, dates, places) from the text so they can be retrieved later\n"
+            "- descriptor: one concise sentence that includes the EXACT dates, names, and numbers "
+            "mentioned — do not paraphrase away specific values\n"
+            "- value: dict with all specific structured data (dates, names, numbers, etc.)\n\n"
+            "IMPORTANT: If the text states a fact (e.g. 'my mom's birthday is 15 May 2026'), "
+            "ALWAYS extract it as kind=fact with the exact date in both descriptor and value. "
+            "Never return {} for text that contains a specific date, name, or personal fact.\n\n"
+            "If there is truly nothing factual or personal to remember (e.g. a generic task "
+            "description with no specific values), return {}\n\n"
             f"Text: {raw_text}"
         )
         try:
