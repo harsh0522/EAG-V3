@@ -1,0 +1,22 @@
+# Browser skill (Session 9 spec)
+httpx
+trafilatura
+playwright
+pillow
+pydantic>=2.0
+python-dotenv
+networkx
+faiss-cpu
+
+# Orchestrator runtime carried over from Session 8 (flow.py / skills.py /
+# memory.py / mcp_runner.py / mcp_server.py and friends)
+mcp[cli]
+ddgs
+tavily-python
+crawl4ai
+pyyaml
+numpy
+
+# Dev / tests
+pytest
+pytest-asyncio

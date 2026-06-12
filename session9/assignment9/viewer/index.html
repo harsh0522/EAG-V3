@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Browser Agent — Replay Viewer</title>
+<style>
+  :root {
+    --bg: #0d1117;
+    --panel: #161b22;
+    --border: #30363d;
+    --text: #e6edf3;
+    --muted: #8b949e;
+    --accent: #58a6ff;
+    --green: #3fb950;
+    --red: #f85149;
+    --yellow: #d29922;
+    --blue: #58a6ff;
+    --grey: #6e7681;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0; height: 100%;
+    background: var(--bg); color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    font-size: 14px;
+  }
+  #app { display: flex; flex-direction: column; height: 100vh; min-width: 1280px; }
+
+  /* top bar */
+  #topbar {
+    display: flex; align-items: center; gap: 12px;
+    padding: 10px 16px; border-bottom: 1px solid var(--border);
+    background: var(--panel);
+  }
+  #topbar h1 { font-size: 16px; margin: 0; font-weight: 600; flex: 0 0 auto; }
+  #session-input {
+    background: var(--bg); color: var(--text); border: 1px solid var(--border);
+    border-radius: 6px; padding: 6px 10px; min-width: 280px; font-size: 13px;
+  }
+  button {
+    background: var(--accent); color: #0d1117; border: none; border-radius: 6px;
+    padding: 6px 14px; font-weight: 600; cursor: pointer; font-size: 13px;
+  }
+  button:hover { filter: brightness(1.1); }
+  #status-msg { color: var(--muted); font-size: 13px; }
+
+  /* main layout */
+  #main { flex: 1; display: flex; min-height: 0; }
+  #sidebar {
+    width: 320px; flex: 0 0 320px; overflow-y: auto;
+    border-right: 1px solid var(--border); padding: 14px;
+    background: var(--panel);
+  }
+  #sidebar h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .05em;
+    color: var(--muted); margin: 0 0 12px; }
+  .node-card {
+    border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px;
+    margin-bottom: 6px; cursor: pointer; background: var(--bg);
+    transition: border-color .12s;
+  }
+  .node-card:hover { border-color: var(--accent); }
+  .node-card.selected { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+  .node-card .nid { color: var(--muted); font-size: 12px; }
+  .node-card .skill { font-weight: 600; font-size: 14px; margin: 2px 0; }
+  .arrow { text-align: center; color: var(--muted); margin: 2px 0 6px; font-size: 16px; }
+
+  .badge {
+    display: inline-block; border-radius: 999px; padding: 2px 9px;
+    font-size: 11px; font-weight: 700; letter-spacing: .02em;
+  }
+  .badge-success { background: rgba(63,185,80,.18); color: var(--green); }
+  .badge-failed  { background: rgba(248,81,73,.18); color: var(--red); }
+  .badge-recovered { background: rgba(210,153,34,.18); color: var(--yellow); }
+  .badge-pending { background: rgba(110,118,129,.18); color: var(--grey); }
+
+  .layer-badge { display: inline-block; border-radius: 5px; padding: 2px 10px;
+    font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; }
+  .layer-extract       { background: rgba(63,185,80,.18); color: var(--green); }
+  .layer-deterministic { background: rgba(88,166,255,.18); color: var(--blue); }
+  .layer-a11y          { background: rgba(210,153,34,.18); color: var(--yellow); }
+  .layer-vision        { background: rgba(248,81,73,.18); color: var(--red); }
+  .layer-blocked       { background: rgba(110,118,129,.18); color: var(--grey); }
+
+  /* detail panel */
+  #detail { flex: 1; overflow-y: auto; padding: 20px 28px; }
+  #detail h2 { margin-top: 0; font-size: 20px; }
+  .section { margin-bottom: 22px; }
+  .section h3 {
+    font-size: 12px; text-transform: uppercase; letter-spacing: .06em;
+    color: var(--muted); margin: 0 0 8px; font-weight: 700;
+  }
+  .kv { display: grid; grid-template-columns: 140px 1fr; gap: 6px 12px; font-size: 13px; }
+  .kv div:nth-child(odd) { color: var(--muted); }
+  pre, code {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  }
+  .codeblock {
+    background: var(--panel); border: 1px solid var(--border); border-radius: 8px;
+    padding: 12px; max-height: 360px; overflow: auto; white-space: pre-wrap;
+    word-break: break-word; font-size: 12.5px; line-height: 1.5;
+  }
+  .actions-list { list-style: none; margin: 0; padding: 0; }
+  .actions-list li {
+    border: 1px solid var(--border); border-radius: 8px; padding: 8px 12px;
+    margin-bottom: 6px; background: var(--panel); font-size: 13px;
+  }
+  .actions-list .turn-no { color: var(--accent); font-weight: 700; margin-right: 8px; }
+  details.snapshot {
+    border: 1px solid var(--border); border-radius: 8px; margin-bottom: 6px;
+    background: var(--panel); padding: 6px 12px;
+  }
+  details.snapshot summary { cursor: pointer; font-size: 13px; color: var(--muted); }
+  details.snapshot pre { margin: 8px 0 0; font-size: 12px; color: var(--text); }
+  .shot { max-width: 100%; border: 1px solid var(--border); border-radius: 8px; margin-bottom: 10px; display: block; }
+  .show-more { color: var(--accent); cursor: pointer; font-size: 12px; margin-top: 6px; display: inline-block; }
+  table.cmp { border-collapse: collapse; width: 100%; font-size: 13px; }
+  table.cmp th, table.cmp td {
+    border: 1px solid var(--border); padding: 8px 12px; text-align: left;
+  }
+  table.cmp th { background: var(--panel); color: var(--muted); text-transform: uppercase; font-size: 11px; }
+  table.cmp tr:nth-child(even) td { background: rgba(255,255,255,.02); }
+  .empty { color: var(--muted); font-style: italic; }
+
+  /* bottom bar */
+  #bottombar {
+    border-top: 1px solid var(--border); background: var(--panel);
+    padding: 10px 28px; display: flex; gap: 28px; flex-wrap: wrap; font-size: 12.5px;
+  }
+  #bottombar .stat { display: flex; flex-direction: column; gap: 2px; }
+  #bottombar .stat .label { color: var(--muted); text-transform: uppercase; font-size: 10.5px; letter-spacing: .05em; }
+  #bottombar .stat .value { font-weight: 700; font-size: 14px; }
+  #node-costs { display: flex; gap: 14px; flex-wrap: wrap; }
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="topbar">
+    <h1>🧭 Browser Agent — Replay Viewer</h1>
+    <input id="session-input" type="text" placeholder="run_id, e.g. 20260607_104400_compar">
+    <button id="load-btn">Load Session</button>
+    <span id="status-msg"></span>
+  </div>
+
+  <div id="main">
+    <div id="sidebar">
+      <h2>DAG</h2>
+      <div id="dag-list"><p class="empty">No session loaded.</p></div>
+    </div>
+    <div id="detail">
+      <p class="empty">Select a session, then click a node to see its detail.</p>
+    </div>
+  </div>
+
+  <div id="bottombar">
+    <div class="stat"><span class="label">Total turns</span><span class="value" id="cost-turns">—</span></div>
+    <div class="stat"><span class="label">Input tokens</span><span class="value" id="cost-in">—</span></div>
+    <div class="stat"><span class="label">Output tokens</span><span class="value" id="cost-out">—</span></div>
+    <div class="stat"><span class="label">Total cost</span><span class="value" id="cost-total">—</span></div>
+    <div class="stat" style="flex:1">
+      <span class="label">Wall-clock per node</span>
+      <div class="value" id="node-costs" style="font-weight:400; font-size:12.5px;">—</div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  const els = {
+    input: document.getElementById('session-input'),
+    loadBtn: document.getElementById('load-btn'),
+    status: document.getElementById('status-msg'),
+    dagList: document.getElementById('dag-list'),
+    detail: document.getElementById('detail'),
+    costTurns: document.getElementById('cost-turns'),
+    costIn: document.getElementById('cost-in'),
+    costOut: document.getElementById('cost-out'),
+    costTotal: document.getElementById('cost-total'),
+    nodeCosts: document.getElementById('node-costs'),
+  };
+
+  let state = { sessionId: null, trace: null, cost: null, selected: null };
+
+  function qs(name) {
+    const m = new RegExp('[?&]' + name + '=([^&]*)').exec(location.search);
+    return m ? decodeURIComponent(m[1]) : null;
+  }
+
+  function escapeHtml(s) {
+    return String(s == null ? '' : s)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  function statusBadge(status) {
+    let cls = 'badge-pending', label = status, icon = '⏳';
+    if (status === 'complete') { cls = 'badge-success'; label = 'success'; icon = '✅'; }
+    else if (status === 'recovered') { cls = 'badge-recovered'; label = 'recovered'; icon = '⚠️'; }
+    else if (status === 'failed') { cls = 'badge-failed'; label = 'failed'; icon = '❌'; }
+    else if (status === 'skipped') { cls = 'badge-pending'; label = 'skipped'; icon = '⏭️'; }
+    return `<span class="badge ${cls}">${icon} ${escapeHtml(label)}</span>`;
+  }
+
+  function layerBadge(path, blocked) {
+    if (blocked) return `<span class="layer-badge layer-blocked">blocked</span>`;
+    const known = ['extract', 'deterministic', 'a11y', 'vision'];
+    const cls = known.includes(path) ? `layer-${path}` : 'layer-blocked';
+    return `<span class="layer-badge ${cls}">${escapeHtml(path || 'unknown')}</span>`;
+  }
+
+  // ── loading ────────────────────────────────────────────────────────────
+  async function loadSession(sid) {
+    if (!sid) return;
+    state = { sessionId: sid, trace: null, cost: null, selected: null };
+    els.status.textContent = 'loading…';
+    els.dagList.innerHTML = '';
+    els.detail.innerHTML = '<p class="empty">Loading…</p>';
+    const base = `state/sessions/${encodeURIComponent(sid)}/`;
+    try {
+      const traceResp = await fetch(base + 'trace.json');
+      if (!traceResp.ok) throw new Error(`trace.json: HTTP ${traceResp.status}`);
+      state.trace = await traceResp.json();
+    } catch (e) {
+      els.status.textContent = `failed to load session "${sid}": ${e.message}`;
+      els.detail.innerHTML = `<p class="empty">Could not load trace.json for "${escapeHtml(sid)}". ` +
+        `Make sure you're serving this directory with a local HTTP server ` +
+        `(python -m http.server 8200) and the run_id is correct.</p>`;
+      return;
+    }
+    try {
+      const costResp = await fetch(base + 'cost.json');
+      state.cost = costResp.ok ? await costResp.json() : null;
+    } catch (e) { state.cost = null; }
+
+    els.status.textContent = `loaded ${sid}`;
+    history.replaceState(null, '', `?session=${encodeURIComponent(sid)}`);
+    renderDag();
+    renderCostBar();
+    // auto-select the first node
+    if (state.trace.nodes && state.trace.nodes.length) {
+      selectNode(state.trace.nodes[0].node_id);
+    } else {
+      els.detail.innerHTML = '<p class="empty">This session has no nodes.</p>';
+    }
+  }
+
+  // ── sidebar / DAG ──────────────────────────────────────────────────────
+  function renderDag() {
+    const nodes = (state.trace && state.trace.nodes) || [];
+    if (!nodes.length) {
+      els.dagList.innerHTML = '<p class="empty">No nodes in this trace.</p>';
+      return;
+    }
+    let html = '';
+    nodes.forEach((n, i) => {
+      if (i > 0) html += `<div class="arrow">↓</div>`;
+      html += `<div class="node-card" data-nid="${escapeHtml(n.node_id)}">
+        <div class="nid">${escapeHtml(n.node_id)}</div>
+        <div class="skill">${escapeHtml(n.skill)}</div>
+        ${statusBadge(n.status)}
+      </div>`;
+    });
+    els.dagList.innerHTML = html;
+    els.dagList.querySelectorAll('.node-card').forEach(card => {
+      card.addEventListener('click', () => selectNode(card.dataset.nid));
+    });
+    highlightSelected();
+  }
+
+  function highlightSelected() {
+    els.dagList.querySelectorAll('.node-card').forEach(card => {
+      card.classList.toggle('selected', card.dataset.nid === state.selected);
+    });
+  }
+
+  function findNode(nid) {
+    return (state.trace.nodes || []).find(n => n.node_id === nid);
+  }
+
+  function selectNode(nid) {
+    state.selected = nid;
+    highlightSelected();
+    const node = findNode(nid);
+    if (!node) { els.detail.innerHTML = '<p class="empty">Node not found.</p>'; return; }
+    if (node.skill === 'browser') renderBrowserDetail(node);
+    else if (node.skill === 'formatter') renderFormatterDetail(node);
+    else renderGenericDetail(node);
+  }
+
+  // ── generic node detail ────────────────────────────────────────────────
+  function renderGenericDetail(node) {
+    const out = node.output || {};
+    els.detail.innerHTML = `
+      <h2>${escapeHtml(node.node_id)} · ${escapeHtml(node.skill)} ${statusBadge(node.status)}</h2>
+      <div class="section">
+        <h3>Inputs</h3>
+        <div class="codeblock">${escapeHtml((node.inputs || []).join('\n') || '(none)')}</div>
+      </div>
+      <div class="section">
+        <h3>Output</h3>
+        <div class="codeblock">${escapeHtml(JSON.stringify(out, null, 2))}</div>
+      </div>
+      ${node.error ? `<div class="section"><h3>Error</h3><div class="codeblock">${escapeHtml(node.error)}</div></div>` : ''}
+    `;
+  }
+
+  // ── browser node detail ────────────────────────────────────────────────
+  function renderBrowserDetail(node) {
+    const out = node.output || {};
+    const blocked = node.error_code === 'gateway_blocked';
+    const path = out.path;
+    const actions = out.actions || [];
+
+    let actionsHtml = '<p class="empty">No actions recorded (this run resolved at Layer 1 — no interaction needed).</p>';
+    if (actions.length) {
+      actionsHtml = '<ol class="actions-list">' + actions.map(a => {
+        // Each entry from BrowserOutput.actions is {turn, actions:[...], outcome}
+        const turn = a.turn != null ? a.turn : '?';
+        const subActions = (a.actions || [a]).map(sa => {
+          const type = sa.type || sa.action || '?';
+          const target = sa.mark != null ? `mark ${sa.mark}` : (sa.selector || sa.value || '');
+          return `${escapeHtml(type)}${target ? ` → ${escapeHtml(String(target))}` : ''}`;
+        }).join(', ');
+        const outcome = a.outcome != null ? a.outcome : '';
+        return `<li><span class="turn-no">turn ${escapeHtml(turn)}</span>${subActions || '(action)'} — <em>${escapeHtml(outcome)}</em></li>`;
+      }).join('') + '</ol>';
+    }
+
+    // a11y snapshots vs vision screenshots
+    let pageStateHtml = '';
+    if (path === 'a11y') {
+      pageStateHtml = actions.length
+        ? actions.map(a => `<details class="snapshot"><summary>turn ${escapeHtml(a.turn)} — a11y snapshot / outcome</summary>` +
+            `<pre>${escapeHtml(JSON.stringify(a, null, 2))}</pre></details>`).join('')
+        : '<p class="empty">No a11y turns recorded.</p>';
+    } else if (path === 'vision') {
+      const turns = actions.length ? actions.map(a => a.turn) : [1];
+      pageStateHtml = turns.map(t =>
+        `<div>
+           <div class="empty" style="margin-bottom:4px;">turn ${escapeHtml(t)} — annotated screenshot</div>
+           <img class="shot" src="state/sessions/${encodeURIComponent(state.sessionId)}/screenshots/turn_${encodeURIComponent(t)}_annotated.png"
+                alt="turn ${escapeHtml(t)} annotated screenshot"
+                onerror="this.replaceWith(Object.assign(document.createElement('p'),{className:'empty',textContent:'(no screenshot saved for this turn)'}))">
+         </div>`
+      ).join('');
+    } else {
+      pageStateHtml = '<p class="empty">No page-state snapshots for this layer (extract / deterministic do not browse interactively).</p>';
+    }
+
+    const content = out.content || '';
+    const truncated = content.length > 2000;
+    const shortContent = truncated ? content.slice(0, 2000) : content;
+
+    els.detail.innerHTML = `
+      <h2>${escapeHtml(node.node_id)} · browser ${statusBadge(node.status)}</h2>
+
+      <div class="section">
+        <h3>Goal</h3>
+        <div class="codeblock">${escapeHtml(out.goal || '(none)')}</div>
+      </div>
+
+      <div class="section">
+        <h3>Layer chosen</h3>
+        ${layerBadge(path, blocked)}
+        ${blocked ? `<div style="margin-top:8px;" class="codeblock">${escapeHtml(node.error || 'gateway_blocked')}</div>` : ''}
+      </div>
+
+      <div class="section">
+        <h3>Actions taken (${actions.length})</h3>
+        ${actionsHtml}
+      </div>
+
+      <div class="section">
+        <h3>Page state / snapshots</h3>
+        ${pageStateHtml}
+      </div>
+
+      <div class="section">
+        <h3>Extracted content</h3>
+        <div class="codeblock" id="content-block">${escapeHtml(shortContent)}${truncated ? '…' : ''}</div>
+        ${truncated ? `<span class="show-more" id="show-more-content">show more (${content.length} chars total)</span>` : ''}
+      </div>
+
+      <div class="section">
+        <h3>Final URL</h3>
+        <div class="codeblock">${escapeHtml(out.final_url || '(unchanged)')}</div>
+      </div>
+    `;
+
+    if (truncated) {
+      document.getElementById('show-more-content').addEventListener('click', function () {
+        document.getElementById('content-block').textContent = content;
+        this.remove();
+      });
+    }
+  }
+
+  // ── formatter node detail ──────────────────────────────────────────────
+  function mdTableToHtml(md) {
+    const lines = md.split('\n').map(l => l.trim()).filter(Boolean);
+    const tableLines = [];
+    let inTable = false;
+    for (const line of lines) {
+      if (/^\|.*\|$/.test(line)) { inTable = true; tableLines.push(line); }
+      else if (inTable) break;
+    }
+    if (tableLines.length < 2) return null;
+    const rows = tableLines
+      .filter(l => !/^\|[\s:|-]+\|$/.test(l))
+      .map(l => l.slice(1, -1).split('|').map(c => c.trim()));
+    if (rows.length < 1) return null;
+    const [header, ...body] = rows;
+    let html = '<table class="cmp"><thead><tr>' +
+      header.map(h => `<th>${escapeHtml(h)}</th>`).join('') + '</tr></thead><tbody>';
+    body.forEach(r => {
+      html += '<tr>' + r.map(c => `<td>${escapeHtml(c)}</td>`).join('') + '</tr>';
+    });
+    html += '</tbody></table>';
+    return html;
+  }
+
+  function renderFormatterDetail(node) {
+    const out = node.output || {};
+    const answer = out.final_answer || '';
+    const tableHtml = mdTableToHtml(answer);
+    els.detail.innerHTML = `
+      <h2>${escapeHtml(node.node_id)} · formatter ${statusBadge(node.status)}</h2>
+      <div class="section">
+        <h3>Final comparison table</h3>
+        ${tableHtml || '<p class="empty">No markdown table detected — showing raw answer below.</p>'}
+      </div>
+      <div class="section">
+        <h3>Raw final answer</h3>
+        <div class="codeblock">${escapeHtml(answer)}</div>
+      </div>
+    `;
+  }
+
+  // ── bottom bar ─────────────────────────────────────────────────────────
+  function renderCostBar() {
+    const cost = state.cost;
+    const nodes = (state.trace && state.trace.nodes) || [];
+    if (cost) {
+      const totalTurns = Object.values(cost.turns_by_layer || {}).reduce((a, b) => a + b, 0);
+      els.costTurns.textContent = totalTurns;
+      els.costIn.textContent = (cost.input_tokens != null) ? cost.input_tokens : '—';
+      els.costOut.textContent = (cost.output_tokens != null) ? cost.output_tokens : '—';
+      els.costTotal.textContent = (cost.total_cost != null) ? `$${Number(cost.total_cost).toFixed(6)}` : '—';
+    } else {
+      els.costTurns.textContent = '—';
+      els.costIn.textContent = '—';
+      els.costOut.textContent = '—';
+      els.costTotal.textContent = '—';
+    }
+    els.nodeCosts.innerHTML = nodes.map(n => {
+      const e = (n.elapsed_s != null) ? `${Number(n.elapsed_s).toFixed(1)}s` : '—';
+      return `<span><strong>${escapeHtml(n.node_id)}</strong> (${escapeHtml(n.skill)}): ${e}</span>`;
+    }).join('') || '—';
+  }
+
+  // ── wiring ─────────────────────────────────────────────────────────────
+  els.loadBtn.addEventListener('click', () => loadSession(els.input.value.trim()));
+  els.input.addEventListener('keydown', e => { if (e.key === 'Enter') loadSession(els.input.value.trim()); });
+
+  const initial = qs('session');
+  if (initial) {
+    els.input.value = initial;
+    loadSession(initial);
+  }
+})();
+</script>
+</body>
+</html>
