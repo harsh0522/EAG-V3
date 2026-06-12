@@ -1,0 +1,66 @@
+[2026-06-13 02:09:04] cost summary for session=s8-0113fe36
+  agent=coder            provider=gemini       calls=1 in_tok=1707 out_tok=320 errors=0
+  agent=formatter        provider=gemini       calls=1 in_tok=1527 out_tok=178 errors=0
+  agent=planner          provider=gemini       calls=1 in_tok=1500 out_tok=314 errors=0
+  agent=researcher       provider=gemini       calls=10 in_tok=23105 out_tok=798 errors=0
+  TOTAL calls=13 input_tokens=27839 output_tokens=1610
+
+{
+  "session": "s8-0113fe36",
+  "by_agent": {
+    "coder": [
+      {
+        "agent": "coder",
+        "provider": "gemini",
+        "calls": 1,
+        "in_tok": 1707,
+        "out_tok": 320,
+        "total_latency_ms": 1670,
+        "total_retries": 0,
+        "ok": 1,
+        "errors": 0
+      }
+    ],
+    "formatter": [
+      {
+        "agent": "formatter",
+        "provider": "gemini",
+        "calls": 1,
+        "in_tok": 1527,
+        "out_tok": 178,
+        "total_latency_ms": 1015,
+        "total_retries": 0,
+        "ok": 1,
+        "errors": 0
+      }
+    ],
+    "planner": [
+      {
+        "agent": "planner",
+        "provider": "gemini",
+        "calls": 1,
+        "in_tok": 1500,
+        "out_tok": 314,
+        "total_latency_ms": 1658,
+        "total_retries": 0,
+        "ok": 1,
+        "errors": 0
+      }
+    ],
+    "researcher": [
+      {
+        "agent": "researcher",
+        "provider": "gemini",
+        "calls": 10,
+        "in_tok": 23105,
+        "out_tok": 798,
+        "total_latency_ms": 9273,
+        "total_retries": 0,
+        "ok": 10,
+        "errors": 0
+      }
+    ]
+  },
+  "total_input_tokens": 27839,
+  "total_output_tokens": 1610
+}

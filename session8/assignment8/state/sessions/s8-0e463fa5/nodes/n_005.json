@@ -1,0 +1,26 @@
+{
+  "node_id": "n:5",
+  "skill": "critic",
+  "status": "complete",
+  "inputs": [
+    "n:3"
+  ],
+  "result": {
+    "success": true,
+    "agent_name": "critic",
+    "output": {
+      "verdict": "pass",
+      "rationale": "All fields match known facts about Marie Curie and are supported by the referenced Wikipedia source."
+    },
+    "artifacts": [],
+    "successors": [],
+    "cost": 0.0,
+    "elapsed_s": 0.9410429000854492,
+    "provider": "groq",
+    "error": null
+  },
+  "prompt_sent": "You are the Critic skill. You evaluate one upstream node's output and\nreturn pass-or-fail with a short rationale.\n\nYou make no tool calls. The upstream output and (when the orchestrator\nhas it) the inputs that node received both appear in the prompt.\n\nProcedure:\n  1. Read the UPSTREAM_OUTPUT.\n  2. Check it against the INPUTS that produced it.\n  3. Look for: fabricated fields, claims unsupported by the input,\n     contradictions, missing fields the input clearly contained.\n  4. Emit pass or fail.\n\nOutput schema (JSON, no prose, no markdown fences):\n\n  {\n    \"verdict\": \"pass\" | \"fail\",\n    \"rationale\": \"<one or two short sentences>\"\n  }\n\nWhen you emit `fail`, the orchestrator may invoke the Planner to\nrecover. Be specific in your rationale so the recovery plan can be\ntargeted. Do not fail for stylistic reasons; only fail when the\nupstream output is wrong, missing, or unsupported.\n\nMEMORY HITS (4 from FAISS):\n  - [tool_outcome] Fetch Claude Shannon wikipedia page for birth date, death date, and three information theory contributions\n      source: user_query\n      raw: Fetch https://en.wikipedia.org/wiki/Claude_Shannon and tell me his birth date, death date, and three key contributions to information theory.\n  - [tool_outcome] Fetch Claude Shannon wikipedia page for birth date, death date, and three information theory contributions\n      source: user_query\n      raw: Fetch https://en.wikipedia.org/wiki/Claude_Shannon and tell me his birth date, death date, and three key contributions to information theory.\n  - [fact] Current population and growth rate query for Lagos, Cairo, and Kinshasa\n      source: user_query\n      raw: For Lagos, Cairo, and Kinshasa, find current populations and growth rates and tell me which is growing fastest.\n  - [fact] Current population and growth rate inquiry for Lagos, Cairo, and Kinshasa\n      source: user_query\n      raw: For Lagos, Cairo, and Kinshasa, find current populations and growth rates and tell me which is growing fastest.\n\nINPUTS:\n[\n  {\n    \"id\": \"n:3\",\n    \"kind\": \"upstream\",\n    \"skill\": \"distiller\",\n    \"output\": {\n      \"fields\": {\n        \"birth_year\": \"1867\",\n        \"nationality\": \"Polish-French\",\n        \"field_of_study\": \"Physics and Chemistry\",\n        \"major_discovery\": \"Radioactivity, polonium, and radium\"\n      },\n      \"rationale\": \"The findings from the Marie Curie Wikipedia source provide her nationality, fields of study, and major discoveries, though the birth year is inferred from the context of her life and death in 1934.\"\n    }\n  }\n]",
+  "started_at": 1781296827.9816182,
+  "completed_at": 1781296828.9226618,
+  "retries": 0
+}

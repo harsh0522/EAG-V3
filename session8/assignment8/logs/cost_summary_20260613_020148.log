@@ -1,0 +1,38 @@
+[2026-06-13 02:01:57] cost summary for session=s8-aa865446
+  agent=formatter        provider=gemini       calls=1 in_tok=478 out_tok=32 errors=0
+  agent=planner          provider=gemini       calls=1 in_tok=1366 out_tok=81 errors=0
+  TOTAL calls=2 input_tokens=1844 output_tokens=113
+
+{
+  "session": "s8-aa865446",
+  "by_agent": {
+    "formatter": [
+      {
+        "agent": "formatter",
+        "provider": "gemini",
+        "calls": 1,
+        "in_tok": 478,
+        "out_tok": 32,
+        "total_latency_ms": 791,
+        "total_retries": 0,
+        "ok": 1,
+        "errors": 0
+      }
+    ],
+    "planner": [
+      {
+        "agent": "planner",
+        "provider": "gemini",
+        "calls": 1,
+        "in_tok": 1366,
+        "out_tok": 81,
+        "total_latency_ms": 867,
+        "total_retries": 0,
+        "ok": 1,
+        "errors": 0
+      }
+    ]
+  },
+  "total_input_tokens": 1844,
+  "total_output_tokens": 113
+}

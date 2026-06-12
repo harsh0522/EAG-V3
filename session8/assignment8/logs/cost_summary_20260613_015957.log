@@ -1,0 +1,52 @@
+[2026-06-13 02:00:55] cost summary for session=s8-b3a799cb
+  agent=formatter        provider=gemini       calls=1 in_tok=1211 out_tok=124 errors=0
+  agent=planner          provider=gemini       calls=1 in_tok=1370 out_tok=267 errors=0
+  agent=researcher       provider=gemini       calls=12 in_tok=33668 out_tok=898 errors=0
+  TOTAL calls=14 input_tokens=36249 output_tokens=1289
+
+{
+  "session": "s8-b3a799cb",
+  "by_agent": {
+    "formatter": [
+      {
+        "agent": "formatter",
+        "provider": "gemini",
+        "calls": 1,
+        "in_tok": 1211,
+        "out_tok": 124,
+        "total_latency_ms": 1348,
+        "total_retries": 0,
+        "ok": 1,
+        "errors": 0
+      }
+    ],
+    "planner": [
+      {
+        "agent": "planner",
+        "provider": "gemini",
+        "calls": 1,
+        "in_tok": 1370,
+        "out_tok": 267,
+        "total_latency_ms": 1453,
+        "total_retries": 0,
+        "ok": 1,
+        "errors": 0
+      }
+    ],
+    "researcher": [
+      {
+        "agent": "researcher",
+        "provider": "gemini",
+        "calls": 12,
+        "in_tok": 33668,
+        "out_tok": 898,
+        "total_latency_ms": 11755,
+        "total_retries": 0,
+        "ok": 12,
+        "errors": 0
+      }
+    ]
+  },
+  "total_input_tokens": 36249,
+  "total_output_tokens": 1289
+}

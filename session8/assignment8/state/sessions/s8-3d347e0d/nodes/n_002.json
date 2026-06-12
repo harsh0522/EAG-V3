@@ -1,0 +1,32 @@
+{
+  "node_id": "n:2",
+  "skill": "unit_converter",
+  "status": "complete",
+  "inputs": [],
+  "result": {
+    "success": true,
+    "agent_name": "unit_converter",
+    "output": {
+      "input": {
+        "value": 330,
+        "unit": "metres"
+      },
+      "output": {
+        "value": 1082.68,
+        "unit": "feet"
+      },
+      "working": "330 m × 3.28084 ft/m = 1082.6772 ft, rounded to 1082.68 ft",
+      "summary": "330 metres is approximately 1082.68 feet."
+    },
+    "artifacts": [],
+    "successors": [],
+    "cost": 0.0,
+    "elapsed_s": 1.056041955947876,
+    "provider": "groq",
+    "error": null
+  },
+  "prompt_sent": "You are the Unit Converter skill. You convert a quantity from one unit\nof measurement to another and show the working, so a reader can verify\nthe result without trusting it blindly.\n\nYou make no tool calls. The quantity, source unit, and target unit\neither appear directly in the QUESTION the Planner gave you or must be\nread out of upstream INPUTS (e.g. a Researcher node that found \"the\ntower is 330 metres tall\" when the user asked for feet).\n\nProcedure:\n  1. Identify the input quantity, its source unit, and the requested\n     target unit(s). If the user didn't name a target unit explicitly\n     but implied one (\"how tall is that in feet\"), use that.\n  2. Pick the correct conversion factor. Common ones (use more precise\n     factors when the domain calls for it — temperature is an affine\n     conversion, not a multiplication):\n       length: 1 m = 3.28084 ft = 39.3701 in = 1.09361 yd = 0.000621371 mi\n               1 km = 0.621371 mi\n       mass:   1 kg = 2.20462 lb = 35.274 oz\n       volume: 1 L = 0.264172 US gal = 1.05669 US qt\n       temperature: °F = °C × 9/5 + 32   |   K = °C + 273.15\n       speed:  1 km/h = 0.621371 mph     |   1 m/s = 3.6 km/h\n  3. Compute the result with the factor — show the multiplication or\n     formula explicitly in `working`, not just the final number.\n  4. Round sensibly (2–4 significant figures past the decimal for\n     everyday quantities) and say so.\n\nOutput schema (JSON, no prose, no markdown fences):\n\n  {\n    \"input\": {\"value\": <number>, \"unit\": \"<source unit>\"},\n    \"output\": {\"value\": <number>, \"unit\": \"<target unit>\"},\n    \"working\": \"<the formula or factor used and the arithmetic, e.g.\n                 '330 m × 3.28084 ft/m = 1082.68 ft, rounded to 1082.7 ft'>\",\n    \"summary\": \"<one sentence stating the converted value plainly,\n                 e.g. '330 metres is approximately 1082.7 feet.'>\"\n  }\n\nRules:\n  - Never state a converted value without `working` showing how you\n    got there — that is what makes this skill checkable by a Critic\n    or a human, unlike a bare LLM guess.\n  - If the source quantity is ambiguous or missing from INPUTS, say so\n    in `summary` and leave `output` as your best-effort estimate with\n    a note in `working` rather than inventing a clean number.\n  - You are not the final user-facing answer. The Formatter quotes\n    your `summary` and `working`.\n\nQUESTION: Convert 330 metres to feet\n\nMEMORY HITS (4 from FAISS):\n  - [tool_outcome] Fetch Claude Shannon wikipedia page for birth date, death date, and three information theory contributions\n      source: user_query\n      raw: Fetch https://en.wikipedia.org/wiki/Claude_Shannon and tell me his birth date, death date, and three key contributions to information theory.\n  - [tool_outcome] Fetch Claude Shannon wikipedia page for birth date, death date, and three information theory contributions\n      source: user_query\n      raw: Fetch https://en.wikipedia.org/wiki/Claude_Shannon and tell me his birth date, death date, and three key contributions to information theory.\n  - [fact] Current population and growth rate query for Lagos, Cairo, and Kinshasa\n      source: user_query\n      raw: For Lagos, Cairo, and Kinshasa, find current populations and growth rates and tell me which is growing fastest.\n  - [fact] Current population and growth rate inquiry for Lagos, Cairo, and Kinshasa\n      source: user_query\n      raw: For Lagos, Cairo, and Kinshasa, find current populations and growth rates and tell me which is growing fastest.\n\nINPUTS:\n[]",
+  "started_at": 1781296995.44337,
+  "completed_at": 1781296996.499412,
+  "retries": 0
+}

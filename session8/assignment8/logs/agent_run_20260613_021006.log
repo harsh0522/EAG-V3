@@ -1,0 +1,34 @@
+[2026-06-13 02:10:06] SESSION s8-0e463fa5
+[2026-06-13 02:10:06] QUERY: 'Fetch the Wikipedia page for Marie Curie and extract her birth year, nationality, field of study, and major discovery.'
+
+══════════════════════════════════════════════════════════════════════════════
+session s8-0e463fa5  ─  query: Fetch the Wikipedia page for Marie Curie and extract her birth year, nationality, field of study, and major discovery.
+══════════════════════════════════════════════════════════════════════════════
+[memory.read] 4 hit(s) visible to every skill this run
+[n:1] planner            complete (4.8s)
+[n:2] researcher         complete (12.2s)
+[n:3] distiller          complete (3.3s)
+[n:5] critic             complete (0.9s)
+[n:4] formatter          complete (3.0s)
+
+┌─ DAG (5 nodes, 4 edges) ──────────────────────────────
+│ L0  ✓  n:1    planner       
+│ L1  ✓  n:2    researcher      ← n:1
+│ L2  ✓  n:3    distiller       ← n:2
+│ L3  ✓  n:5    critic          ← n:3
+│ L4  ✓  n:4    formatter       ← n:5
+└──────────────────────────────────────────────────────────
+
+
+┌──────────────────┐   ┌──────────────────┐   ┌──────────────────┐   ┌──────────────────┐   ┌──────────────────┐
+│  ✓ n:1 planner   │──►│ ✓ n:2 researcher │──►│ ✓ n:3 distiller  │──►│   ✓ n:5 critic   │──►│ ✓ n:4 formatter  │
+└──────────────────┘   └──────────────────┘   └──────────────────┘   └──────────────────┘   └──────────────────┘
+
+
+
+
+══════════════════════════════════════════════════════════════════════════════
+FINAL: Marie Curie was born in 1867. She was of Polish-French nationality and worked in the fields of physics and chemistry. Her major discoveries include radioactivity, polonium, and radium.
+══════════════════════════════════════════════════════════════════════════════
+
+[2026-06-13 02:10:31] SESSION COMPLETE wall_clock=25.28s

@@ -1,0 +1,38 @@
+[2026-06-13 01:56:22] cost summary for session=s8-f4271e9a
+  agent=formatter        provider=gemini       calls=1 in_tok=304 out_tok=20 errors=0
+  agent=planner          provider=gemini       calls=1 in_tok=1192 out_tok=78 errors=0
+  TOTAL calls=2 input_tokens=1496 output_tokens=98
+
+{
+  "session": "s8-f4271e9a",
+  "by_agent": {
+    "formatter": [
+      {
+        "agent": "formatter",
+        "provider": "gemini",
+        "calls": 1,
+        "in_tok": 304,
+        "out_tok": 20,
+        "total_latency_ms": 729,
+        "total_retries": 0,
+        "ok": 1,
+        "errors": 0
+      }
+    ],
+    "planner": [
+      {
+        "agent": "planner",
+        "provider": "gemini",
+        "calls": 1,
+        "in_tok": 1192,
+        "out_tok": 78,
+        "total_latency_ms": 821,
+        "total_retries": 0,
+        "ok": 1,
+        "errors": 0
+      }
+    ]
+  },
+  "total_input_tokens": 1496,
+  "total_output_tokens": 98
+}

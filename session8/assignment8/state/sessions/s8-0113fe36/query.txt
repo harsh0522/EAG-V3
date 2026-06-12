@@ -1,0 +1,1 @@
+Find the GDP, population, and capital city of Japan, Brazil, and Nigeria, then compare which country has the highest GDP per capita.

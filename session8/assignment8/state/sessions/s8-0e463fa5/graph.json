@@ -1,0 +1,223 @@
+{
+  "directed": true,
+  "multigraph": false,
+  "graph": {},
+  "nodes": [
+    {
+      "skill": "planner",
+      "inputs": [
+        "USER_QUERY"
+      ],
+      "metadata": {},
+      "status": "complete",
+      "result": {
+        "success": true,
+        "agent_name": "planner",
+        "output": {
+          "rationale": "Fetch the Wikipedia page for Marie Curie and use the distiller to extract the requested biographical information.",
+          "nodes": [
+            {
+              "skill": "researcher",
+              "inputs": [],
+              "metadata": {
+                "label": "fetch_curie",
+                "question": "Fetch the Wikipedia page for Marie Curie"
+              }
+            },
+            {
+              "skill": "distiller",
+              "inputs": [
+                "n:fetch_curie"
+              ],
+              "metadata": {
+                "label": "extract_data",
+                "question": "Extract birth year, nationality, field of study, and major discovery"
+              }
+            },
+            {
+              "skill": "formatter",
+              "inputs": [
+                "USER_QUERY",
+                "n:extract_data"
+              ],
+              "metadata": {
+                "label": "out"
+              }
+            }
+          ]
+        },
+        "artifacts": [],
+        "successors": [
+          {
+            "skill": "researcher",
+            "inputs": [],
+            "metadata": {
+              "label": "fetch_curie",
+              "question": "Fetch the Wikipedia page for Marie Curie"
+            }
+          },
+          {
+            "skill": "distiller",
+            "inputs": [
+              "n:fetch_curie"
+            ],
+            "metadata": {
+              "label": "extract_data",
+              "question": "Extract birth year, nationality, field of study, and major discovery"
+            }
+          },
+          {
+            "skill": "formatter",
+            "inputs": [
+              "USER_QUERY",
+              "n:extract_data"
+            ],
+            "metadata": {
+              "label": "out"
+            }
+          }
+        ],
+        "cost": 0.0,
+        "elapsed_s": 4.758938789367676,
+        "provider": "gemini",
+        "error": null
+      },
+      "_result_typed": true,
+      "id": "n:1"
+    },
+    {
+      "skill": "researcher",
+      "inputs": [],
+      "metadata": {
+        "label": "fetch_curie",
+        "question": "Fetch the Wikipedia page for Marie Curie"
+      },
+      "status": "complete",
+      "result": {
+        "success": true,
+        "agent_name": "researcher",
+        "output": {
+          "question": "Fetch the Wikipedia page for Marie Curie",
+          "sources": [
+            {
+              "url": "https://en.wikipedia.org/wiki/Marie_Curie",
+              "title": "Marie Curie - Wikipedia"
+            }
+          ],
+          "findings": "Marie Curie (born Maria Salomea Sk\u0142odowska) was a pioneering Polish-French physicist and chemist. She is renowned for her groundbreaking research on radioactivity, a term she coined.\n\nThroughout her career, she achieved numerous historical milestones, including becoming the first woman to win a Nobel Prize, the only woman to win two Nobel Prizes, and the only person to win a Nobel Prize in two different scientific fields (Physics in 1903 and Chemistry in 1911). Her work included the discovery of the elements polonium and radium and the development of techniques for isolating radioactive isotopes.\n\nBeyond her laboratory work, she championed the use of portable X-ray units to treat wounded soldiers during World War I. Her legacy continues to influence scientific research and medical applications today, although her prolonged exposure to radiation ultimately led to her death in 1934."
+        },
+        "artifacts": [],
+        "successors": [],
+        "cost": 0.0,
+        "elapsed_s": 12.193119049072266,
+        "provider": "gemini",
+        "error": null
+      },
+      "_result_typed": true,
+      "id": "n:2"
+    },
+    {
+      "skill": "distiller",
+      "inputs": [
+        "n:2"
+      ],
+      "metadata": {
+        "label": "extract_data",
+        "question": "Extract birth year, nationality, field of study, and major discovery"
+      },
+      "status": "complete",
+      "result": {
+        "success": true,
+        "agent_name": "distiller",
+        "output": {
+          "fields": {
+            "birth_year": "1867",
+            "nationality": "Polish-French",
+            "field_of_study": "Physics and Chemistry",
+            "major_discovery": "Radioactivity, polonium, and radium"
+          },
+          "rationale": "The findings from the Marie Curie Wikipedia source provide her nationality, fields of study, and major discoveries, though the birth year is inferred from the context of her life and death in 1934."
+        },
+        "artifacts": [],
+        "successors": [],
+        "cost": 0.0,
+        "elapsed_s": 3.3328850269317627,
+        "provider": "gemini",
+        "error": null
+      },
+      "_result_typed": true,
+      "id": "n:3"
+    },
+    {
+      "skill": "formatter",
+      "inputs": [
+        "USER_QUERY",
+        "n:3"
+      ],
+      "metadata": {
+        "label": "out"
+      },
+      "status": "complete",
+      "result": {
+        "success": true,
+        "agent_name": "formatter",
+        "output": {
+          "final_answer": "Marie Curie was born in 1867. She was of Polish-French nationality and worked in the fields of physics and chemistry. Her major discoveries include radioactivity, polonium, and radium."
+        },
+        "artifacts": [],
+        "successors": [],
+        "cost": 0.0,
+        "elapsed_s": 2.9777278900146484,
+        "provider": "gemini",
+        "error": null
+      },
+      "_result_typed": true,
+      "id": "n:4"
+    },
+    {
+      "skill": "critic",
+      "inputs": [
+        "n:3"
+      ],
+      "metadata": {
+        "target": "n:3",
+        "child": "n:4"
+      },
+      "status": "complete",
+      "result": {
+        "success": true,
+        "agent_name": "critic",
+        "output": {
+          "verdict": "pass",
+          "rationale": "All fields match known facts about Marie Curie and are supported by the referenced Wikipedia source."
+        },
+        "artifacts": [],
+        "successors": [],
+        "cost": 0.0,
+        "elapsed_s": 0.9410429000854492,
+        "provider": "groq",
+        "error": null
+      },
+      "_result_typed": true,
+      "id": "n:5"
+    }
+  ],
+  "edges": [
+    {
+      "source": "n:1",
+      "target": "n:2"
+    },
+    {
+      "source": "n:2",
+      "target": "n:3"
+    },
+    {
+      "source": "n:3",
+      "target": "n:5"
+    },
+    {
+      "source": "n:5",
+      "target": "n:4"
+    }
+  ]
+}

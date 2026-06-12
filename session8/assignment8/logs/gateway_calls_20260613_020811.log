@@ -1,0 +1,13 @@
+[2026-06-13 02:08:16] agent=planner session=s8-0113fe36 model=gemini-3.1-flash-lite provider=gemini in_tok=1500 out_tok=314 latency_ms=1658 status=ok
+[2026-06-13 02:08:20] agent=researcher session=s8-0113fe36 model=gemini-3.1-flash-lite provider=gemini in_tok=720 out_tok=29 latency_ms=660 status=ok
+[2026-06-13 02:08:24] agent=researcher session=s8-0113fe36 model=gemini-3.1-flash-lite provider=gemini in_tok=720 out_tok=39 latency_ms=695 status=ok
+[2026-06-13 02:08:28] agent=researcher session=s8-0113fe36 model=gemini-3.1-flash-lite provider=gemini in_tok=720 out_tok=25 latency_ms=691 status=ok
+[2026-06-13 02:08:32] agent=researcher session=s8-0113fe36 model=gemini-3.1-flash-lite provider=gemini in_tok=1017 out_tok=26 latency_ms=699 status=ok
+[2026-06-13 02:08:36] agent=researcher session=s8-0113fe36 model=gemini-3.1-flash-lite provider=gemini in_tok=3956 out_tok=30 latency_ms=886 status=ok
+[2026-06-13 02:08:41] agent=researcher session=s8-0113fe36 model=gemini-3.1-flash-lite provider=gemini in_tok=6784 out_tok=212 latency_ms=1430 status=ok
+[2026-06-13 02:08:44] agent=researcher session=s8-0113fe36 model=gemini-3.1-flash-lite provider=gemini in_tok=1096 out_tok=32 latency_ms=733 status=ok
+[2026-06-13 02:08:48] agent=researcher session=s8-0113fe36 model=gemini-3.1-flash-lite provider=gemini in_tok=1322 out_tok=30 latency_ms=760 status=ok
+[2026-06-13 02:08:53] agent=researcher session=s8-0113fe36 model=gemini-3.1-flash-lite provider=gemini in_tok=3216 out_tok=205 latency_ms=1340 status=ok
+[2026-06-13 02:08:57] agent=researcher session=s8-0113fe36 model=gemini-3.1-flash-lite provider=gemini in_tok=3554 out_tok=170 latency_ms=1379 status=ok
+[2026-06-13 02:09:01] agent=coder session=s8-0113fe36 model=gemini-3.1-flash-lite provider=gemini in_tok=1707 out_tok=320 latency_ms=1670 status=ok
+[2026-06-13 02:09:04] agent=formatter session=s8-0113fe36 model=gemini-3.1-flash-lite provider=gemini in_tok=1527 out_tok=178 latency_ms=1015 status=ok

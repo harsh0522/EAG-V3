@@ -1,0 +1,52 @@
+[2026-06-13 02:07:44] cost summary for session=s8-c0731757
+  agent=formatter        provider=gemini       calls=1 in_tok=1317 out_tok=139 errors=0
+  agent=planner          provider=gemini       calls=1 in_tok=1380 out_tok=280 errors=0
+  agent=researcher       provider=gemini       calls=12 in_tok=16743 out_tok=977 errors=0
+  TOTAL calls=14 input_tokens=19440 output_tokens=1396
+
+{
+  "session": "s8-c0731757",
+  "by_agent": {
+    "formatter": [
+      {
+        "agent": "formatter",
+        "provider": "gemini",
+        "calls": 1,
+        "in_tok": 1317,
+        "out_tok": 139,
+        "total_latency_ms": 1457,
+        "total_retries": 0,
+        "ok": 1,
+        "errors": 0
+      }
+    ],
+    "planner": [
+      {
+        "agent": "planner",
+        "provider": "gemini",
+        "calls": 1,
+        "in_tok": 1380,
+        "out_tok": 280,
+        "total_latency_ms": 1358,
+        "total_retries": 0,
+        "ok": 1,
+        "errors": 0
+      }
+    ],
+    "researcher": [
+      {
+        "agent": "researcher",
+        "provider": "gemini",
+        "calls": 12,
+        "in_tok": 16743,
+        "out_tok": 977,
+        "total_latency_ms": 10939,
+        "total_retries": 0,
+        "ok": 12,
+        "errors": 0
+      }
+    ]
+  },
+  "total_input_tokens": 19440,
+  "total_output_tokens": 1396
+}

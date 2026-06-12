@@ -1,0 +1,2 @@
+[2026-06-13 01:56:18] agent=planner session=s8-f4271e9a model=gemini-3.1-flash-lite provider=gemini in_tok=1192 out_tok=78 latency_ms=821 status=ok
+[2026-06-13 01:56:22] agent=formatter session=s8-f4271e9a model=gemini-3.1-flash-lite provider=gemini in_tok=304 out_tok=20 latency_ms=729 status=ok

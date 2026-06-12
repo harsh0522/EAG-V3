@@ -1,0 +1,6 @@
+[2026-06-13 01:58:41] agent=planner session=s8-76dba0d3 model=gemini-3.1-flash-lite provider=gemini in_tok=1250 out_tok=231 latency_ms=1156 status=ok
+[2026-06-13 01:58:44] agent=researcher session=s8-76dba0d3 model=gemini-3.1-flash-lite provider=gemini in_tok=464 out_tok=28 latency_ms=675 status=ok
+[2026-06-13 01:58:49] agent=researcher session=s8-76dba0d3 model=gemini-3.1-flash-lite provider=gemini in_tok=3422 out_tok=352 latency_ms=1867 status=ok
+[2026-06-13 01:58:53] agent=distiller session=s8-76dba0d3 model=gemini-3.1-flash-lite provider=gemini in_tok=740 out_tok=109 latency_ms=965 status=ok
+[2026-06-13 01:58:53] agent=critic session=s8-76dba0d3 model=openai/gpt-oss-120b provider=groq in_tok=416 out_tok=224 latency_ms=776 status=ok
+[2026-06-13 01:58:57] agent=formatter session=s8-76dba0d3 model=gemini-3.1-flash-lite provider=gemini in_tok=510 out_tok=73 latency_ms=1139 status=ok

@@ -1,0 +1,30 @@
+{
+  "node_id": "n:2",
+  "skill": "researcher",
+  "status": "complete",
+  "inputs": [],
+  "result": {
+    "success": true,
+    "agent_name": "researcher",
+    "output": {
+      "question": "Fetch content from https://en.wikipedia.org/wiki/Claude_Shannon",
+      "sources": [
+        {
+          "url": "https://en.wikipedia.org/wiki/Claude_Shannon",
+          "title": "Claude Shannon - Wikipedia"
+        }
+      ],
+      "findings": "Claude Elwood Shannon (1916–2001) was an American mathematician, electrical engineer, and cryptographer, widely recognized as the 'father of information theory.' His landmark 1948 paper, 'A Mathematical Theory of Communication,' established the foundational concepts for the digital age, including the bit, entropy, and the limits of data compression and transmission.\n\nIn his 1937 master's thesis, Shannon proved that Boolean algebra could be used to optimize the design of systems of electromechanical relays used in telephone routing switches. This insight effectively laid the theoretical groundwork for all modern digital computer design by demonstrating that electronic circuits could implement logic functions.\n\nBeyond information theory and digital logic, Shannon made significant contributions to artificial intelligence, cryptography, and game theory. He designed 'Theseus,' a robotic mouse capable of navigating a maze, and authored seminal papers on computer chess, including an estimate for the game's complexity. During World War II, he worked at Bell Labs on cryptography and fire-control systems.\n\nShannon spent much of his career at MIT and Bell Labs. Known for his eclectic interests, he was also an avid inventor and hobbyist, creating devices such as rocket-powered frisbees and juggling robots. His work remains central to the fields of telecommunications, computing, and signal processing."
+    },
+    "artifacts": [],
+    "successors": [],
+    "cost": 0.0,
+    "elapsed_s": 9.041018009185791,
+    "provider": "gemini",
+    "error": null
+  },
+  "prompt_sent": "You are the Researcher skill. You go to the web for a specific question\nand bring back normalised text the rest of the DAG can work from.\n\nYour tool surface is two MCP tools: `web_search(query, max_results)` and\n`fetch_url(url)`. Use them. Do not narrate; do not invent other tools.\n\nProcedure:\n  1. Read the QUESTION in the prompt.\n  2. Issue ONE `web_search` to get candidate URLs.\n  3. Pick the 1–3 most authoritative-looking URLs and fetch them with\n     `fetch_url` in sequence. Avoid clearly low-signal results (aggregator\n     spam, ad redirects).\n  4. Synthesise the relevant content from the fetched pages.\n\nTime budget: keep tool calls to 4 max per invocation. If a `fetch_url`\nreturns very little usable text, do not retry; move on.\n\nOutput schema (JSON, no prose, no markdown fences):\n\n  {\n    \"question\": \"<the question this run answered>\",\n    \"sources\": [{\"url\": \"<url>\", \"title\": \"<title>\"}, ...],\n    \"findings\": \"<2–6 short paragraphs of normalised text>\"\n  }\n\nYou do NOT produce the final user-facing answer. The downstream\ndistiller or formatter does that. If the question cannot be answered\nfrom the web within your budget, return `\"findings\": \"(not found)\"`\nand let the next node decide.\n\nQUESTION: Fetch content from https://en.wikipedia.org/wiki/Claude_Shannon\n\nINPUTS:\n[]",
+  "started_at": 1781296121.033181,
+  "completed_at": 1781296130.0742002,
+  "retries": 0
+}

@@ -1,0 +1,138 @@
+{
+  "directed": true,
+  "multigraph": false,
+  "graph": {},
+  "nodes": [
+    {
+      "skill": "planner",
+      "inputs": [
+        "USER_QUERY"
+      ],
+      "metadata": {},
+      "status": "complete",
+      "result": {
+        "success": true,
+        "agent_name": "planner",
+        "output": {
+          "rationale": "The user requested a unit conversion, which is handled directly by the unit_converter skill.",
+          "nodes": [
+            {
+              "skill": "unit_converter",
+              "inputs": [],
+              "metadata": {
+                "label": "uc1",
+                "question": "Convert 330 metres to feet"
+              }
+            },
+            {
+              "skill": "formatter",
+              "inputs": [
+                "USER_QUERY",
+                "n:uc1"
+              ],
+              "metadata": {
+                "label": "out"
+              }
+            }
+          ]
+        },
+        "artifacts": [],
+        "successors": [
+          {
+            "skill": "unit_converter",
+            "inputs": [],
+            "metadata": {
+              "label": "uc1",
+              "question": "Convert 330 metres to feet"
+            }
+          },
+          {
+            "skill": "formatter",
+            "inputs": [
+              "USER_QUERY",
+              "n:uc1"
+            ],
+            "metadata": {
+              "label": "out"
+            }
+          }
+        ],
+        "cost": 0.0,
+        "elapsed_s": 4.264463186264038,
+        "provider": "gemini",
+        "error": null
+      },
+      "_result_typed": true,
+      "id": "n:1"
+    },
+    {
+      "skill": "unit_converter",
+      "inputs": [],
+      "metadata": {
+        "label": "uc1",
+        "question": "Convert 330 metres to feet"
+      },
+      "status": "complete",
+      "result": {
+        "success": true,
+        "agent_name": "unit_converter",
+        "output": {
+          "input": {
+            "value": 330,
+            "unit": "metres"
+          },
+          "output": {
+            "value": 1082.68,
+            "unit": "feet"
+          },
+          "working": "330 m \u00d7 3.28084 ft/m = 1082.6772 ft, rounded to 1082.68 ft",
+          "summary": "330 metres is approximately 1082.68 feet."
+        },
+        "artifacts": [],
+        "successors": [],
+        "cost": 0.0,
+        "elapsed_s": 1.056041955947876,
+        "provider": "groq",
+        "error": null
+      },
+      "_result_typed": true,
+      "id": "n:2"
+    },
+    {
+      "skill": "formatter",
+      "inputs": [
+        "USER_QUERY",
+        "n:2"
+      ],
+      "metadata": {
+        "label": "out"
+      },
+      "status": "complete",
+      "result": {
+        "success": true,
+        "agent_name": "formatter",
+        "output": {
+          "final_answer": "330 metres is equal to approximately 1,082.68 feet."
+        },
+        "artifacts": [],
+        "successors": [],
+        "cost": 0.0,
+        "elapsed_s": 2.4634580612182617,
+        "provider": "gemini",
+        "error": null
+      },
+      "_result_typed": true,
+      "id": "n:3"
+    }
+  ],
+  "edges": [
+    {
+      "source": "n:1",
+      "target": "n:2"
+    },
+    {
+      "source": "n:2",
+      "target": "n:3"
+    }
+  ]
+}

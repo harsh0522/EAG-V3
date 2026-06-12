@@ -1,0 +1,80 @@
+[2026-06-13 02:11:11] cost summary for session=s8-427a6cde
+  agent=critic           provider=groq         calls=1 in_tok=658 out_tok=326 errors=0
+  agent=distiller        provider=gemini       calls=1 in_tok=813 out_tok=100 errors=0
+  agent=formatter        provider=gemini       calls=1 in_tok=770 out_tok=70 errors=0
+  agent=planner          provider=gemini       calls=1 in_tok=1519 out_tok=255 errors=0
+  agent=researcher       provider=gemini       calls=3 in_tok=8960 out_tok=234 errors=0
+  TOTAL calls=7 input_tokens=12720 output_tokens=985
+
+{
+  "session": "s8-427a6cde",
+  "by_agent": {
+    "critic": [
+      {
+        "agent": "critic",
+        "provider": "groq",
+        "calls": 1,
+        "in_tok": 658,
+        "out_tok": 326,
+        "total_latency_ms": 1120,
+        "total_retries": 0,
+        "ok": 1,
+        "errors": 0
+      }
+    ],
+    "distiller": [
+      {
+        "agent": "distiller",
+        "provider": "gemini",
+        "calls": 1,
+        "in_tok": 813,
+        "out_tok": 100,
+        "total_latency_ms": 916,
+        "total_retries": 0,
+        "ok": 1,
+        "errors": 0
+      }
+    ],
+    "formatter": [
+      {
+        "agent": "formatter",
+        "provider": "gemini",
+        "calls": 1,
+        "in_tok": 770,
+        "out_tok": 70,
+        "total_latency_ms": 766,
+        "total_retries": 0,
+        "ok": 1,
+        "errors": 0
+      }
+    ],
+    "planner": [
+      {
+        "agent": "planner",
+        "provider": "gemini",
+        "calls": 1,
+        "in_tok": 1519,
+        "out_tok": 255,
+        "total_latency_ms": 1600,
+        "total_retries": 0,
+        "ok": 1,
+        "errors": 0
+      }
+    ],
+    "researcher": [
+      {
+        "agent": "researcher",
+        "provider": "gemini",
+        "calls": 3,
+        "in_tok": 8960,
+        "out_tok": 234,
+        "total_latency_ms": 3076,
+        "total_retries": 0,
+        "ok": 3,
+        "errors": 0
+      }
+    ]
+  },
+  "total_input_tokens": 12720,
+  "total_output_tokens": 985
+}

@@ -1,0 +1,52 @@
+[2026-06-13 02:13:18] cost summary for session=s8-3d347e0d
+  agent=formatter        provider=gemini       calls=1 in_tok=750 out_tok=30 errors=0
+  agent=planner          provider=gemini       calls=1 in_tok=1462 out_tok=147 errors=0
+  agent=unit_converter   provider=groq         calls=1 in_tok=970 out_tok=279 errors=0
+  TOTAL calls=3 input_tokens=3182 output_tokens=456
+
+{
+  "session": "s8-3d347e0d",
+  "by_agent": {
+    "formatter": [
+      {
+        "agent": "formatter",
+        "provider": "gemini",
+        "calls": 1,
+        "in_tok": 750,
+        "out_tok": 30,
+        "total_latency_ms": 631,
+        "total_retries": 0,
+        "ok": 1,
+        "errors": 0
+      }
+    ],
+    "planner": [
+      {
+        "agent": "planner",
+        "provider": "gemini",
+        "calls": 1,
+        "in_tok": 1462,
+        "out_tok": 147,
+        "total_latency_ms": 1155,
+        "total_retries": 0,
+        "ok": 1,
+        "errors": 0
+      }
+    ],
+    "unit_converter": [
+      {
+        "agent": "unit_converter",
+        "provider": "groq",
+        "calls": 1,
+        "in_tok": 970,
+        "out_tok": 279,
+        "total_latency_ms": 1041,
+        "total_retries": 0,
+        "ok": 1,
+        "errors": 0
+      }
+    ]
+  },
+  "total_input_tokens": 3182,
+  "total_output_tokens": 456
+}

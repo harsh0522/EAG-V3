@@ -1,0 +1,26 @@
+{
+  "node_id": "n:5",
+  "skill": "critic",
+  "status": "complete",
+  "inputs": [
+    "n:3"
+  ],
+  "result": {
+    "success": true,
+    "agent_name": "critic",
+    "output": {
+      "verdict": "pass",
+      "rationale": "The output provides the required fields with plausible values and a rationale that aligns with the expected Wikipedia content; no contradictions or missing fields are evident."
+    },
+    "artifacts": [],
+    "successors": [],
+    "cost": 0.0,
+    "elapsed_s": 0.7890806198120117,
+    "provider": "groq",
+    "error": null
+  },
+  "prompt_sent": "You are the Critic skill. You evaluate one upstream node's output and\nreturn pass-or-fail with a short rationale.\n\nYou make no tool calls. The upstream output and (when the orchestrator\nhas it) the inputs that node received both appear in the prompt.\n\nProcedure:\n  1. Read the UPSTREAM_OUTPUT.\n  2. Check it against the INPUTS that produced it.\n  3. Look for: fabricated fields, claims unsupported by the input,\n     contradictions, missing fields the input clearly contained.\n  4. Emit pass or fail.\n\nOutput schema (JSON, no prose, no markdown fences):\n\n  {\n    \"verdict\": \"pass\" | \"fail\",\n    \"rationale\": \"<one or two short sentences>\"\n  }\n\nWhen you emit `fail`, the orchestrator may invoke the Planner to\nrecover. Be specific in your rationale so the recovery plan can be\ntargeted. Do not fail for stylistic reasons; only fail when the\nupstream output is wrong, missing, or unsupported.\n\nINPUTS:\n[\n  {\n    \"id\": \"n:3\",\n    \"kind\": \"upstream\",\n    \"skill\": \"distiller\",\n    \"output\": {\n      \"fields\": {\n        \"birth_date\": \"1916\",\n        \"death_date\": \"2001\",\n        \"contributions\": [\n          \"Established the concept of the bit\",\n          \"Developed the concept of entropy\",\n          \"Defined limits of data compression and transmission\"\n        ]\n      },\n      \"rationale\": \"The birth and death dates and the three key contributions are explicitly stated in the findings from the Wikipedia entry for Claude Shannon.\"\n    }\n  }\n]",
+  "started_at": 1781296133.1277425,
+  "completed_at": 1781296133.9168231,
+  "retries": 0
+}

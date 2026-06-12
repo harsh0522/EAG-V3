@@ -1,0 +1,1 @@
+Fetch the Wikipedia page for Marie Curie and extract her birth year, nationality, field of study, and major discovery.

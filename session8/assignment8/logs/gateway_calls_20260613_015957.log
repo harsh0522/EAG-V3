@@ -1,0 +1,14 @@
+[2026-06-13 02:00:03] agent=planner session=s8-b3a799cb model=gemini-3.1-flash-lite provider=gemini in_tok=1370 out_tok=267 latency_ms=1453 status=ok
+[2026-06-13 02:00:06] agent=researcher session=s8-b3a799cb model=gemini-3.1-flash-lite provider=gemini in_tok=602 out_tok=36 latency_ms=900 status=ok
+[2026-06-13 02:00:10] agent=researcher session=s8-b3a799cb model=gemini-3.1-flash-lite provider=gemini in_tok=602 out_tok=35 latency_ms=697 status=ok
+[2026-06-13 02:00:14] agent=researcher session=s8-b3a799cb model=gemini-3.1-flash-lite provider=gemini in_tok=602 out_tok=29 latency_ms=686 status=ok
+[2026-06-13 02:00:18] agent=researcher session=s8-b3a799cb model=gemini-3.1-flash-lite provider=gemini in_tok=939 out_tok=42 latency_ms=779 status=ok
+[2026-06-13 02:00:22] agent=researcher session=s8-b3a799cb model=gemini-3.1-flash-lite provider=gemini in_tok=1028 out_tok=26 latency_ms=735 status=ok
+[2026-06-13 02:00:26] agent=researcher session=s8-b3a799cb model=gemini-3.1-flash-lite provider=gemini in_tok=3725 out_tok=33 latency_ms=905 status=ok
+[2026-06-13 02:00:31] agent=researcher session=s8-b3a799cb model=gemini-3.1-flash-lite provider=gemini in_tok=3710 out_tok=241 latency_ms=1535 status=ok
+[2026-06-13 02:00:34] agent=researcher session=s8-b3a799cb model=gemini-3.1-flash-lite provider=gemini in_tok=1334 out_tok=30 latency_ms=684 status=ok
+[2026-06-13 02:00:39] agent=researcher session=s8-b3a799cb model=gemini-3.1-flash-lite provider=gemini in_tok=3986 out_tok=31 latency_ms=857 status=ok
+[2026-06-13 02:00:43] agent=researcher session=s8-b3a799cb model=gemini-3.1-flash-lite provider=gemini in_tok=3516 out_tok=225 latency_ms=1522 status=ok
+[2026-06-13 02:00:47] agent=researcher session=s8-b3a799cb model=gemini-3.1-flash-lite provider=gemini in_tok=6674 out_tok=32 latency_ms=1121 status=ok
+[2026-06-13 02:00:51] agent=researcher session=s8-b3a799cb model=gemini-3.1-flash-lite provider=gemini in_tok=6950 out_tok=138 latency_ms=1334 status=ok
+[2026-06-13 02:00:55] agent=formatter session=s8-b3a799cb model=gemini-3.1-flash-lite provider=gemini in_tok=1211 out_tok=124 latency_ms=1348 status=ok

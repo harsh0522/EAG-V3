@@ -1,0 +1,28 @@
+[project]
+name = "assignment8"
+version = "0.1.0"
+description = "Session 8 assignment: Multi-Agent DAG Orchestration"
+requires-python = ">=3.11"
+dependencies = [
+    "mcp[cli]",
+    "httpx",
+    "ddgs",
+    "tavily-python",
+    "crawl4ai",
+    "python-dotenv",
+    "pydantic>=2.13.4",
+    "faiss-cpu>=1.8.0",
+    "numpy>=1.26",
+    "networkx>=3.2",
+    "pyyaml>=6.0",
+]
+
+[dependency-groups]
+dev = [
+    "pytest",
+    "pytest-asyncio",
+]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "session"

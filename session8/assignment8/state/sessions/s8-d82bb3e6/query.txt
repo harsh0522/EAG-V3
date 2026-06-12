@@ -1,0 +1,1 @@
+Find the populations of Tokyo, Delhi, and Shanghai, and tell me which two cities have populations that differ by less than 5% of each other.
