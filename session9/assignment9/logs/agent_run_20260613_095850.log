@@ -1,0 +1,22 @@
+[2026-06-13 09:58:50] [INFO] [run] goal received: Compare 3 laptops under ₹80,000.
+[2026-06-13 09:58:50] [INFO] [run] run_id=20260613_095850_compar
+[2026-06-13 09:58:50] [INFO] [_client] HTTP Request: GET http://localhost:8109/v1/routers "HTTP/1.1 200 OK"
+[2026-06-13 09:58:50] [INFO] [_client] HTTP Request: GET http://localhost:8109/v1/routers "HTTP/1.1 200 OK"
+[2026-06-13 09:58:50] [INFO] [_client] HTTP Request: POST http://localhost:8109/v1/embed "HTTP/1.1 200 OK"
+[2026-06-13 09:58:50] [INFO] [_client] HTTP Request: GET http://localhost:8109/v1/routers "HTTP/1.1 200 OK"
+[2026-06-13 09:58:50] [INFO] [_client] HTTP Request: POST http://localhost:8109/v1/chat "HTTP/1.1 503 Service Unavailable"
+[2026-06-13 09:58:53] [INFO] [_client] HTTP Request: POST http://localhost:8109/v1/chat "HTTP/1.1 503 Service Unavailable"
+[2026-06-13 09:58:56] [INFO] [_client] HTTP Request: POST http://localhost:8109/v1/chat "HTTP/1.1 503 Service Unavailable"
+[2026-06-13 09:59:19] [INFO] [_client] HTTP Request: POST http://localhost:8109/v1/chat "HTTP/1.1 503 Service Unavailable"
+[2026-06-13 09:59:23] [INFO] [_client] HTTP Request: POST http://localhost:8109/v1/chat "HTTP/1.1 200 OK"
+[2026-06-13 09:59:23] [INFO] [_client] HTTP Request: GET http://localhost:8109/v1/routers "HTTP/1.1 200 OK"
+[2026-06-13 09:59:23] [INFO] [_client] HTTP Request: POST http://localhost:8109/v1/embed "HTTP/1.1 200 OK"
+[2026-06-13 09:59:23] [INFO] [_client] HTTP Request: POST http://localhost:8109/v1/chat "HTTP/1.1 503 Service Unavailable"
+[2026-06-13 09:59:26] [INFO] [_client] HTTP Request: POST http://localhost:8109/v1/chat "HTTP/1.1 503 Service Unavailable"
+[2026-06-13 09:59:29] [INFO] [_client] HTTP Request: POST http://localhost:8109/v1/chat "HTTP/1.1 503 Service Unavailable"
+[2026-06-13 09:59:49] [INFO] [_client] HTTP Request: POST http://localhost:8109/v1/chat "HTTP/1.1 503 Service Unavailable"
+[2026-06-13 09:59:52] [INFO] [_client] HTTP Request: POST http://localhost:8109/v1/chat "HTTP/1.1 503 Service Unavailable"
+[2026-06-13 09:59:59] [INFO] [_client] HTTP Request: POST http://localhost:8109/v1/chat "HTTP/1.1 200 OK"
+[2026-06-13 09:59:59] [INFO] [run] run complete in 69.4s
+[2026-06-13 09:59:59] [INFO] [_client] HTTP Request: GET http://localhost:8109/v1/cost/by_agent?session=20260613_095850_compar "HTTP/1.1 200 OK"
+[2026-06-13 09:59:59] [INFO] [run] trace saved to /Users/harshagarwal/Documents/EAGv3/session9/assignment9/state/sessions/20260613_095850_compar

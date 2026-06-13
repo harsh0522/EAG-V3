@@ -1,0 +1,246 @@
+{
+  "directed": true,
+  "multigraph": false,
+  "graph": {},
+  "nodes": [
+    {
+      "skill": "planner",
+      "inputs": [
+        "USER_QUERY"
+      ],
+      "metadata": {},
+      "status": "complete",
+      "result": {
+        "success": true,
+        "agent_name": "planner",
+        "output": {
+          "rationale": "To compare three laptops, I need to first identify three distinct models that meet the price criteria. I will use three parallel researcher nodes, each tasked with finding one suitable laptop.",
+          "nodes": [
+            {
+              "skill": "researcher",
+              "inputs": [],
+              "metadata": {
+                "label": "laptop1",
+                "question": "Find a good laptop under \u20b980,000, focusing on general-purpose use and value."
+              }
+            },
+            {
+              "skill": "researcher",
+              "inputs": [],
+              "metadata": {
+                "label": "laptop2",
+                "question": "Find a second distinct good laptop under \u20b980,000, different from the first, suitable for general-purpose use."
+              }
+            },
+            {
+              "skill": "researcher",
+              "inputs": [],
+              "metadata": {
+                "label": "laptop3",
+                "question": "Find a third distinct good laptop under \u20b980,000, different from the previous two, suitable for general-purpose use."
+              }
+            }
+          ]
+        },
+        "artifacts": [],
+        "successors": [
+          {
+            "skill": "researcher",
+            "inputs": [],
+            "metadata": {
+              "label": "laptop1",
+              "question": "Find a good laptop under \u20b980,000, focusing on general-purpose use and value."
+            }
+          },
+          {
+            "skill": "researcher",
+            "inputs": [],
+            "metadata": {
+              "label": "laptop2",
+              "question": "Find a second distinct good laptop under \u20b980,000, different from the first, suitable for general-purpose use."
+            }
+          },
+          {
+            "skill": "researcher",
+            "inputs": [],
+            "metadata": {
+              "label": "laptop3",
+              "question": "Find a third distinct good laptop under \u20b980,000, different from the previous two, suitable for general-purpose use."
+            }
+          }
+        ],
+        "cost": 0.0,
+        "elapsed_s": 4.54465389251709,
+        "provider": "gemini",
+        "error": null,
+        "error_code": null
+      },
+      "_result_typed": true,
+      "id": "n:1"
+    },
+    {
+      "skill": "researcher",
+      "inputs": [],
+      "metadata": {
+        "label": "laptop1",
+        "question": "Find a good laptop under \u20b980,000, focusing on general-purpose use and value."
+      },
+      "status": "failed",
+      "result": {
+        "success": false,
+        "agent_name": "researcher",
+        "output": {},
+        "artifacts": [],
+        "successors": [],
+        "cost": 0.0,
+        "elapsed_s": 0.0,
+        "provider": "",
+        "error": "exception: ExceptionGroup: unhandled errors in a TaskGroup (1 sub-exception)",
+        "error_code": null
+      },
+      "_result_typed": true,
+      "id": "n:2"
+    },
+    {
+      "skill": "researcher",
+      "inputs": [],
+      "metadata": {
+        "label": "laptop2",
+        "question": "Find a second distinct good laptop under \u20b980,000, different from the first, suitable for general-purpose use."
+      },
+      "status": "failed",
+      "result": {
+        "success": false,
+        "agent_name": "researcher",
+        "output": {},
+        "artifacts": [],
+        "successors": [],
+        "cost": 0.0,
+        "elapsed_s": 0.0,
+        "provider": "",
+        "error": "exception: ExceptionGroup: unhandled errors in a TaskGroup (1 sub-exception)",
+        "error_code": null
+      },
+      "_result_typed": true,
+      "id": "n:3"
+    },
+    {
+      "skill": "researcher",
+      "inputs": [],
+      "metadata": {
+        "label": "laptop3",
+        "question": "Find a third distinct good laptop under \u20b980,000, different from the previous two, suitable for general-purpose use."
+      },
+      "status": "failed",
+      "result": {
+        "success": false,
+        "agent_name": "researcher",
+        "output": {},
+        "artifacts": [],
+        "successors": [],
+        "cost": 0.0,
+        "elapsed_s": 0.0,
+        "provider": "",
+        "error": "exception: ExceptionGroup: unhandled errors in a TaskGroup (1 sub-exception)",
+        "error_code": null
+      },
+      "_result_typed": true,
+      "id": "n:4"
+    },
+    {
+      "skill": "planner",
+      "inputs": [
+        "USER_QUERY"
+      ],
+      "metadata": {
+        "failure_report": "node=n:2 skill=researcher reason=upstream_failure error=exception: ExceptionGroup: unhandled errors in a TaskGroup (1 sub-exception)",
+        "recovers": "n:2",
+        "recovery_reason": "upstream_failure",
+        "prior_complete": []
+      },
+      "status": "failed",
+      "result": {
+        "success": false,
+        "agent_name": "planner",
+        "output": {},
+        "artifacts": [],
+        "successors": [],
+        "cost": 0.0,
+        "elapsed_s": 0.0,
+        "provider": "",
+        "error": "exception: HTTPStatusError: Server error '503 Service Unavailable' for url 'http://localhost:8109/v1/chat'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/503",
+        "error_code": null
+      },
+      "_result_typed": true,
+      "id": "n:5"
+    },
+    {
+      "skill": "planner",
+      "inputs": [
+        "USER_QUERY"
+      ],
+      "metadata": {
+        "failure_report": "node=n:3 skill=researcher reason=upstream_failure error=exception: ExceptionGroup: unhandled errors in a TaskGroup (1 sub-exception)",
+        "recovers": "n:3",
+        "recovery_reason": "upstream_failure",
+        "prior_complete": []
+      },
+      "status": "failed",
+      "result": {
+        "success": false,
+        "agent_name": "planner",
+        "output": {},
+        "artifacts": [],
+        "successors": [],
+        "cost": 0.0,
+        "elapsed_s": 0.0,
+        "provider": "",
+        "error": "exception: HTTPStatusError: Server error '503 Service Unavailable' for url 'http://localhost:8109/v1/chat'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/503",
+        "error_code": null
+      },
+      "_result_typed": true,
+      "id": "n:6"
+    },
+    {
+      "skill": "planner",
+      "inputs": [
+        "USER_QUERY"
+      ],
+      "metadata": {
+        "failure_report": "node=n:4 skill=researcher reason=upstream_failure error=exception: ExceptionGroup: unhandled errors in a TaskGroup (1 sub-exception)",
+        "recovers": "n:4",
+        "recovery_reason": "upstream_failure",
+        "prior_complete": []
+      },
+      "status": "failed",
+      "result": {
+        "success": false,
+        "agent_name": "planner",
+        "output": {},
+        "artifacts": [],
+        "successors": [],
+        "cost": 0.0,
+        "elapsed_s": 0.0,
+        "provider": "",
+        "error": "exception: HTTPStatusError: Server error '503 Service Unavailable' for url 'http://localhost:8109/v1/chat'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/503",
+        "error_code": null
+      },
+      "_result_typed": true,
+      "id": "n:7"
+    }
+  ],
+  "edges": [
+    {
+      "source": "n:1",
+      "target": "n:2"
+    },
+    {
+      "source": "n:1",
+      "target": "n:3"
+    },
+    {
+      "source": "n:1",
+      "target": "n:4"
+    }
+  ]
+}

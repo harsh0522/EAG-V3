@@ -1,0 +1,2 @@
+[2026-06-13 09:39:34] [INFO] [skill] [Layer 1] extract failed — escalating
+[2026-06-13 09:39:41] [INFO] [skill] [Layer 2b] turn 1: action={'type': 'click', 'mark': 25}

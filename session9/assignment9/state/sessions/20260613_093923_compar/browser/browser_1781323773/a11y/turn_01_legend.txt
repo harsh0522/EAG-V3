@@ -1,0 +1,64 @@
+[1]<a>Amazon.in</a>
+[2]<a role="button">Delivering to Kanpur 208001 Update location</a>
+[3]<input role="searchbox">Search Amazon.in</input>
+[4]<input>Go</input>
+[5]<a>Choose a language for shopping in Amazon India. The current selection is English</a>
+[6]<a>Hello, sign in Account & Lists</a>
+[7]<button>Expand Account and Lists</button>
+[8]<a>Returns & Orders</a>
+[9]<a>0 items in cart</a>
+[10]<a role="button">Open All Categories Menu</a>
+[11]<a>Fresh</a>
+[12]<a>MX Player</a>
+[13]<a>Sell</a>
+[14]<a>Bestsellers</a>
+[15]<a>Today's Deals</a>
+[16]<a>Mobiles</a>
+[17]<a>Prime</a>
+[18]<button>Prime Details</button>
+[19]<a>New Releases</a>
+[20]<a>Customer Service</a>
+[21]<a>Electronics</a>
+[22]<a>Amazon Pay</a>
+[23]<a>Fashion</a>
+[24]<a>Home & Kitchen</a>
+[25]<a>Computers</a>
+[26]<a>Toys & Games</a>
+[27]<a>Car & Motorbike</a>
+[28]<a>Gift Cards</a>
+[29]<a>Beauty & Personal Care</a>
+[30]<a>Home Improvement</a>
+[31]<a>Health, Household & Personal Care</a>
+[32]<a>Books</a>
+[33]<a>Custom Products</a>
+[34]<a>Grocery & Gourmet Foods</a>
+[35]<a>Video Games</a>
+[36]<a>Sports, Fitness & Outdoors</a>
+[37]<a>Baby</a>
+[38]<a>Pet Supplies</a>
+[39]<a>AmazonBasics</a>
+[40]<a>Audible</a>
+[41]<a>Kindle eBooks</a>
+[42]<a>Subscribe & Save</a>
+[43]<a>Flights</a>
+[44]<a></a>
+[45]<a>ACs</a>
+[46]<a>Refrigerators</a>
+[47]<a>Microwaves</a>
+[48]<a>Washing machines</a>
+[49]<a>Appliances for your home | Up to 55% off - See more</a>
+[50]<a>Cushion covers, bedsheets & more</a>
+[51]<a>Figurines, vases & more</a>
+[52]<a>Home storage</a>
+[53]<a>Lighting solutions</a>
+[54]<a>Revamp your home in style - Explore all</a>
+[55]<a>Cleaning</a>
+[56]<a>Bath accessories</a>
+[57]<a>Home tools</a>
+[58]<a>Wallpapers</a>
+[59]<a>Starting ₹49 | Deals on home essentials - Explore all</a>
+[60]<a></a>
+[61]<a></a>
+[62]<a></a>
+[63]<a></a>
+[64]<a>See all offers</a>

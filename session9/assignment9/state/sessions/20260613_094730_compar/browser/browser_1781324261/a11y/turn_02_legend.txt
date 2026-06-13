@@ -1,0 +1,89 @@
+[1]<a>Amazon.in</a>
+[2]<a role="button">Delivering to Kanpur 208001 Update location</a>
+[3]<input role="searchbox">Search Amazon.in</input>
+[4]<input>Go</input>
+[5]<a>Choose a language for shopping in Amazon India. The current selection is English</a>
+[6]<button>Expand to Change Language or Country</button>
+[7]<a>Hello, sign in Account & Lists</a>
+[8]<button>Expand Account and Lists</button>
+[9]<a>Returns & Orders</a>
+[10]<a>0 items in cart</a>
+[11]<div role="button">laptop under 35000</div>
+[12]<div role="button">laptop for gaming</div>
+[13]<div role="button">laptop stand metal</div>
+[14]<div role="button">laptop under 20000 price</div>
+[15]<div role="button">laptop under 50k</div>
+[16]<div role="button">laptop under 50k+</div>
+[17]<div role="button">laptop bags for men office use</div>
+[18]<div role="button">laptop table on bed</div>
+[19]<div role="button">laptop bag for man</div>
+[20]<div role="button">laptop cleaner kit</div>
+[21]<a role="button">Open All Categories Menu</a>
+[22]<a>Fresh</a>
+[23]<a>MX Player</a>
+[24]<a>Sell</a>
+[25]<a>Bestsellers</a>
+[26]<a>Today's Deals</a>
+[27]<a>Mobiles</a>
+[28]<a>Prime</a>
+[29]<button>Prime Details</button>
+[30]<a>New Releases</a>
+[31]<a>Customer Service</a>
+[32]<a>Electronics</a>
+[33]<a>Amazon Pay</a>
+[34]<a>Fashion</a>
+[35]<a>Home & Kitchen</a>
+[36]<a>Computers</a>
+[37]<a>Toys & Games</a>
+[38]<a>Car & Motorbike</a>
+[39]<a>Gift Cards</a>
+[40]<a>Beauty & Personal Care</a>
+[41]<a>Home Improvement</a>
+[42]<a>Health, Household & Personal Care</a>
+[43]<a>Books</a>
+[44]<a>Custom Products</a>
+[45]<a>Grocery & Gourmet Foods</a>
+[46]<a>Video Games</a>
+[47]<a>Sports, Fitness & Outdoors</a>
+[48]<a>Baby</a>
+[49]<a>Pet Supplies</a>
+[50]<a>AmazonBasics</a>
+[51]<a>Audible</a>
+[52]<a>Kindle eBooks</a>
+[53]<a>Subscribe & Save</a>
+[54]<a>Flights</a>
+[55]<a role="button">Previous slide</a>
+[56]<a></a>
+[57]<a role="button">Next slide</a>
+[58]<a>ACs</a>
+[59]<a>Refrigerators</a>
+[60]<a>Microwaves</a>
+[61]<a>Washing machines</a>
+[62]<a>Appliances for your home | Up to 55% off - See more</a>
+[63]<a>Cushion covers, bedsheets & more</a>
+[64]<a>Figurines, vases & more</a>
+[65]<a>Home storage</a>
+[66]<a>Lighting solutions</a>
+[67]<a>Revamp your home in style - Explore all</a>
+[68]<a>Cleaning</a>
+[69]<a>Bath accessories</a>
+[70]<a>Home tools</a>
+[71]<a>Wallpapers</a>
+[72]<a>Starting ₹49 | Deals on home essentials - Explore all</a>
+[73]<a></a>
+[74]<a></a>
+[75]<a></a>
+[76]<a></a>
+[77]<a>See all offers</a>
+[78]<a>Carousel previous slide</a>
+[79]<a>Carousel next slide</a>
+[80]<i></i>
+[81]<i></i>
+[82]<i></i>
+[83]<i></i>
+[84]<i></i>
+[85]<i></i>
+[86]<i></i>
+[87]<i></i>
+[88]<i></i>
+[89]<i></i>

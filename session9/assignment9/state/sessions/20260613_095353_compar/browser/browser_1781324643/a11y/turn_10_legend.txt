@@ -1,0 +1,77 @@
+[1]<a>Hugging Face</a>
+[2]<input>Search models, datasets, users...</input>
+[3]<a>Models</a>
+[4]<a>Datasets</a>
+[5]<a>Spaces</a>
+[6]<a>Buckets NEW</a>
+[7]<a>Docs</a>
+[8]<a>Pricing</a>
+[9]<button></button>
+[10]<a>Tasks</a>
+[11]<a>HuggingChat</a>
+[12]<a>Collections</a>
+[13]<a>Languages</a>
+[14]<a>Organizations</a>
+[15]<a>Blog</a>
+[16]<a>Posts</a>
+[17]<a>Daily Papers</a>
+[18]<a>Learn</a>
+[19]<a>Discord</a>
+[20]<a>Forum</a>
+[21]<a>GitHub</a>
+[22]<a>Team & Enterprise</a>
+[23]<a>Hugging Face PRO</a>
+[24]<a>Enterprise Support</a>
+[25]<a>Inference Providers</a>
+[26]<a>Inference Endpoints</a>
+[27]<a>Storage Buckets</a>
+[28]<a>Log In</a>
+[29]<a>Sign Up</a>
+[30]<a></a>
+[31]<a>openai</a>
+[32]<a>gpt-oss-20b</a>
+[33]<button>Copy model name to clipboard</button>
+[34]<button>like</button>
+[35]<button>4.71k</button>
+[36]<button>Follow OpenAI</button>
+[37]<button>36.7k</button>
+[38]<a>Text Generation</a>
+[39]<a>Transformers</a>
+[40]<a>Safetensors</a>
+[41]<a>gpt_oss</a>
+[42]<a>vllm</a>
+[43]<a>conversational</a>
+[44]<a>Eval Results</a>
+[45]<a>8-bit precision</a>
+[46]<a>mxfp4</a>
+[47]<button>arxiv: 2508.10925</button>
+[48]<button>License: apache-2.0</button>
+[49]<a>Model card</a>
+[50]<a>Files and versions xet</a>
+[51]<a>Community 253</a>
+[52]<button></button>
+[53]<button>Deploy</button>
+[54]<button>Copy to bucket NEW</button>
+[55]<button>Use this model</button>
+[56]<a>Transformers</a>
+[57]<button></button>
+[58]<a>Try gpt-oss</a>
+[59]<a>Guides</a>
+[60]<a>Model card</a>
+[61]<a>OpenAI blog</a>
+[62]<a>OpenAI’s open-weight models</a>
+[63]<a>harmony response format</a>
+[64]<a></a>
+[65]<button>Chat template</button>
+[66]<button>Files info</button>
+[67]<a>NEW</a>
+[68]<button>Groq +4</button>
+[69]<a>Text Generation</a>
+[70]<input>Your prompt here...</input>
+[71]<button>Send</button>
+[72]<button>View Code Snippets</button>
+[73]<a>Compare providers</a>
+[74]<a>Learn more</a>
+[75]<button>View API Code</button>
+[76]<button>Dismiss</button>
+[77]<div>Examples</div>

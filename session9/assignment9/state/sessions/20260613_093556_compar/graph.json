@@ -1,0 +1,154 @@
+{
+  "directed": true,
+  "multigraph": false,
+  "graph": {},
+  "nodes": [
+    {
+      "skill": "planner",
+      "inputs": [
+        "USER_QUERY"
+      ],
+      "metadata": {},
+      "status": "complete",
+      "result": {
+        "success": true,
+        "agent_name": "planner",
+        "output": {
+          "rationale": "Use the browser to fetch the latest Indian laptop listings under \u20b980,000, distill the top three into structured data, then format the comparison.",
+          "nodes": [
+            {
+              "skill": "browser",
+              "inputs": [],
+              "metadata": {
+                "label": "b1",
+                "url": "https://www.amazon.in",
+                "goal": "Filter Category=Laptops, Price \u226480000 INR, Sort=Best Sellers; then extract the top 3 product names, prices, and key specifications (CPU, RAM, storage, display)."
+              }
+            },
+            {
+              "skill": "distiller",
+              "inputs": [
+                "n:b1"
+              ],
+              "metadata": {
+                "label": "d1",
+                "question": "Extract a list of three items with fields: model_name, price_INR, cpu, ram, storage, display."
+              }
+            },
+            {
+              "skill": "formatter",
+              "inputs": [
+                "USER_QUERY",
+                "n:d1"
+              ],
+              "metadata": {
+                "label": "out"
+              }
+            }
+          ]
+        },
+        "artifacts": [],
+        "successors": [
+          {
+            "skill": "browser",
+            "inputs": [],
+            "metadata": {
+              "label": "b1",
+              "url": "https://www.amazon.in",
+              "goal": "Filter Category=Laptops, Price \u226480000 INR, Sort=Best Sellers; then extract the top 3 product names, prices, and key specifications (CPU, RAM, storage, display)."
+            }
+          },
+          {
+            "skill": "distiller",
+            "inputs": [
+              "n:b1"
+            ],
+            "metadata": {
+              "label": "d1",
+              "question": "Extract a list of three items with fields: model_name, price_INR, cpu, ram, storage, display."
+            }
+          },
+          {
+            "skill": "formatter",
+            "inputs": [
+              "USER_QUERY",
+              "n:d1"
+            ],
+            "metadata": {
+              "label": "out"
+            }
+          }
+        ],
+        "cost": 0.0,
+        "elapsed_s": 4.551903963088989,
+        "provider": "groq",
+        "error": null,
+        "error_code": null
+      },
+      "_result_typed": true,
+      "id": "n:1"
+    },
+    {
+      "skill": "browser",
+      "inputs": [],
+      "metadata": {
+        "label": "b1",
+        "url": "https://www.amazon.in",
+        "goal": "Filter Category=Laptops, Price \u226480000 INR, Sort=Best Sellers; then extract the top 3 product names, prices, and key specifications (CPU, RAM, storage, display)."
+      },
+      "status": "failed",
+      "result": {
+        "success": false,
+        "agent_name": "browser",
+        "output": {},
+        "artifacts": [],
+        "successors": [],
+        "cost": 0.0,
+        "elapsed_s": 0.0,
+        "provider": "",
+        "error": "exception: HTTPStatusError: Server error '503 Service Unavailable' for url 'http://localhost:8109/v1/chat'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/503",
+        "error_code": null
+      },
+      "_result_typed": true,
+      "id": "n:2"
+    },
+    {
+      "skill": "distiller",
+      "inputs": [
+        "n:2"
+      ],
+      "metadata": {
+        "label": "d1",
+        "question": "Extract a list of three items with fields: model_name, price_INR, cpu, ram, storage, display."
+      },
+      "status": "pending",
+      "id": "n:3"
+    },
+    {
+      "skill": "formatter",
+      "inputs": [
+        "USER_QUERY",
+        "n:3"
+      ],
+      "metadata": {
+        "label": "out"
+      },
+      "status": "pending",
+      "id": "n:4"
+    }
+  ],
+  "edges": [
+    {
+      "source": "n:1",
+      "target": "n:2"
+    },
+    {
+      "source": "n:2",
+      "target": "n:3"
+    },
+    {
+      "source": "n:3",
+      "target": "n:4"
+    }
+  ]
+}

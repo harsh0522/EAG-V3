@@ -1,0 +1,22 @@
+[2026-06-13 09:47:30] [INFO] [run] goal received: Compare 3 laptops under ₹80,000.
+[2026-06-13 09:47:30] [INFO] [run] run_id=20260613_094730_compar
+[2026-06-13 09:47:30] [INFO] [_client] HTTP Request: GET http://localhost:8109/v1/routers "HTTP/1.1 200 OK"
+[2026-06-13 09:47:30] [INFO] [_client] HTTP Request: GET http://localhost:8109/v1/routers "HTTP/1.1 200 OK"
+[2026-06-13 09:47:31] [INFO] [_client] HTTP Request: POST http://localhost:8109/v1/embed "HTTP/1.1 200 OK"
+[2026-06-13 09:47:31] [INFO] [_client] HTTP Request: GET http://localhost:8109/v1/routers "HTTP/1.1 200 OK"
+[2026-06-13 09:47:32] [INFO] [_client] HTTP Request: POST http://localhost:8109/v1/chat "HTTP/1.1 502 Bad Gateway"
+[2026-06-13 09:47:36] [INFO] [_client] HTTP Request: POST http://localhost:8109/v1/chat "HTTP/1.1 200 OK"
+[2026-06-13 09:47:36] [INFO] [_client] HTTP Request: GET http://localhost:8109/v1/routers "HTTP/1.1 200 OK"
+[2026-06-13 09:47:36] [INFO] [_client] HTTP Request: POST http://localhost:8109/v1/embed "HTTP/1.1 200 OK"
+[2026-06-13 09:47:36] [INFO] [_client] HTTP Request: POST http://localhost:8109/v1/chat "HTTP/1.1 503 Service Unavailable"
+[2026-06-13 09:47:41] [INFO] [_client] HTTP Request: POST http://localhost:8109/v1/chat "HTTP/1.1 200 OK"
+[2026-06-13 09:47:41] [INFO] [_client] HTTP Request: GET https://www.amazon.in "HTTP/1.1 202 Accepted"
+[2026-06-13 09:47:44] [INFO] [_client] HTTP Request: POST http://localhost:8109/v1/chat "HTTP/1.1 503 Service Unavailable"
+[2026-06-13 09:47:49] [INFO] [_client] HTTP Request: POST http://localhost:8109/v1/chat "HTTP/1.1 502 Bad Gateway"
+[2026-06-13 09:47:54] [INFO] [_client] HTTP Request: POST http://localhost:8109/v1/chat "HTTP/1.1 200 OK"
+[2026-06-13 09:47:55] [INFO] [_client] HTTP Request: POST http://localhost:8109/v1/chat "HTTP/1.1 503 Service Unavailable"
+[2026-06-13 09:47:58] [INFO] [_client] HTTP Request: POST http://localhost:8109/v1/chat "HTTP/1.1 503 Service Unavailable"
+[2026-06-13 09:48:01] [INFO] [_client] HTTP Request: POST http://localhost:8109/v1/chat "HTTP/1.1 502 Bad Gateway"
+[2026-06-13 09:48:01] [INFO] [run] run complete in 31.2s
+[2026-06-13 09:48:01] [INFO] [_client] HTTP Request: GET http://localhost:8109/v1/cost/by_agent?session=20260613_094730_compar "HTTP/1.1 200 OK"
+[2026-06-13 09:48:01] [INFO] [run] trace saved to /Users/harshagarwal/Documents/EAGv3/session9/assignment9/state/sessions/20260613_094730_compar

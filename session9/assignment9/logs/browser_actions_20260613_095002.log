@@ -1,0 +1,8 @@
+[2026-06-13 09:50:14] [INFO] [skill] [Layer 1] extract failed — escalating
+[2026-06-13 09:50:22] [INFO] [skill] [Layer 2b] turn 1: action={'type': 'type', 'mark': 2, 'value': 'laptops', 'clear': True}
+[2026-06-13 09:50:22] [INFO] [skill] [Layer 2b] turn 1: action={'type': 'key', 'value': 'Enter'}
+[2026-06-13 09:51:33] [INFO] [skill] [Layer 2b] turn 2: action={'type': 'wait', 'seconds': 2}
+[2026-06-13 09:51:39] [INFO] [skill] [Layer 2b] turn 3: action={'type': 'scroll', 'direction': 'down'}
+[2026-06-13 09:51:45] [INFO] [skill] [Layer 2b] turn 4: action={'type': 'scroll', 'direction': 'down'}
+[2026-06-13 09:52:22] [INFO] [skill] [Layer 2b] turn 5: action={'type': 'type', 'mark': 2, 'value': 'laptops', 'clear': True}
+[2026-06-13 09:52:22] [INFO] [skill] [Layer 2b] turn 5: action={'type': 'key', 'value': 'Enter'}

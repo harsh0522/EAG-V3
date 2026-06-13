@@ -1,0 +1,141 @@
+{
+  "directed": true,
+  "multigraph": false,
+  "graph": {},
+  "nodes": [
+    {
+      "skill": "planner",
+      "inputs": [
+        "USER_QUERY"
+      ],
+      "metadata": {},
+      "status": "complete",
+      "result": {
+        "success": true,
+        "agent_name": "planner",
+        "output": {
+          "rationale": "Use the browser to interactively filter Hugging Face models by text-generation task and most likes, then distill the top 3 entries into structured fields for final formatting.",
+          "nodes": [
+            {
+              "skill": "browser",
+              "inputs": [],
+              "metadata": {
+                "label": "b1",
+                "url": "https://huggingface.co/models",
+                "goal": "Filter Task=Text Generation, sort by Likes (most liked); then extract the top 3 model cards, capturing each model's name, likes count, and short description."
+              }
+            },
+            {
+              "skill": "distiller",
+              "inputs": [
+                "n:b1"
+              ],
+              "metadata": {
+                "label": "d1",
+                "question": "From the browser output, extract a list of the top 3 models with fields: model_name, likes, short_description."
+              }
+            },
+            {
+              "skill": "formatter",
+              "inputs": [
+                "USER_QUERY",
+                "n:d1"
+              ],
+              "metadata": {
+                "label": "out"
+              }
+            }
+          ]
+        },
+        "artifacts": [],
+        "successors": [
+          {
+            "skill": "browser",
+            "inputs": [],
+            "metadata": {
+              "label": "b1",
+              "url": "https://huggingface.co/models",
+              "goal": "Filter Task=Text Generation, sort by Likes (most liked); then extract the top 3 model cards, capturing each model's name, likes count, and short description."
+            }
+          },
+          {
+            "skill": "distiller",
+            "inputs": [
+              "n:b1"
+            ],
+            "metadata": {
+              "label": "d1",
+              "question": "From the browser output, extract a list of the top 3 models with fields: model_name, likes, short_description."
+            }
+          },
+          {
+            "skill": "formatter",
+            "inputs": [
+              "USER_QUERY",
+              "n:d1"
+            ],
+            "metadata": {
+              "label": "out"
+            }
+          }
+        ],
+        "cost": 0.0,
+        "elapsed_s": 4.607879400253296,
+        "provider": "groq",
+        "error": null,
+        "error_code": null
+      },
+      "_result_typed": true,
+      "id": "n:1"
+    },
+    {
+      "skill": "browser",
+      "inputs": [],
+      "metadata": {
+        "label": "b1",
+        "url": "https://huggingface.co/models",
+        "goal": "Filter Task=Text Generation, sort by Likes (most liked); then extract the top 3 model cards, capturing each model's name, likes count, and short description."
+      },
+      "status": "running",
+      "id": "n:2"
+    },
+    {
+      "skill": "distiller",
+      "inputs": [
+        "n:2"
+      ],
+      "metadata": {
+        "label": "d1",
+        "question": "From the browser output, extract a list of the top 3 models with fields: model_name, likes, short_description."
+      },
+      "status": "pending",
+      "id": "n:3"
+    },
+    {
+      "skill": "formatter",
+      "inputs": [
+        "USER_QUERY",
+        "n:3"
+      ],
+      "metadata": {
+        "label": "out"
+      },
+      "status": "pending",
+      "id": "n:4"
+    }
+  ],
+  "edges": [
+    {
+      "source": "n:1",
+      "target": "n:2"
+    },
+    {
+      "source": "n:2",
+      "target": "n:3"
+    },
+    {
+      "source": "n:3",
+      "target": "n:4"
+    }
+  ]
+}

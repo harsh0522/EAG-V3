@@ -17,10 +17,11 @@ screenshot and `driver.py` references by `id` to dispatch actions.
 """
 from __future__ import annotations
 
+import asyncio
 from dataclasses import dataclass, asdict
 from typing import Any
 
-from playwright.async_api import Page
+from playwright.async_api import Error as PlaywrightError, Page
 
 
 # Inline JS — written once, evaluated on every turn. Returns a list of
@@ -176,8 +177,21 @@ class PageSnapshot:
         return text
 
 
-async def enumerate_interactives(page: Page) -> PageSnapshot:
-    raw = await page.evaluate(_ENUMERATE_JS)
+async def enumerate_interactives(page: Page, retries: int = 3, delay: float = 0.5) -> PageSnapshot:
+    # A prior turn's action (e.g. pressing Enter in a search box) can trigger
+    # a same-page navigation. If that's still in flight when this turn's
+    # evaluate() runs, Playwright raises "Execution context was destroyed,
+    # most likely because of a navigation". Let the navigation settle and
+    # retry instead of letting this escape as an unhandled exception.
+    for attempt in range(retries):
+        try:
+            raw = await page.evaluate(_ENUMERATE_JS)
+            break
+        except PlaywrightError as e:
+            if "Execution context was destroyed" not in str(e) or attempt == retries - 1:
+                raise
+            await page.wait_for_load_state("domcontentloaded")
+            await asyncio.sleep(delay)
     els = [Element(**e) for e in raw["elements"]]
     return PageSnapshot(
         elements=els,

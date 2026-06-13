@@ -1,0 +1,4 @@
+[2026-06-13 09:59:59] [INFO] [run] run_id=20260613_095850_compar
+[2026-06-13 09:59:59] [INFO] [run] total_tokens=0 (in=0, out=0)
+[2026-06-13 09:59:59] [INFO] [run] total_cost=$0.001842
+[2026-06-13 09:59:59] [INFO] [run] agent=planner provider=cerebras calls=1 in_tok=2185 out_tok=1500 dollars=0.001842

@@ -11,6 +11,7 @@ gateway's V8 ledger so tests can pull real numbers.
 """
 from __future__ import annotations
 
+import asyncio
 import os
 from dataclasses import dataclass
 from pathlib import Path
@@ -23,6 +24,45 @@ load_dotenv(Path(__file__).resolve().parent.parent / ".env")
 
 # Base URL must always come from .env — never hardcode the port (S9 rule).
 GATEWAY_URL = os.getenv("GATEWAY_URL", "http://localhost:8109")
+
+# The browser agent is pinned to a single provider via agent_routing.yaml,
+# which makes the gateway treat that pin as an explicit override: a 502/503
+# (provider rate-limited or unavailable) is raised immediately instead of
+# failing over to an idle provider. Retry with these providers in turn,
+# pausing briefly between attempts, before giving up.
+_FALLBACK_PROVIDERS = ("groq", "cerebras")
+
+# RPM-based 429 backoff on the router is 60s (see llm_gatewayV9/router.py
+# LIMITS). If every provider is in cooldown at once (likely from rapid
+# repeated test runs), one pass through the list won't help — wait out most
+# of that window and try the whole cycle again.
+_MAX_ROUNDS = 3
+_ROUND_WAIT_S = 20
+
+
+async def _post_with_fallback(url: str, body: dict, timeout: float) -> dict:
+    requested = body.get("provider")
+    providers_to_try = [requested] + [p for p in _FALLBACK_PROVIDERS if p != requested]
+
+    last_resp: httpx.Response | None = None
+    for round_num in range(_MAX_ROUNDS):
+        for i, provider in enumerate(providers_to_try):
+            attempt = dict(body)
+            if provider is not None:
+                attempt["provider"] = provider
+            else:
+                attempt.pop("provider", None)
+            async with httpx.AsyncClient(timeout=timeout) as c:
+                r = await c.post(url, json=attempt)
+            if r.status_code not in (502, 503):
+                r.raise_for_status()
+                return r.json()
+            last_resp = r
+            if i < len(providers_to_try) - 1:
+                await asyncio.sleep(3)
+        if round_num < _MAX_ROUNDS - 1:
+            await asyncio.sleep(_ROUND_WAIT_S)
+    last_resp.raise_for_status()
 
 
 @dataclass
@@ -96,10 +136,8 @@ class V9Client:
         if model:         body["model"] = model
         if provider:      body["provider"] = provider
 
-        async with httpx.AsyncClient(timeout=self.timeout) as c:
-            r = await c.post(f"{self.base_url}/v1/vision", json=body)
-            r.raise_for_status()
-            return self._normalise(r.json())
+        data = await _post_with_fallback(f"{self.base_url}/v1/vision", body, self.timeout)
+        return self._normalise(data)
 
     async def chat(
         self,
@@ -133,10 +171,8 @@ class V9Client:
         if model:     body["model"] = model
         if provider:  body["provider"] = provider
 
-        async with httpx.AsyncClient(timeout=self.timeout) as c:
-            r = await c.post(f"{self.base_url}/v1/chat", json=body)
-            r.raise_for_status()
-            return self._normalise(r.json())
+        data = await _post_with_fallback(f"{self.base_url}/v1/chat", body, self.timeout)
+        return self._normalise(data)
 
     async def cost_by_agent(self, agent: Optional[str] = None,
                             session: Optional[str] = None) -> dict:

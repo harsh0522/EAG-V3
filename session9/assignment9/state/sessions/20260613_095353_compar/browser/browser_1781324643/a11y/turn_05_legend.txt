@@ -1,0 +1,79 @@
+[1]<a>Hugging Face</a>
+[2]<input>Search models, datasets, users...</input>
+[3]<a>Models</a>
+[4]<a>Datasets</a>
+[5]<a>Spaces</a>
+[6]<a>Buckets NEW</a>
+[7]<a>Docs</a>
+[8]<a>Pricing</a>
+[9]<button></button>
+[10]<a>Tasks</a>
+[11]<a>HuggingChat</a>
+[12]<a>Collections</a>
+[13]<a>Languages</a>
+[14]<a>Organizations</a>
+[15]<a>Blog</a>
+[16]<a>Posts</a>
+[17]<a>Daily Papers</a>
+[18]<a>Learn</a>
+[19]<a>Discord</a>
+[20]<a>Forum</a>
+[21]<a>GitHub</a>
+[22]<a>Team & Enterprise</a>
+[23]<a>Hugging Face PRO</a>
+[24]<a>Enterprise Support</a>
+[25]<a>Inference Providers</a>
+[26]<a>Inference Endpoints</a>
+[27]<a>Storage Buckets</a>
+[28]<a>Log In</a>
+[29]<a>Sign Up</a>
+[30]<a></a>
+[31]<a>deepseek-ai</a>
+[32]<a>DeepSeek-R1</a>
+[33]<button>Copy model name to clipboard</button>
+[34]<button>like</button>
+[35]<button>13.4k</button>
+[36]<button>Follow DeepSeek</button>
+[37]<button>135k</button>
+[38]<a>Text Generation</a>
+[39]<a>Transformers</a>
+[40]<a>Safetensors</a>
+[41]<a>deepseek_v3</a>
+[42]<a>conversational</a>
+[43]<a>custom_code</a>
+[44]<a>Eval Results</a>
+[45]<a>text-generation-inference</a>
+[46]<a>fp8</a>
+[47]<button>arxiv: 2501.12948</button>
+[48]<button>License: mit</button>
+[49]<a>Model card</a>
+[50]<a>Files and versions xet</a>
+[51]<a>Community 240</a>
+[52]<button></button>
+[53]<button>Deploy</button>
+[54]<button>Copy to bucket NEW</button>
+[55]<button>Use this model</button>
+[56]<a>Transformers</a>
+[57]<button></button>
+[58]<a></a>
+[59]<a></a>
+[60]<a></a>
+[61]<a></a>
+[62]<a></a>
+[63]<a></a>
+[64]<a></a>
+[65]<a>Paper Link👁️</a>
+[66]<a></a>
+[67]<button>Chat template</button>
+[68]<button>Files info</button>
+[69]<a>NEW</a>
+[70]<button>Novita</button>
+[71]<a>Text Generation</a>
+[72]<input>Your prompt here...</input>
+[73]<button>Send</button>
+[74]<button>View Code Snippets</button>
+[75]<a>Compare providers</a>
+[76]<a>Learn more</a>
+[77]<button>View API Code</button>
+[78]<button>Dismiss</button>
+[79]<div>Examples</div>

@@ -1,0 +1,45 @@
+{
+  "node_id": "n:3",
+  "skill": "distiller",
+  "status": "complete",
+  "inputs": [
+    "n:2"
+  ],
+  "result": {
+    "success": true,
+    "agent_name": "distiller",
+    "output": {
+      "fields": {
+        "top_models": [
+          {
+            "name": "deepseek-ai/DeepSeek-R1",
+            "likes": "5.59M",
+            "description": "Text Generation, 685B parameters"
+          },
+          {
+            "name": "openai/gpt-oss-20b",
+            "likes": "6.54M",
+            "description": "Text Generation, 22B parameters"
+          },
+          {
+            "name": "bigscience/bloom",
+            "likes": "5.65k",
+            "description": "Text Generation, 176B parameters"
+          }
+        ]
+      },
+      "rationale": "The model names, like counts, and descriptions were extracted directly from the browser output provided in the final turn of the upstream node."
+    },
+    "artifacts": [],
+    "successors": [],
+    "cost": 0.0,
+    "elapsed_s": 2.5862929821014404,
+    "provider": "gemini",
+    "error": null,
+    "error_code": null
+  },
+  "prompt_sent": "You are the Distiller skill. You receive raw text (typically the\n`findings` of one or more Researcher nodes, or the `chunks` of a\nRetriever node) and produce a small structured record.\n\nYou make no tool calls. You do no web access. Everything you need is\nalready in the prompt under INPUTS.\n\nProcedure:\n  1. Identify what fields the user's question implies (people, dates,\n     numbers, comparisons, percentages, attributions).\n  2. Pull those fields out of the inputs.\n  3. Emit a compact JSON record. Fields with no evidence in the inputs\n     are omitted, not made up.\n\nOutput schema (JSON, no prose, no markdown fences):\n\n  {\n    \"fields\": { \"<field_name>\": \"<value>\", ... },\n    \"rationale\": \"<one short sentence saying which input supports each field>\"\n  }\n\nNotes:\n  - The fields dictionary is the load-bearing output; downstream\n    Formatter nodes read it.\n  - When the question is a comparison (`fastest growing`, `largest`),\n    emit a `comparison` key with `winner: <id>` and `reason: <short>`.\n  - When the question's evidence is missing, set `fields: {}` and put\n    the gap in `rationale`. Do not invent.\n\nA Critic node may run after you. Its evaluation will fail if you\ninvented fields or made claims unsupported by the inputs.\n\nQUESTION: Extract the model name, like count, and description for each of the top 3 models from the browser output.\n\nMEMORY HITS (8 from FAISS):\n  - [preference] Compare top 3 Hugging Face text-generation models sorted by likes.\n      source: user_query\n      raw: Compare top 3 Hugging Face text-generation models sorted by likes.\n  - [preference] Compare 3 laptops under ₹80,000\n      source: user_query\n      raw: Compare 3 laptops under ₹80,000.\n  - [preference] Compare 3 laptops under ₹80,000\n      source: user_query\n      raw: Compare 3 laptops under ₹80,000.\n  - [preference] Compare 3 laptops under ₹80,000\n      source: user_query\n      raw: Compare 3 laptops under ₹80,000.\n  - [preference] Compare 3 laptops under ₹80,000\n      source: user_query\n      raw: Compare 3 laptops under ₹80,000.\n  - [preference] Compare 3 laptops under ₹80,000\n      source: user_query\n      raw: Compare 3 laptops under ₹80,000.\n  - [preference] Compare 3 laptops under ₹80,000\n      source: user_query\n      raw: Compare 3 laptops under ₹80,000.\n  - [preference] Compare 3 laptops under ₹80,000\n      source: user_query\n      raw: Compare 3 laptops under ₹80,000.\n\nINPUTS:\n[\n  {\n    \"id\": \"n:2\",\n    \"kind\": \"upstream\",\n    \"skill\": \"browser\",\n    \"output\": {\n      \"url\": \"https://huggingface.co/models\",\n      \"goal\": \"Filter by Task: Text Generation, Sort by: Most likes; then extract the names, like counts, and brief descriptions of the top 3 model cards.\",\n      \"path\": \"a11y\",\n      \"turns\": 4,\n      \"content\": \"deepseek-ai/DeepSeek-R1\\nText Generation \\u2022 685B \\u2022 Updated \\u2022 5.59M \\u2022 \\u2022 13.4k\\nTasks\\nParameters\\nLibraries\\nInference Providers\\n373,192\\nActive filters: text-generation\\nText Generation \\u2022 685B \\u2022 Updated \\u2022 5.59M \\u2022 \\u2022 13.4k\\nText Generation \\u2022 8B \\u2022 Updated \\u2022 1.19M \\u2022 \\u2022 6.57k\\nText Generation \\u2022 8B \\u2022 Updated \\u2022 9.87M \\u2022 \\u2022 6.07k\\nText Generation \\u2022 176B \\u2022 Updated \\u2022 5.65k \\u2022 5.01k\\nText Generation \\u2022 120B \\u2022 Updated \\u2022 3.81M \\u2022 \\u2022 4.88k\\nText Generation \\u2022 862B \\u2022 Updated \\u2022 3.38M \\u2022 \\u2022 4.8k\\nText Generation \\u2022 7B \\u2022 Updated \\u2022 258k \\u2022 4.78k\\nText Generation \\u2022 22B \\u2022 Updated \\u2022 6.54M \\u2022 \\u2022 4.71k\\nText Generation \\u2022 8B \\u2022 Updated \\u2022 1.33M \\u2022 \\u2022 4.59k\\nText Generation \\u2022 Updated \\u2022 176 \\u2022 4.5k\\nText Generation \\u2022 7B \\u2022 Updated \\u2022 404k \\u2022 \\u2022 4.11k\\nText Generation \\u2022 685B \\u2022 Updated \\u2022 999k \\u2022 \\u2022 4.09k\\nText Generation \\u2022 3B \\u2022 Updated \\u2022 438k \\u2022 \\u2022 3.47k\\nText Generation \\u2022 9B \\u2022 Updated \\u2022 26.2k \\u2022 \\u2022 3.35k\\nText Generation \\u2022 0.1B \\u2022 Updated \\u2022 13.2M \\u2022 3.3k\\nText Generation \\u2022 7B \\u2022 Updated \\u2022 1.38M \\u2022 \\u2022 3.16k\\nText Generation \\u2022 685B \\u2022 Updated \\u2022 896k \\u2022 \\u2022 3.13k\\nText Generation \\u2022 16B \\u2022 Updated \\u2022 22.3k \\u2022 2.96k\\nText Generation \\u2022 33B \\u2022 Updated \\u2022 50k \\u2022 \\u2022 2.93k\\nText Generation \\u2022 71B \\u2022 Updated \\u2022 658k \\u2022 \\u2022 2.82k\\nText Generation \\u2022 685B \\u2022 Updated \\u2022 6.81M \\u2022 \\u2022 2.45k\\nText Generation \\u2022 1B \\u2022 Updated \\u2022 2.13M \\u2022 \\u2022 2.45k\\nText Generation \\u2022 42B \\u2022 Updated \\u2022 29.2k \\u2022 2.44k\\nText Generation \\u2022 Updated \\u2022 253 \\u2022 2.42k\\nText Generation \\u2022 1T \\u2022 Updated \\u2022 532k \\u2022 \\u2022 2.37k\\nText Generation \\u2022 7B \\u2022 Updated \\u2022 714k \\u2022 2.32k\\nText Generation \\u2022 15B \\u2022 Updated \\u2022 814k \\u2022 \\u2022 2.25k\\nText Generation \\u2022 8B \\u2022 Updated \\u2022 1.3M \\u2022 \\u2022 2.25k\\nText Generation \\u2022 3B \\u2022 Updated \\u2022 1.44M \\u2022 \\u2022 2.22k\\nText Generation \\u2022 69B \\u2022 Updated \\u2022 72.9k \\u2022 2.21k\",\n      \"actions\": [\n        {\n          \"turn\": 1,\n          \"actions\": [\n            {\n              \"type\": \"click\",\n              \"mark\": 36\n            }\n          ],\n          \"outcome\": \"ok\"\n        },\n        {\n          \"turn\": 2,\n          \"actions\": [\n            {\n              \"type\": \"click\",\n              \"mark\": 80\n            }\n          ],\n          \"outcome\": \"ok\"\n        },\n        {\n          \"turn\": 3,\n          \"actions\": [\n            {\n              \"type\": \"click\",\n              \"mark\": 82\n            }\n          ],\n          \"outcome\": \"ok\"\n        },\n        {\n          \"turn\": 4,\n          \"actions\": [\n            {\n              \"type\": \"done\",\n              \"success\": true,\n              \"value\": \"1. deepseek-ai/DeepSeek-R1: 5.59M likes, Text Generation, 685B parameters. 2. openai/gpt-oss-20b: 6.54M likes, Text Generation, 22B parameters. 3. bigscience/bloom: 5.65k likes, Text Generation, 176B parameters.\"\n            }\n          ],\n          \"outcome\": \"done(True)\"\n        }\n      ],\n      \"final_url\": \"https://huggingface.co/models?pipeline_tag=text-generation&sort=likes\"\n    }\n  }\n]",
+  "started_at": 1781325917.044665,
+  "completed_at": 1781325919.630958,
+  "retries": 0
+}

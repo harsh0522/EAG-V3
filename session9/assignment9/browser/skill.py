@@ -35,7 +35,7 @@ from typing import Any
 import httpx
 import trafilatura
 from dotenv import load_dotenv
-from playwright.async_api import async_playwright
+from playwright.async_api import Error as PlaywrightError, async_playwright
 
 from schemas import AgentResult, BrowserOutput, NodeSpec
 
@@ -112,6 +112,23 @@ def _extract(html: str) -> str:
         html, include_links=True, include_formatting=False, favor_recall=True,
     )
     return (text or "").strip()
+
+
+async def _safe_content(page, retries: int = 3, delay: float = 0.5) -> str:
+    """page.content() right after goto() can race a same-page redirect
+    (e.g. amazon.in's region/locale bounce): Playwright raises 'Execution
+    context was destroyed, most likely because of a navigation' if the
+    document is mid-navigation when evaluate() runs. Let the new
+    navigation settle and retry instead of letting this escape as an
+    unhandled exception (which the orchestrator surfaces as layer=UNKNOWN)."""
+    for attempt in range(retries):
+        try:
+            return await page.content()
+        except PlaywrightError as e:
+            if "Execution context was destroyed" not in str(e) or attempt == retries - 1:
+                raise
+            await page.wait_for_load_state("domcontentloaded")
+            await asyncio.sleep(delay)
 
 
 def _is_useful_extract(content: str, goal: str) -> bool:
@@ -306,7 +323,7 @@ class BrowserSkill:
                 await page.goto(url, wait_until="domcontentloaded", timeout=45000)
                 # Last-chance gateway-block check on the rendered page (some
                 # walls only show up after JS executes).
-                kind = detect_gateway_block(await page.content())
+                kind = detect_gateway_block(await _safe_content(page))
                 if kind:
                     await browser.close()
                     out = DriverResult(
@@ -328,7 +345,7 @@ class BrowserSkill:
                 result.final_url = page.url
                 result.extracted = ""
                 try:
-                    result.extracted = _extract(await page.content())
+                    result.extracted = _extract(await _safe_content(page))
                 except Exception:                          # noqa: BLE001
                     pass
                 result.turns = len(drv.steps)

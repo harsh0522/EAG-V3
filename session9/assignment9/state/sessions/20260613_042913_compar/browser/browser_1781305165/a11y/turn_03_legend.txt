@@ -1,0 +1,101 @@
+[1]<a>Hugging Face</a>
+[2]<input>Search models, datasets, users...</input>
+[3]<a>Models</a>
+[4]<a>Datasets</a>
+[5]<a>Spaces</a>
+[6]<a>Buckets NEW</a>
+[7]<a>Docs</a>
+[8]<a>Pricing</a>
+[9]<button></button>
+[10]<a>Tasks</a>
+[11]<a>HuggingChat</a>
+[12]<a>Collections</a>
+[13]<a>Languages</a>
+[14]<a>Organizations</a>
+[15]<a>Blog</a>
+[16]<a>Posts</a>
+[17]<a>Daily Papers</a>
+[18]<a>Learn</a>
+[19]<a>Discord</a>
+[20]<a>Forum</a>
+[21]<a>GitHub</a>
+[22]<a>Team & Enterprise</a>
+[23]<a>Hugging Face PRO</a>
+[24]<a>Enterprise Support</a>
+[25]<a>Inference Providers</a>
+[26]<a>Inference Endpoints</a>
+[27]<a>Storage Buckets</a>
+[28]<a>Log In</a>
+[29]<a>Sign Up</a>
+[30]<button>Main</button>
+[31]<button>Tasks 1</button>
+[32]<button>Libraries</button>
+[33]<button>Languages</button>
+[34]<button>Licenses</button>
+[35]<button>Other</button>
+[36]<button>Reset Tasks</button>
+[37]<a>Text Generation</a>
+[38]<a>Any-to-Any</a>
+[39]<a>Image-Text-to-Text</a>
+[40]<a>Image-to-Text</a>
+[41]<a>Image-to-Image</a>
+[42]<a>Text-to-Image</a>
+[43]<a>Text-to-Video</a>
+[44]<a>Text-to-Speech</a>
+[45]<button>+ 44</button>
+[46]<button>< 1B</button>
+[47]<button>6B</button>
+[48]<button>12B</button>
+[49]<button>32B</button>
+[50]<button>128B</button>
+[51]<button>> 500B</button>
+[52]<button>< 1B</button>
+[53]<button>> 500B</button>
+[54]<a>PyTorch</a>
+[55]<a>TensorFlow</a>
+[56]<a>JAX</a>
+[57]<a>Transformers</a>
+[58]<a>Diffusers</a>
+[59]<a>GGUF</a>
+[60]<a>MLX</a>
+[61]<a>Transformers.js</a>
+[62]<a>Safetensors</a>
+[63]<a>sentence-transformers</a>
+[64]<a>ONNX</a>
+[65]<button>+ 42</button>
+[66]<a>vLLM</a>
+[67]<a>llama.cpp</a>
+[68]<a>MLX LM</a>
+[69]<a>LM Studio</a>
+[70]<a>Ollama</a>
+[71]<a>Jan</a>
+[72]<a>Draw Things</a>
+[73]<button>+ 9</button>
+[74]<a>Groq</a>
+[75]<a>Novita</a>
+[76]<a>Cerebras</a>
+[77]<input>Filter by name</input>
+[78]<div role="switch">switch</div>
+[79]<button>Inference Available</button>
+[80]<button>Sort: Trending</button>
+[81]<button>Trending</button>
+[82]<button>Most likes</button>
+[83]<button>Most downloads</button>
+[84]<button>Recently created</button>
+[85]<button>Recently updated</button>
+[86]<button>Most parameters</button>
+[87]<button>Least parameters</button>
+[88]<a>CohereLabs/North-Mini-Code-1.0 Text Generation • 30B • Updated 1 day ago • 4.05k</a>
+[89]<a>OBLITERATUS/Gemma-4-12B-OBLITERATED Text Generation • 12B • Updated 4 days ago •</a>
+[90]<a>nex-agi/Nex-N2-Pro Text Generation • 397B • Updated 1 day ago • 2.55k • 223</a>
+[91]<a>nex-agi/Nex-N2-mini Text Generation • 35B • Updated 1 day ago • 2.84k • 180</a>
+[92]<a>deepseek-ai/DeepSeek-V4-Pro Text Generation • 862B • Updated 5 days ago • 3.38M </a>
+[93]<a>XiaomiMiMo/MiMo-V2.5-Pro-FP4-DFlash Text Generation • 554B • Updated 4 days ago </a>
+[94]<a>nvidia/NVIDIA-Nemotron-3-Ultra-550B-A55B-BF16 Text Generation • 561B • Updated 3</a>
+[95]<a>Jiunsong/supergemma4-26b-uncensored-gguf-v2 Text Generation • 25B • Updated Apr </a>
+[96]<a>LiquidAI/LFM2.5-8B-A1B Text Generation • 8B • Updated 2 days ago • 54.9k • 598</a>
+[97]<a>pat-jj/harness-1 Text Generation • 21B • Updated 5 days ago • 630 • 82</a>
+[98]<div></div>
+[99]<div></div>
+[100]<div></div>
+[101]<span>Base only</span>

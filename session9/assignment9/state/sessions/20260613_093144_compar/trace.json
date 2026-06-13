@@ -1,0 +1,27 @@
+{
+  "run_id": "20260613_093144_compar",
+  "query": "Compare 3 laptops under \u20b980,000.",
+  "final_answer": "",
+  "nodes": [
+    {
+      "node_id": "n:1",
+      "skill": "planner",
+      "status": "failed",
+      "inputs": [
+        "USER_QUERY"
+      ],
+      "metadata_keys": [],
+      "retries": 0,
+      "started_at": 1781323316.274774,
+      "completed_at": 1781323316.274775,
+      "elapsed_s": 0.0,
+      "provider": "",
+      "success": false,
+      "error": "exception: HTTPStatusError: Server error '502 Bad Gateway' for url 'http://localhost:8109/v1/chat'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/502",
+      "error_code": null,
+      "output": {},
+      "prompt_sent": "(exception before prompt-render)"
+    }
+  ],
+  "edges": []
+}

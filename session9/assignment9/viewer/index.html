@@ -217,7 +217,7 @@
     els.status.textContent = 'loading…';
     els.dagList.innerHTML = '';
     els.detail.innerHTML = '<p class="empty">Loading…</p>';
-    const base = `state/sessions/${encodeURIComponent(sid)}/`;
+    const base = `../state/sessions/${encodeURIComponent(sid)}/`;
     try {
       const traceResp = await fetch(base + 'trace.json');
       if (!traceResp.ok) throw new Error(`trace.json: HTTP ${traceResp.status}`);
@@ -340,7 +340,7 @@
       pageStateHtml = turns.map(t =>
         `<div>
            <div class="empty" style="margin-bottom:4px;">turn ${escapeHtml(t)} — annotated screenshot</div>
-           <img class="shot" src="state/sessions/${encodeURIComponent(state.sessionId)}/screenshots/turn_${encodeURIComponent(t)}_annotated.png"
+           <img class="shot" src="../state/sessions/${encodeURIComponent(state.sessionId)}/screenshots/turn_${encodeURIComponent(t)}_annotated.png"
                 alt="turn ${escapeHtml(t)} annotated screenshot"
                 onerror="this.replaceWith(Object.assign(document.createElement('p'),{className:'empty',textContent:'(no screenshot saved for this turn)'}))">
          </div>`

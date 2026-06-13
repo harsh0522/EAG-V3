@@ -1,0 +1,230 @@
+{
+  "run_id": "20260613_102142_compar",
+  "query": "Compare top 3 Hugging Face text-generation models sorted by likes.",
+  "final_answer": "Based on current data from Hugging Face, here are the top 3 text-generation models ranked by their number of likes:\n\n1. openai/gpt-oss-20b: 6.54M likes\n2. deepseek-ai/DeepSeek-R1: 5.59M likes\n3. deepseek-ai/DeepSeek-V4-Pro: 3.38M likes\n\nThe leading model is openai/gpt-oss-20b, which holds the highest popularity with 6.54 million likes.",
+  "nodes": [
+    {
+      "node_id": "n:1",
+      "skill": "planner",
+      "status": "complete",
+      "inputs": [
+        "USER_QUERY"
+      ],
+      "metadata_keys": [],
+      "retries": 0,
+      "started_at": 1781326303.8703053,
+      "completed_at": 1781326308.317673,
+      "elapsed_s": 4.447366714477539,
+      "provider": "gemini",
+      "success": true,
+      "error": null,
+      "error_code": null,
+      "output": {
+        "rationale": "Use the browser to navigate to the Hugging Face models page, apply filters for 'Text Generation' and sort by 'Most Likes', then extract the top 3 models and format the comparison.",
+        "nodes": [
+          {
+            "skill": "browser",
+            "inputs": [],
+            "metadata": {
+              "label": "hf_browser",
+              "url": "https://huggingface.co/models",
+              "goal": "Filter by Task=Text Generation, sort by Most Likes, and extract the names, descriptions, and like counts of the top 3 models."
+            }
+          },
+          {
+            "skill": "distiller",
+            "inputs": [
+              "n:hf_browser"
+            ],
+            "metadata": {
+              "label": "hf_distiller",
+              "question": "Extract the model name, description, and like count for the top 3 models from the provided page text."
+            }
+          },
+          {
+            "skill": "formatter",
+            "inputs": [
+              "USER_QUERY",
+              "n:hf_distiller"
+            ],
+            "metadata": {
+              "label": "out"
+            }
+          }
+        ]
+      },
+      "prompt_sent": "You are the Planner. Emit the next set of nodes for the orchestrator.\n\nAvailable skills:\n  retriever          search the agent's indexed knowledge base\n  browser            fetch / interact with a SPECIFIC URL through a\n                     four-layer cascade (extract \u2192 deterministic \u2192\n                     a11y \u2192 vision). PREFER this over researcher when:\n                       - the query targets a specific site and a\n                         specific filter / sort / trending list\n                         (\"most-liked on Hugging Face\", \"top issues\n                         on GitHub\", \"newest papers on arXiv\");\n                       - the target page is JavaScript-rendered, has\n                         interactive filter widgets, or requires a\n                         multi-step navigation to surface the data\n                         (Researcher's static fetch_url will return\n                         the page chrome without the listed content);\n                       - recency matters (\"this week\", \"today\",\n                         \"recent\") and the data lives behind a\n                         site-native sort.\n                     metadata MUST set: url (str, the entry point)\n                     and goal (str, \"what to do on the page\"). The\n                     goal should be specific enough that the skill\n                     can verify success (e.g., \"filter Tasks=Text\n                     Generation, Libraries=Transformers, Sort=Most\n                     Likes; then extract the top 3 model cards\").\n                     IMPORTANT: pass the BASE URL (e.g.\n                     \"https://huggingface.co/models\" \u2014 no query\n                     string). Do NOT pre-fill the URL with the\n                     filter you want \u2014 describe the filter in\n                     `goal` instead. The skill knows how to drive\n                     the page's own filter widgets and that is the\n                     point of having Browser in the first place;\n                     a pre-filtered URL would skip the interactive\n                     path the cascade is built for.\n                     Do NOT set metadata.force_path. Let the\n                     cascade choose its own layer; the skill knows\n                     how to escalate from extract \u2192 a11y \u2192 vision\n                     when needed.\n  researcher         fetch fresh content from the web (general\n                     URLs, search). Use for open-ended research\n                     across multiple sources. Do NOT use when the\n                     answer lives in one specific site's interactive\n                     listing \u2014 that is what Browser exists for.\n\nALWAYS insert a `distiller` node between Browser and Formatter when\nthe user wants structured fields per item (a list of model_name +\nparam_count + description, a table of price + bed_count, etc.).\nBrowser returns raw page text; Distiller turns that text into the\nstructured records the Formatter can render cleanly.\n  distiller          extract structured fields from raw text\n  summariser         condense long content\n  critic             pass/fail evaluation of an upstream node\n  formatter          render the final user-facing answer (TERMINAL)\n  coder              emit Python (stub; routes to sandbox_executor)\n  sandbox_executor   run Python from coder\n\nOutput (JSON, no markdown):\n{\n  \"rationale\": \"<one sentence>\",\n  \"nodes\": [\n    {\"skill\": \"<name>\",\n     \"inputs\": [\"USER_QUERY\" or \"n:<label>\" or \"art:<id>\"],\n     \"metadata\": {\"label\": \"<short_id>\", \"question\": \"<optional hint>\"}}\n  ]\n}\n\nReference upstream nodes as \"n:<label>\" where label matches a\nsibling's metadata.label. The final node must be a formatter.\n\nScoping a worker \u2014 IMPORTANT:\n  - A node only sees USER_QUERY if you list \"USER_QUERY\" in its\n    `inputs`. Do NOT list USER_QUERY on a fan-out worker \u2014 it will\n    see the whole multi-item query and answer for all items.\n  - Instead, set `metadata.question` to the specific sub-question\n    for that worker. It is rendered into the worker's prompt as a\n    `QUESTION:` block.\n  - The `formatter` SHOULD list \"USER_QUERY\" in its inputs so it\n    can phrase the final answer against the user's actual ask.\n  - Browser nodes are scoped by `metadata.url` and `metadata.goal`\n    (not `metadata.question`). The goal already names the sub-task\n    for that one page, so do NOT also list USER_QUERY on a browser\n    node \u2014 same fan-out leak otherwise.\n\nWhen the user asks to compare or process N concrete items\n(\"compare A, B, C\" / \"top 3 results\"), emit one node per item so\nthe orchestrator can run them in parallel. Do NOT consolidate.\nEach per-item worker must carry its item in `metadata.question`\n(or in `metadata.goal` for browser nodes) and must NOT list\nUSER_QUERY in its inputs.\n\nWhen the user demands a strict format constraint the writer might\nmiss (\"exactly 5-7-5 syllables\", \"valid JSON\", \"\u2264 280 characters\"),\ninsert a `critic` node between the writing node and the formatter.\nIts input is the writing node id. Its metadata.question repeats\nthe constraint. If the critic fails, the orchestrator re-plans.\n\nIf MEMORY HITS appear in the prompt, the agent already has indexed\nmaterial relevant to this query (FAISS-ranked vector hits with\nchunks). Prefer routing the answer through the existing knowledge\nbase: emit a `retriever` or, when the hits clearly answer the query\nalready, go straight to a `formatter` that synthesises from MEMORY\nHITS \u2014 do NOT emit a `researcher` to re-fetch material the agent\nhas already indexed.\n\nIf FAILURE appears in the prompt, do not re-emit the failing step\non the same inputs. In particular: if FAILURE mentions\n`gateway_blocked` for a Browser node, the target URL refused\nautomation (CAPTCHA / login wall / geo-block). Do NOT retry the\nsame URL; pick a different source or hand back to the user with\nthe formatter.\n\nRecovery \u2014 when FAILURE is present AND your INPUTS include `n:*`\nentries beyond USER_QUERY: those `n:*` entries are nodes from THIS\nrun that already completed successfully. Their full outputs are\nin the INPUTS block.\n  - WIRE THEM BY ID in your successor nodes' `inputs`. Reference\n    each as `n:<that-id>` exactly as it appears in INPUTS.\n  - DO NOT re-emit a fresh researcher / browser / retriever /\n    distiller node to redo work whose result is already in INPUTS.\n  - Only emit fresh successor nodes for (a) the failing step, with\n    a DIFFERENT approach \u2014 different query, source, or scope \u2014\n    and (b) any downstream node that depended on the failing one\n    (e.g. a distiller or formatter that needed its output).\n  - Your formatter should list USER_QUERY plus every relevant\n    `n:*` input (prior successes) plus any new fresh-node label,\n    so it can synthesise the final answer from the union of prior\n    successes and new results.\n\nRecovery example. Original run: planner \u2192 researcher \u00d7 3 \u2192 formatter.\nTwo researchers (`n:2`, `n:3`) succeeded; the third failed; the\nrecovery Planner receives USER_QUERY, n:2, n:3 in INPUTS plus a\nFAILURE for the third. Emit:\n{\"rationale\": \"Reuse the two successful researchers; retry the failing one with a narrower query.\",\n \"nodes\": [\n   {\"skill\":\"researcher\",\"inputs\":[],\n    \"metadata\":{\"label\":\"rRetry\",\"question\":\"<narrower sub-question for the failed item>\"}},\n   {\"skill\":\"formatter\",\"inputs\":[\"USER_QUERY\",\"n:2\",\"n:3\",\"n:rRetry\"],\n    \"metadata\":{\"label\":\"out\"}}]}\n\nExample \u2014 single-item query (researcher takes USER_QUERY because\nthere is nothing to fan out over):\n{\"rationale\": \"Look it up and answer.\",\n \"nodes\": [\n   {\"skill\":\"researcher\",\"inputs\":[\"USER_QUERY\"],\n    \"metadata\":{\"label\":\"r1\",\"question\":\"...\"}},\n   {\"skill\":\"formatter\",\"inputs\":[\"USER_QUERY\",\"n:r1\"],\n    \"metadata\":{\"label\":\"out\"}}]}\n\nExample \u2014 fan-out over N items (\"populations of London, Paris,\nBerlin; which two are closest?\"). Each researcher is scoped by\nmetadata.question and does NOT receive USER_QUERY; the formatter\ndoes, so it can answer the comparison the user asked for:\n{\"rationale\": \"Fetch each city's population in parallel, then compare.\",\n \"nodes\": [\n   {\"skill\":\"researcher\",\"inputs\":[],\n    \"metadata\":{\"label\":\"rL\",\"question\":\"current population of London\"}},\n   {\"skill\":\"researcher\",\"inputs\":[],\n    \"metadata\":{\"label\":\"rP\",\"question\":\"current population of Paris\"}},\n   {\"skill\":\"researcher\",\"inputs\":[],\n    \"metadata\":{\"label\":\"rB\",\"question\":\"current population of Berlin\"}},\n   {\"skill\":\"formatter\",\"inputs\":[\"USER_QUERY\",\"n:rL\",\"n:rP\",\"n:rB\"],\n    \"metadata\":{\"label\":\"out\"}}]}\n\nUSER_QUERY: Compare top 3 Hugging Face text-generation models sorted by likes.\n\nMEMORY HITS (8 from FAISS):\n  - [preference] Compare top 3 Hugging Face text-generation models sorted by likes.\n      source: user_query\n      raw: Compare top 3 Hugging Face text-generation models sorted by likes.\n  - [tool_outcome] Compare top 3 Hugging Face text-generation models sorted by likes\n      source: user_query\n      raw: Compare top 3 Hugging Face text-generation models sorted by likes\n  - [tool_outcome] Compare top 3 Hugging Face text-generation models sorted by likes\n      source: user_query\n      raw: Compare top 3 Hugging Face text-generation models sorted by likes\n  - [preference] Compare 3 laptops under \u20b980,000\n      source: user_query\n      raw: Compare 3 laptops under \u20b980,000.\n  - [preference] Compare 3 laptops under \u20b980,000\n      source: user_query\n      raw: Compare 3 laptops under \u20b980,000.\n  - [preference] Compare 3 laptops under \u20b980,000\n      source: user_query\n      raw: Compare 3 laptops under \u20b980,000.\n  - [preference] Compare 3 laptops under \u20b980,000\n      source: user_query\n      raw: Compare 3 laptops under \u20b980,000.\n  - [preference] Compare 3 laptops under \u20b980,000\n      source: user_query\n      raw: Compare 3 laptops under \u20b980,000.\n\nINPUTS:\n[\n  {\n    \"id\": \"USER_QUERY\",\n    \"kind\": \"query\",\n    \"value\": \"Compare top 3 Hugging Face text-generation models sorted by likes.\"\n  }\n]"
+    },
+    {
+      "node_id": "n:2",
+      "skill": "browser",
+      "status": "complete",
+      "inputs": [],
+      "metadata_keys": [],
+      "retries": 0,
+      "started_at": 1781326308.521228,
+      "completed_at": 1781326325.122626,
+      "elapsed_s": 16.601397037506104,
+      "provider": "",
+      "success": true,
+      "error": null,
+      "error_code": null,
+      "output": {
+        "url": "https://huggingface.co/models",
+        "goal": "Filter by Task=Text Generation, sort by Most Likes, and extract the names, descriptions, and like counts of the top 3 models.",
+        "path": "a11y",
+        "turns": 4,
+        "content": "deepseek-ai/DeepSeek-R1\nText Generation \u2022 685B \u2022 Updated \u2022 5.59M \u2022 \u2022 13.4k\nTasks\nParameters\nLibraries\nInference Providers\n373,194\nActive filters: text-generation\nText Generation \u2022 685B \u2022 Updated \u2022 5.59M \u2022 \u2022 13.4k\nText Generation \u2022 8B \u2022 Updated \u2022 1.19M \u2022 \u2022 6.57k\nText Generation \u2022 8B \u2022 Updated \u2022 9.87M \u2022 \u2022 6.07k\nText Generation \u2022 176B \u2022 Updated \u2022 5.65k \u2022 5.01k\nText Generation \u2022 120B \u2022 Updated \u2022 3.81M \u2022 \u2022 4.88k\nText Generation \u2022 862B \u2022 Updated \u2022 3.38M \u2022 \u2022 4.8k\nText Generation \u2022 7B \u2022 Updated \u2022 258k \u2022 4.78k\nText Generation \u2022 22B \u2022 Updated \u2022 6.54M \u2022 \u2022 4.71k\nText Generation \u2022 8B \u2022 Updated \u2022 1.33M \u2022 \u2022 4.59k\nText Generation \u2022 Updated \u2022 176 \u2022 4.5k\nText Generation \u2022 7B \u2022 Updated \u2022 404k \u2022 \u2022 4.11k\nText Generation \u2022 685B \u2022 Updated \u2022 999k \u2022 \u2022 4.09k\nText Generation \u2022 3B \u2022 Updated \u2022 438k \u2022 \u2022 3.47k\nText Generation \u2022 9B \u2022 Updated \u2022 26.2k \u2022 \u2022 3.35k\nText Generation \u2022 0.1B \u2022 Updated \u2022 13.2M \u2022 3.3k\nText Generation \u2022 7B \u2022 Updated \u2022 1.38M \u2022 \u2022 3.16k\nText Generation \u2022 685B \u2022 Updated \u2022 896k \u2022 \u2022 3.13k\nText Generation \u2022 16B \u2022 Updated \u2022 22.3k \u2022 2.96k\nText Generation \u2022 33B \u2022 Updated \u2022 50k \u2022 \u2022 2.93k\nText Generation \u2022 71B \u2022 Updated \u2022 658k \u2022 \u2022 2.82k\nText Generation \u2022 685B \u2022 Updated \u2022 6.81M \u2022 \u2022 2.45k\nText Generation \u2022 1B \u2022 Updated \u2022 2.13M \u2022 \u2022 2.45k\nText Generation \u2022 42B \u2022 Updated \u2022 29.2k \u2022 2.44k\nText Generation \u2022 Updated \u2022 253 \u2022 2.42k\nText Generation \u2022 1T \u2022 Updated \u2022 532k \u2022 \u2022 2.37k\nText Generation \u2022 7B \u2022 Updated \u2022 714k \u2022 2.32k\nText Generation \u2022 15B \u2022 Updated \u2022 814k \u2022 \u2022 2.25k\nText Generation \u2022 8B \u2022 Updated \u2022 1.3M \u2022 \u2022 2.25k\nText Generation \u2022 3B \u2022 Updated \u2022 1.44M \u2022 \u2022 2.22k\nText Generation \u2022 69B \u2022 Updated \u2022 72.9k \u2022 2.21k",
+        "actions": [
+          {
+            "turn": 1,
+            "actions": [
+              {
+                "type": "click",
+                "mark": 36
+              }
+            ],
+            "outcome": "ok"
+          },
+          {
+            "turn": 2,
+            "actions": [
+              {
+                "type": "click",
+                "mark": 80
+              }
+            ],
+            "outcome": "ok"
+          },
+          {
+            "turn": 3,
+            "actions": [
+              {
+                "type": "click",
+                "mark": 82
+              }
+            ],
+            "outcome": "ok"
+          },
+          {
+            "turn": 4,
+            "actions": [
+              {
+                "type": "done",
+                "success": true,
+                "value": "1. deepseek-ai/DeepSeek-R1: Text Generation, 5.59M likes. 2. openai/gpt-oss-20b: Text Generation, 6.54M likes. 3. deepseek-ai/DeepSeek-V4-Pro: Text Generation, 3.38M likes."
+              }
+            ],
+            "outcome": "done(True)"
+          }
+        ],
+        "final_url": "https://huggingface.co/models?pipeline_tag=text-generation&sort=likes"
+      },
+      "prompt_sent": "The Browser skill fetches and interacts with web pages. It walks a\nfour-layer cascade starting from the cheapest path (HTML extraction)\nand escalating only when needed (deterministic selectors, accessibility\ntree, then visual set-of-marks with a vision model). The escalation\nis internal; you pass `url` and `goal`, the skill chooses the layer.\n\nInputs: `metadata.url` (required), `metadata.goal` (required, free-text\ndescription of what to extract or do). Output: `BrowserOutput` with\n`content` (for extraction goals) or `actions` plus `final_url` (for\ninteraction goals), and `path` reporting the cascade layer that\nactually ran. When the page is gated by CAPTCHA or login, the skill\nreturns `error_code=\"gateway_blocked\"` and no content; the Planner\nshould route around by trying a different source URL or by handing\nback to the user.\n\nMEMORY HITS (8 from FAISS):\n  - [preference] Compare top 3 Hugging Face text-generation models sorted by likes.\n      source: user_query\n      raw: Compare top 3 Hugging Face text-generation models sorted by likes.\n  - [tool_outcome] Compare top 3 Hugging Face text-generation models sorted by likes\n      source: user_query\n      raw: Compare top 3 Hugging Face text-generation models sorted by likes\n  - [tool_outcome] Compare top 3 Hugging Face text-generation models sorted by likes\n      source: user_query\n      raw: Compare top 3 Hugging Face text-generation models sorted by likes\n  - [preference] Compare 3 laptops under \u20b980,000\n      source: user_query\n      raw: Compare 3 laptops under \u20b980,000.\n  - [preference] Compare 3 laptops under \u20b980,000\n      source: user_query\n      raw: Compare 3 laptops under \u20b980,000.\n  - [preference] Compare 3 laptops under \u20b980,000\n      source: user_query\n      raw: Compare 3 laptops under \u20b980,000.\n  - [preference] Compare 3 laptops under \u20b980,000\n      source: user_query\n      raw: Compare 3 laptops under \u20b980,000.\n  - [preference] Compare 3 laptops under \u20b980,000\n      source: user_query\n      raw: Compare 3 laptops under \u20b980,000.\n\nINPUTS:\n[]"
+    },
+    {
+      "node_id": "n:3",
+      "skill": "distiller",
+      "status": "complete",
+      "inputs": [
+        "n:2"
+      ],
+      "metadata_keys": [],
+      "retries": 0,
+      "started_at": 1781326325.1243782,
+      "completed_at": 1781326329.3652842,
+      "elapsed_s": 4.240904808044434,
+      "provider": "gemini",
+      "success": true,
+      "error": null,
+      "error_code": null,
+      "output": {
+        "fields": {
+          "top_models": [
+            {
+              "name": "deepseek-ai/DeepSeek-R1",
+              "likes": "5.59M"
+            },
+            {
+              "name": "openai/gpt-oss-20b",
+              "likes": "6.54M"
+            },
+            {
+              "name": "deepseek-ai/DeepSeek-V4-Pro",
+              "likes": "3.38M"
+            }
+          ]
+        },
+        "rationale": "The model names and like counts were extracted from the browser node's final output, though descriptions were not provided in the source text.",
+        "comparison": {
+          "winner": "openai/gpt-oss-20b",
+          "reason": "It has the highest like count (6.54M) among the top 3 models listed."
+        }
+      },
+      "prompt_sent": "You are the Distiller skill. You receive raw text (typically the\n`findings` of one or more Researcher nodes, or the `chunks` of a\nRetriever node) and produce a small structured record.\n\nYou make no tool calls. You do no web access. Everything you need is\nalready in the prompt under INPUTS.\n\nProcedure:\n  1. Identify what fields the user's question implies (people, dates,\n     numbers, comparisons, percentages, attributions).\n  2. Pull those fields out of the inputs.\n  3. Emit a compact JSON record. Fields with no evidence in the inputs\n     are omitted, not made up.\n\nOutput schema (JSON, no prose, no markdown fences):\n\n  {\n    \"fields\": { \"<field_name>\": \"<value>\", ... },\n    \"rationale\": \"<one short sentence saying which input supports each field>\"\n  }\n\nNotes:\n  - The fields dictionary is the load-bearing output; downstream\n    Formatter nodes read it.\n  - When the question is a comparison (`fastest growing`, `largest`),\n    emit a `comparison` key with `winner: <id>` and `reason: <short>`.\n  - When the question's evidence is missing, set `fields: {}` and put\n    the gap in `rationale`. Do not invent.\n\nA Critic node may run after you. Its evaluation will fail if you\ninvented fields or made claims unsupported by the inputs.\n\nQUESTION: Extract the model name, description, and like count for the top 3 models from the provided page text.\n\nMEMORY HITS (8 from FAISS):\n  - [preference] Compare top 3 Hugging Face text-generation models sorted by likes.\n      source: user_query\n      raw: Compare top 3 Hugging Face text-generation models sorted by likes.\n  - [tool_outcome] Compare top 3 Hugging Face text-generation models sorted by likes\n      source: user_query\n      raw: Compare top 3 Hugging Face text-generation models sorted by likes\n  - [tool_outcome] Compare top 3 Hugging Face text-generation models sorted by likes\n      source: user_query\n      raw: Compare top 3 Hugging Face text-generation models sorted by likes\n  - [preference] Compare 3 laptops under \u20b980,000\n      source: user_query\n      raw: Compare 3 laptops under \u20b980,000.\n  - [preference] Compare 3 laptops under \u20b980,000\n      source: user_query\n      raw: Compare 3 laptops under \u20b980,000.\n  - [preference] Compare 3 laptops under \u20b980,000\n      source: user_query\n      raw: Compare 3 laptops under \u20b980,000.\n  - [preference] Compare 3 laptops under \u20b980,000\n      source: user_query\n      raw: Compare 3 laptops under \u20b980,000.\n  - [preference] Compare 3 laptops under \u20b980,000\n      source: user_query\n      raw: Compare 3 laptops under \u20b980,000.\n\nINPUTS:\n[\n  {\n    \"id\": \"n:2\",\n    \"kind\": \"upstream\",\n    \"skill\": \"browser\",\n    \"output\": {\n      \"url\": \"https://huggingface.co/models\",\n      \"goal\": \"Filter by Task=Text Generation, sort by Most Likes, and extract the names, descriptions, and like counts of the top 3 models.\",\n      \"path\": \"a11y\",\n      \"turns\": 4,\n      \"content\": \"deepseek-ai/DeepSeek-R1\\nText Generation \\u2022 685B \\u2022 Updated \\u2022 5.59M \\u2022 \\u2022 13.4k\\nTasks\\nParameters\\nLibraries\\nInference Providers\\n373,194\\nActive filters: text-generation\\nText Generation \\u2022 685B \\u2022 Updated \\u2022 5.59M \\u2022 \\u2022 13.4k\\nText Generation \\u2022 8B \\u2022 Updated \\u2022 1.19M \\u2022 \\u2022 6.57k\\nText Generation \\u2022 8B \\u2022 Updated \\u2022 9.87M \\u2022 \\u2022 6.07k\\nText Generation \\u2022 176B \\u2022 Updated \\u2022 5.65k \\u2022 5.01k\\nText Generation \\u2022 120B \\u2022 Updated \\u2022 3.81M \\u2022 \\u2022 4.88k\\nText Generation \\u2022 862B \\u2022 Updated \\u2022 3.38M \\u2022 \\u2022 4.8k\\nText Generation \\u2022 7B \\u2022 Updated \\u2022 258k \\u2022 4.78k\\nText Generation \\u2022 22B \\u2022 Updated \\u2022 6.54M \\u2022 \\u2022 4.71k\\nText Generation \\u2022 8B \\u2022 Updated \\u2022 1.33M \\u2022 \\u2022 4.59k\\nText Generation \\u2022 Updated \\u2022 176 \\u2022 4.5k\\nText Generation \\u2022 7B \\u2022 Updated \\u2022 404k \\u2022 \\u2022 4.11k\\nText Generation \\u2022 685B \\u2022 Updated \\u2022 999k \\u2022 \\u2022 4.09k\\nText Generation \\u2022 3B \\u2022 Updated \\u2022 438k \\u2022 \\u2022 3.47k\\nText Generation \\u2022 9B \\u2022 Updated \\u2022 26.2k \\u2022 \\u2022 3.35k\\nText Generation \\u2022 0.1B \\u2022 Updated \\u2022 13.2M \\u2022 3.3k\\nText Generation \\u2022 7B \\u2022 Updated \\u2022 1.38M \\u2022 \\u2022 3.16k\\nText Generation \\u2022 685B \\u2022 Updated \\u2022 896k \\u2022 \\u2022 3.13k\\nText Generation \\u2022 16B \\u2022 Updated \\u2022 22.3k \\u2022 2.96k\\nText Generation \\u2022 33B \\u2022 Updated \\u2022 50k \\u2022 \\u2022 2.93k\\nText Generation \\u2022 71B \\u2022 Updated \\u2022 658k \\u2022 \\u2022 2.82k\\nText Generation \\u2022 685B \\u2022 Updated \\u2022 6.81M \\u2022 \\u2022 2.45k\\nText Generation \\u2022 1B \\u2022 Updated \\u2022 2.13M \\u2022 \\u2022 2.45k\\nText Generation \\u2022 42B \\u2022 Updated \\u2022 29.2k \\u2022 2.44k\\nText Generation \\u2022 Updated \\u2022 253 \\u2022 2.42k\\nText Generation \\u2022 1T \\u2022 Updated \\u2022 532k \\u2022 \\u2022 2.37k\\nText Generation \\u2022 7B \\u2022 Updated \\u2022 714k \\u2022 2.32k\\nText Generation \\u2022 15B \\u2022 Updated \\u2022 814k \\u2022 \\u2022 2.25k\\nText Generation \\u2022 8B \\u2022 Updated \\u2022 1.3M \\u2022 \\u2022 2.25k\\nText Generation \\u2022 3B \\u2022 Updated \\u2022 1.44M \\u2022 \\u2022 2.22k\\nText Generation \\u2022 69B \\u2022 Updated \\u2022 72.9k \\u2022 2.21k\",\n      \"actions\": [\n        {\n          \"turn\": 1,\n          \"actions\": [\n            {\n              \"type\": \"click\",\n              \"mark\": 36\n            }\n          ],\n          \"outcome\": \"ok\"\n        },\n        {\n          \"turn\": 2,\n          \"actions\": [\n            {\n              \"type\": \"click\",\n              \"mark\": 80\n            }\n          ],\n          \"outcome\": \"ok\"\n        },\n        {\n          \"turn\": 3,\n          \"actions\": [\n            {\n              \"type\": \"click\",\n              \"mark\": 82\n            }\n          ],\n          \"outcome\": \"ok\"\n        },\n        {\n          \"turn\": 4,\n          \"actions\": [\n            {\n              \"type\": \"done\",\n              \"success\": true,\n              \"value\": \"1. deepseek-ai/DeepSeek-R1: Text Generation, 5.59M likes. 2. openai/gpt-oss-20b: Text Generation, 6.54M likes. 3. deepseek-ai/DeepSeek-V4-Pro: Text Generation, 3.38M likes.\"\n            }\n          ],\n          \"outcome\": \"done(True)\"\n        }\n      ],\n      \"final_url\": \"https://huggingface.co/models?pipeline_tag=text-generation&sort=likes\"\n    }\n  }\n]"
+    },
+    {
+      "node_id": "n:5",
+      "skill": "critic",
+      "status": "complete",
+      "inputs": [
+        "USER_QUERY",
+        "n:3"
+      ],
+      "metadata_keys": [],
+      "retries": 0,
+      "started_at": 1781326329.3701982,
+      "completed_at": 1781326329.744162,
+      "elapsed_s": 0.3739638328552246,
+      "provider": "groq",
+      "success": true,
+      "error": null,
+      "error_code": null,
+      "output": {
+        "verdict": "pass",
+        "rationale": "The output correctly identifies the top 3 Hugging Face text-generation models sorted by likes, with the winner being openai/gpt-oss-20b due to its highest like count."
+      },
+      "prompt_sent": "You are the Critic skill. You evaluate one upstream node's output and\nreturn pass-or-fail with a short rationale.\n\nYou make no tool calls. The upstream output and (when the orchestrator\nhas it) the inputs that node received both appear in the prompt.\n\nProcedure:\n  1. Read the UPSTREAM_OUTPUT.\n  2. Check it against the INPUTS that produced it.\n  3. Look for: fabricated fields, claims unsupported by the input,\n     contradictions, missing fields the input clearly contained.\n  4. Emit pass or fail.\n\nOutput schema (JSON, no prose, no markdown fences):\n\n  {\n    \"verdict\": \"pass\" | \"fail\",\n    \"rationale\": \"<one or two short sentences>\"\n  }\n\nWhen you emit `fail`, the orchestrator may invoke the Planner to\nrecover. Be specific in your rationale so the recovery plan can be\ntargeted. Do not fail for stylistic reasons; only fail when the\nupstream output is wrong, missing, or unsupported.\n\nUSER_QUERY: Compare top 3 Hugging Face text-generation models sorted by likes.\n\nMEMORY HITS (8 from FAISS):\n  - [preference] Compare top 3 Hugging Face text-generation models sorted by likes.\n      source: user_query\n      raw: Compare top 3 Hugging Face text-generation models sorted by likes.\n  - [tool_outcome] Compare top 3 Hugging Face text-generation models sorted by likes\n      source: user_query\n      raw: Compare top 3 Hugging Face text-generation models sorted by likes\n  - [tool_outcome] Compare top 3 Hugging Face text-generation models sorted by likes\n      source: user_query\n      raw: Compare top 3 Hugging Face text-generation models sorted by likes\n  - [preference] Compare 3 laptops under \u20b980,000\n      source: user_query\n      raw: Compare 3 laptops under \u20b980,000.\n  - [preference] Compare 3 laptops under \u20b980,000\n      source: user_query\n      raw: Compare 3 laptops under \u20b980,000.\n  - [preference] Compare 3 laptops under \u20b980,000\n      source: user_query\n      raw: Compare 3 laptops under \u20b980,000.\n  - [preference] Compare 3 laptops under \u20b980,000\n      source: user_query\n      raw: Compare 3 laptops under \u20b980,000.\n  - [preference] Compare 3 laptops under \u20b980,000\n      source: user_query\n      raw: Compare 3 laptops under \u20b980,000.\n\nINPUTS:\n[\n  {\n    \"id\": \"USER_QUERY\",\n    \"kind\": \"query\",\n    \"value\": \"Compare top 3 Hugging Face text-generation models sorted by likes.\"\n  },\n  {\n    \"id\": \"n:3\",\n    \"kind\": \"upstream\",\n    \"skill\": \"distiller\",\n    \"output\": {\n      \"fields\": {\n        \"top_models\": [\n          {\n            \"name\": \"deepseek-ai/DeepSeek-R1\",\n            \"likes\": \"5.59M\"\n          },\n          {\n            \"name\": \"openai/gpt-oss-20b\",\n            \"likes\": \"6.54M\"\n          },\n          {\n            \"name\": \"deepseek-ai/DeepSeek-V4-Pro\",\n            \"likes\": \"3.38M\"\n          }\n        ]\n      },\n      \"rationale\": \"The model names and like counts were extracted from the browser node's final output, though descriptions were not provided in the source text.\",\n      \"comparison\": {\n        \"winner\": \"openai/gpt-oss-20b\",\n        \"reason\": \"It has the highest like count (6.54M) among the top 3 models listed.\"\n      }\n    }\n  }\n]"
+    },
+    {
+      "node_id": "n:4",
+      "skill": "formatter",
+      "status": "complete",
+      "inputs": [
+        "USER_QUERY",
+        "n:3"
+      ],
+      "metadata_keys": [],
+      "retries": 0,
+      "started_at": 1781326329.748832,
+      "completed_at": 1781326333.2705019,
+      "elapsed_s": 3.521669864654541,
+      "provider": "gemini",
+      "success": true,
+      "error": null,
+      "error_code": null,
+      "output": {
+        "final_answer": "Based on current data from Hugging Face, here are the top 3 text-generation models ranked by their number of likes:\n\n1. openai/gpt-oss-20b: 6.54M likes\n2. deepseek-ai/DeepSeek-R1: 5.59M likes\n3. deepseek-ai/DeepSeek-V4-Pro: 3.38M likes\n\nThe leading model is openai/gpt-oss-20b, which holds the highest popularity with 6.54 million likes."
+      },
+      "prompt_sent": "You are the Formatter skill. You are the conventional TERMINAL node of\nevery DAG. Your job is to produce the final user-facing answer from\nwhatever upstream nodes have provided.\n\nYou make no tool calls. The user's original query appears under\nUSER_QUERY. Upstream results appear under INPUTS.\n\nProcedure:\n  1. Read USER_QUERY.\n  2. Read INPUTS and decide which fields / findings answer the query.\n  3. Write the user-facing answer in plain English. Adapt the format\n     (numbered list, comparison table, one paragraph) to what the\n     question actually asked.\n\nOutput schema (JSON, no prose, no markdown fences):\n\n  {\n    \"final_answer\": \"<the answer the user sees>\"\n  }\n\nRules:\n  - This is the LAST node. Do not add successors.\n  - The answer must be answerable from INPUTS alone. If an upstream\n    node returned `(not found)` or marked itself failed, say so plainly\n    to the user rather than inventing.\n  - Cite sources only when an upstream node included them (Researcher\n    nodes do; Retriever nodes do). Do not invent URLs.\n\nUSER_QUERY: Compare top 3 Hugging Face text-generation models sorted by likes.\n\nMEMORY HITS (8 from FAISS):\n  - [preference] Compare top 3 Hugging Face text-generation models sorted by likes.\n      source: user_query\n      raw: Compare top 3 Hugging Face text-generation models sorted by likes.\n  - [tool_outcome] Compare top 3 Hugging Face text-generation models sorted by likes\n      source: user_query\n      raw: Compare top 3 Hugging Face text-generation models sorted by likes\n  - [tool_outcome] Compare top 3 Hugging Face text-generation models sorted by likes\n      source: user_query\n      raw: Compare top 3 Hugging Face text-generation models sorted by likes\n  - [preference] Compare 3 laptops under \u20b980,000\n      source: user_query\n      raw: Compare 3 laptops under \u20b980,000.\n  - [preference] Compare 3 laptops under \u20b980,000\n      source: user_query\n      raw: Compare 3 laptops under \u20b980,000.\n  - [preference] Compare 3 laptops under \u20b980,000\n      source: user_query\n      raw: Compare 3 laptops under \u20b980,000.\n  - [preference] Compare 3 laptops under \u20b980,000\n      source: user_query\n      raw: Compare 3 laptops under \u20b980,000.\n  - [preference] Compare 3 laptops under \u20b980,000\n      source: user_query\n      raw: Compare 3 laptops under \u20b980,000.\n\nINPUTS:\n[\n  {\n    \"id\": \"USER_QUERY\",\n    \"kind\": \"query\",\n    \"value\": \"Compare top 3 Hugging Face text-generation models sorted by likes.\"\n  },\n  {\n    \"id\": \"n:3\",\n    \"kind\": \"upstream\",\n    \"skill\": \"distiller\",\n    \"output\": {\n      \"fields\": {\n        \"top_models\": [\n          {\n            \"name\": \"deepseek-ai/DeepSeek-R1\",\n            \"likes\": \"5.59M\"\n          },\n          {\n            \"name\": \"openai/gpt-oss-20b\",\n            \"likes\": \"6.54M\"\n          },\n          {\n            \"name\": \"deepseek-ai/DeepSeek-V4-Pro\",\n            \"likes\": \"3.38M\"\n          }\n        ]\n      },\n      \"rationale\": \"The model names and like counts were extracted from the browser node's final output, though descriptions were not provided in the source text.\",\n      \"comparison\": {\n        \"winner\": \"openai/gpt-oss-20b\",\n        \"reason\": \"It has the highest like count (6.54M) among the top 3 models listed.\"\n      }\n    }\n  }\n]"
+    }
+  ],
+  "edges": [
+    {
+      "source": "n:1",
+      "target": "n:2"
+    },
+    {
+      "source": "n:2",
+      "target": "n:3"
+    },
+    {
+      "source": "n:3",
+      "target": "n:5"
+    },
+    {
+      "source": "n:5",
+      "target": "n:4"
+    }
+  ]
+}

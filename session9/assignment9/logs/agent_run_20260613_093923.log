@@ -1,0 +1,19 @@
+[2026-06-13 09:39:23] [INFO] [run] goal received: Compare 3 laptops under ₹80,000.
+[2026-06-13 09:39:23] [INFO] [run] run_id=20260613_093923_compar
+[2026-06-13 09:39:23] [INFO] [_client] HTTP Request: GET http://localhost:8109/v1/routers "HTTP/1.1 200 OK"
+[2026-06-13 09:39:23] [INFO] [_client] HTTP Request: GET http://localhost:8109/v1/routers "HTTP/1.1 200 OK"
+[2026-06-13 09:39:23] [INFO] [_client] HTTP Request: POST http://localhost:8109/v1/embed "HTTP/1.1 200 OK"
+[2026-06-13 09:39:23] [INFO] [_client] HTTP Request: GET http://localhost:8109/v1/routers "HTTP/1.1 200 OK"
+[2026-06-13 09:39:24] [INFO] [_client] HTTP Request: POST http://localhost:8109/v1/chat "HTTP/1.1 502 Bad Gateway"
+[2026-06-13 09:39:28] [INFO] [_client] HTTP Request: POST http://localhost:8109/v1/chat "HTTP/1.1 200 OK"
+[2026-06-13 09:39:28] [INFO] [_client] HTTP Request: POST http://localhost:8109/v1/chat "HTTP/1.1 503 Service Unavailable"
+[2026-06-13 09:39:33] [INFO] [_client] HTTP Request: POST http://localhost:8109/v1/chat "HTTP/1.1 200 OK"
+[2026-06-13 09:39:34] [INFO] [_client] HTTP Request: GET https://www.amazon.in "HTTP/1.1 202 Accepted"
+[2026-06-13 09:39:36] [INFO] [_client] HTTP Request: POST http://localhost:8109/v1/chat "HTTP/1.1 503 Service Unavailable"
+[2026-06-13 09:39:41] [INFO] [_client] HTTP Request: POST http://localhost:8109/v1/chat "HTTP/1.1 200 OK"
+[2026-06-13 09:39:42] [INFO] [_client] HTTP Request: POST http://localhost:8109/v1/chat "HTTP/1.1 503 Service Unavailable"
+[2026-06-13 09:39:45] [INFO] [_client] HTTP Request: POST http://localhost:8109/v1/chat "HTTP/1.1 503 Service Unavailable"
+[2026-06-13 09:39:52] [INFO] [_client] HTTP Request: POST http://localhost:8109/v1/chat "HTTP/1.1 200 OK"
+[2026-06-13 09:39:52] [INFO] [run] run complete in 28.7s
+[2026-06-13 09:39:52] [INFO] [_client] HTTP Request: GET http://localhost:8109/v1/cost/by_agent?session=20260613_093923_compar "HTTP/1.1 200 OK"
+[2026-06-13 09:39:52] [INFO] [run] trace saved to /Users/harshagarwal/Documents/EAGv3/session9/assignment9/state/sessions/20260613_093923_compar

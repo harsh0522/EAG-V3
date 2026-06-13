@@ -1,0 +1,181 @@
+{
+  "directed": true,
+  "multigraph": false,
+  "graph": {},
+  "nodes": [
+    {
+      "skill": "planner",
+      "inputs": [
+        "USER_QUERY"
+      ],
+      "metadata": {},
+      "status": "complete",
+      "result": {
+        "success": true,
+        "agent_name": "planner",
+        "output": {
+          "rationale": "Fetch the latest laptop listings under \u20b980,000 from a major Indian e\u2011commerce site using interactive filters, extract structured details for the top three, then format the comparison.",
+          "nodes": [
+            {
+              "skill": "browser",
+              "inputs": [],
+              "metadata": {
+                "label": "b1",
+                "url": "https://www.amazon.in",
+                "goal": "Filter Category=Laptops, Price \u2264 80000 INR, Sort=Avg Customer Review; then extract the top 3 product names, prices, and key specifications (CPU, RAM, storage, display size)."
+              }
+            },
+            {
+              "skill": "distiller",
+              "inputs": [
+                "n:b1"
+              ],
+              "metadata": {
+                "label": "d1",
+                "question": "Parse the browser output into a list of three records with fields: name, price, CPU, RAM, storage, display."
+              }
+            },
+            {
+              "skill": "formatter",
+              "inputs": [
+                "USER_QUERY",
+                "n:d1"
+              ],
+              "metadata": {
+                "label": "out"
+              }
+            }
+          ]
+        },
+        "artifacts": [],
+        "successors": [
+          {
+            "skill": "browser",
+            "inputs": [],
+            "metadata": {
+              "label": "b1",
+              "url": "https://www.amazon.in",
+              "goal": "Filter Category=Laptops, Price \u2264 80000 INR, Sort=Avg Customer Review; then extract the top 3 product names, prices, and key specifications (CPU, RAM, storage, display size)."
+            }
+          },
+          {
+            "skill": "distiller",
+            "inputs": [
+              "n:b1"
+            ],
+            "metadata": {
+              "label": "d1",
+              "question": "Parse the browser output into a list of three records with fields: name, price, CPU, RAM, storage, display."
+            }
+          },
+          {
+            "skill": "formatter",
+            "inputs": [
+              "USER_QUERY",
+              "n:d1"
+            ],
+            "metadata": {
+              "label": "out"
+            }
+          }
+        ],
+        "cost": 0.0,
+        "elapsed_s": 4.781224012374878,
+        "provider": "groq",
+        "error": null,
+        "error_code": null
+      },
+      "_result_typed": true,
+      "id": "n:1"
+    },
+    {
+      "skill": "browser",
+      "inputs": [],
+      "metadata": {
+        "label": "b1",
+        "url": "https://www.amazon.in",
+        "goal": "Filter Category=Laptops, Price \u2264 80000 INR, Sort=Avg Customer Review; then extract the top 3 product names, prices, and key specifications (CPU, RAM, storage, display size)."
+      },
+      "status": "failed",
+      "result": {
+        "success": false,
+        "agent_name": "browser",
+        "output": {},
+        "artifacts": [],
+        "successors": [],
+        "cost": 0.0,
+        "elapsed_s": 0.0,
+        "provider": "",
+        "error": "exception: Error: Page.evaluate: Execution context was destroyed, most likely because of a navigation",
+        "error_code": null
+      },
+      "_result_typed": true,
+      "id": "n:2"
+    },
+    {
+      "skill": "distiller",
+      "inputs": [
+        "n:2"
+      ],
+      "metadata": {
+        "label": "d1",
+        "question": "Parse the browser output into a list of three records with fields: name, price, CPU, RAM, storage, display."
+      },
+      "status": "pending",
+      "id": "n:3"
+    },
+    {
+      "skill": "formatter",
+      "inputs": [
+        "USER_QUERY",
+        "n:3"
+      ],
+      "metadata": {
+        "label": "out"
+      },
+      "status": "pending",
+      "id": "n:4"
+    },
+    {
+      "skill": "planner",
+      "inputs": [
+        "USER_QUERY"
+      ],
+      "metadata": {
+        "failure_report": "node=n:2 skill=browser reason=upstream_failure error=exception: Error: Page.evaluate: Execution context was destroyed, most likely because of a navigation",
+        "recovers": "n:2",
+        "recovery_reason": "upstream_failure",
+        "prior_complete": []
+      },
+      "status": "complete",
+      "result": {
+        "success": true,
+        "agent_name": "planner",
+        "output": {},
+        "artifacts": [],
+        "successors": [],
+        "cost": 0.0,
+        "elapsed_s": 9.751497983932495,
+        "provider": "cerebras",
+        "error": null,
+        "error_code": null
+      },
+      "_result_typed": true,
+      "id": "n:5"
+    }
+  ],
+  "edges": [
+    {
+      "source": "n:1",
+      "target": "n:2"
+    },
+    {
+      "source": "n:2",
+      "target": "n:3"
+    },
+    {
+      "source": "n:3",
+      "target": "n:4"
+    }
+  ]
+}

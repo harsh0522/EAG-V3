@@ -1,0 +1,181 @@
+{
+  "directed": true,
+  "multigraph": false,
+  "graph": {},
+  "nodes": [
+    {
+      "skill": "planner",
+      "inputs": [
+        "USER_QUERY"
+      ],
+      "metadata": {},
+      "status": "complete",
+      "result": {
+        "success": true,
+        "agent_name": "planner",
+        "output": {
+          "rationale": "Use a browser to fetch the latest laptops under \u20b980,000 from a major Indian e\u2011commerce site, distill the top three into structured specs, then format a comparison.",
+          "nodes": [
+            {
+              "skill": "browser",
+              "inputs": [],
+              "metadata": {
+                "label": "b1",
+                "url": "https://www.flipkart.com",
+                "goal": "Search for \"laptops\", apply a price filter \u226480000 INR, sort by rating descending, then extract the top 3 results: product name, price, processor, RAM, storage, display size, and a short key\u2011feature summary."
+              }
+            },
+            {
+              "skill": "distiller",
+              "inputs": [
+                "n:b1"
+              ],
+              "metadata": {
+                "label": "d1",
+                "question": "From the raw page text, produce a list of three items each with fields: name, price, processor, RAM, storage, display size, key features."
+              }
+            },
+            {
+              "skill": "formatter",
+              "inputs": [
+                "USER_QUERY",
+                "n:d1"
+              ],
+              "metadata": {
+                "label": "out"
+              }
+            }
+          ]
+        },
+        "artifacts": [],
+        "successors": [
+          {
+            "skill": "browser",
+            "inputs": [],
+            "metadata": {
+              "label": "b1",
+              "url": "https://www.flipkart.com",
+              "goal": "Search for \"laptops\", apply a price filter \u226480000 INR, sort by rating descending, then extract the top 3 results: product name, price, processor, RAM, storage, display size, and a short key\u2011feature summary."
+            }
+          },
+          {
+            "skill": "distiller",
+            "inputs": [
+              "n:b1"
+            ],
+            "metadata": {
+              "label": "d1",
+              "question": "From the raw page text, produce a list of three items each with fields: name, price, processor, RAM, storage, display size, key features."
+            }
+          },
+          {
+            "skill": "formatter",
+            "inputs": [
+              "USER_QUERY",
+              "n:d1"
+            ],
+            "metadata": {
+              "label": "out"
+            }
+          }
+        ],
+        "cost": 0.0,
+        "elapsed_s": 5.085116386413574,
+        "provider": "groq",
+        "error": null,
+        "error_code": null
+      },
+      "_result_typed": true,
+      "id": "n:1"
+    },
+    {
+      "skill": "browser",
+      "inputs": [],
+      "metadata": {
+        "label": "b1",
+        "url": "https://www.flipkart.com",
+        "goal": "Search for \"laptops\", apply a price filter \u226480000 INR, sort by rating descending, then extract the top 3 results: product name, price, processor, RAM, storage, display size, and a short key\u2011feature summary."
+      },
+      "status": "failed",
+      "result": {
+        "success": false,
+        "agent_name": "browser",
+        "output": {},
+        "artifacts": [],
+        "successors": [],
+        "cost": 0.0,
+        "elapsed_s": 0.0,
+        "provider": "",
+        "error": "exception: Error: Page.evaluate: Execution context was destroyed, most likely because of a navigation",
+        "error_code": null
+      },
+      "_result_typed": true,
+      "id": "n:2"
+    },
+    {
+      "skill": "distiller",
+      "inputs": [
+        "n:2"
+      ],
+      "metadata": {
+        "label": "d1",
+        "question": "From the raw page text, produce a list of three items each with fields: name, price, processor, RAM, storage, display size, key features."
+      },
+      "status": "pending",
+      "id": "n:3"
+    },
+    {
+      "skill": "formatter",
+      "inputs": [
+        "USER_QUERY",
+        "n:3"
+      ],
+      "metadata": {
+        "label": "out"
+      },
+      "status": "pending",
+      "id": "n:4"
+    },
+    {
+      "skill": "planner",
+      "inputs": [
+        "USER_QUERY"
+      ],
+      "metadata": {
+        "failure_report": "node=n:2 skill=browser reason=upstream_failure error=exception: Error: Page.evaluate: Execution context was destroyed, most likely because of a navigation",
+        "recovers": "n:2",
+        "recovery_reason": "upstream_failure",
+        "prior_complete": []
+      },
+      "status": "complete",
+      "result": {
+        "success": true,
+        "agent_name": "planner",
+        "output": {},
+        "artifacts": [],
+        "successors": [],
+        "cost": 0.0,
+        "elapsed_s": 10.07072901725769,
+        "provider": "cerebras",
+        "error": null,
+        "error_code": null
+      },
+      "_result_typed": true,
+      "id": "n:5"
+    }
+  ],
+  "edges": [
+    {
+      "source": "n:1",
+      "target": "n:2"
+    },
+    {
+      "source": "n:2",
+      "target": "n:3"
+    },
+    {
+      "source": "n:3",
+      "target": "n:4"
+    }
+  ]
+}

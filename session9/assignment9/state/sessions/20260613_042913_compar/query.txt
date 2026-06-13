@@ -1,0 +1,1 @@
+Compare the top 3 Hugging Face text-generation models sorted by most likes — show model name, parameter count, likes count, and a one-line description.

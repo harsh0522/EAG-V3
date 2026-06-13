@@ -1,0 +1,20 @@
+[2026-06-13 09:54:04] [INFO] [skill] [Layer 1] extract failed — escalating
+[2026-06-13 09:54:15] [INFO] [skill] [Layer 2b] turn 1: action={'type': 'click', 'mark': 36}
+[2026-06-13 09:54:15] [INFO] [skill] [Layer 2b] turn 1: action={'type': 'wait', 'seconds': 2}
+[2026-06-13 09:54:24] [INFO] [skill] [Layer 2b] turn 2: action={'type': 'click', 'mark': 80}
+[2026-06-13 09:55:27] [INFO] [skill] [Layer 2b] turn 3: action={'type': 'click', 'mark': 82}
+[2026-06-13 09:55:27] [INFO] [skill] [Layer 2b] turn 3: action={'type': 'wait', 'seconds': 2}
+[2026-06-13 09:56:41] [INFO] [skill] [Layer 2b] turn 4: action={'type': 'click', 'mark': 81}
+[2026-06-13 09:56:41] [INFO] [skill] [Layer 2b] turn 4: action={'type': 'wait', 'seconds': 2}
+[2026-06-13 09:56:51] [INFO] [skill] [Layer 2b] turn 5: action={'type': 'click', 'mark': 3}
+[2026-06-13 09:56:51] [INFO] [skill] [Layer 2b] turn 5: action={'type': 'wait', 'seconds': 2}
+[2026-06-13 09:57:28] [INFO] [skill] [Layer 2b] turn 6: action={'type': 'click', 'mark': 36}
+[2026-06-13 09:57:28] [INFO] [skill] [Layer 2b] turn 6: action={'type': 'wait', 'seconds': 1}
+[2026-06-13 09:58:03] [INFO] [skill] [Layer 2b] turn 7: action={'type': 'click', 'mark': 80}
+[2026-06-13 09:58:43] [INFO] [skill] [Layer 2b] turn 8: action={'type': 'click', 'mark': 82}
+[2026-06-13 09:58:43] [INFO] [skill] [Layer 2b] turn 8: action={'type': 'wait', 'seconds': 1}
+[2026-06-13 09:59:24] [INFO] [skill] [Layer 2b] turn 9: action={'type': 'click', 'mark': 88}
+[2026-06-13 09:59:24] [INFO] [skill] [Layer 2b] turn 9: action={'type': 'wait', 'seconds': 1}
+[2026-06-13 09:59:31] [INFO] [skill] [Layer 2b] turn 10: action={'type': 'click', 'mark': 3}
+[2026-06-13 09:59:31] [INFO] [skill] [Layer 2b] turn 10: action={'type': 'click', 'mark': 38}
+[2026-06-13 10:00:06] [INFO] [skill] [Layer 2b] turn 11: action={'type': 'click', 'mark': 36}

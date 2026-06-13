@@ -1,0 +1,51 @@
+{
+  "url": "https://huggingface.co/models",
+  "goal": "Filter by Task=Text Generation, sort by Most Likes, and extract the names, descriptions, and like counts of the top 3 models.",
+  "path": "a11y",
+  "turns": 4,
+  "content": "deepseek-ai/DeepSeek-R1\nText Generation \u2022 685B \u2022 Updated \u2022 5.59M \u2022 \u2022 13.4k\nTasks\nParameters\nLibraries\nInference Providers\n373,194\nActive filters: text-generation\nText Generation \u2022 685B \u2022 Updated \u2022 5.59M \u2022 \u2022 13.4k\nText Generation \u2022 8B \u2022 Updated \u2022 1.19M \u2022 \u2022 6.57k\nText Generation \u2022 8B \u2022 Updated \u2022 9.87M \u2022 \u2022 6.07k\nText Generation \u2022 176B \u2022 Updated \u2022 5.65k \u2022 5.01k\nText Generation \u2022 120B \u2022 Updated \u2022 3.81M \u2022 \u2022 4.88k\nText Generation \u2022 862B \u2022 Updated \u2022 3.38M \u2022 \u2022 4.8k\nText Generation \u2022 7B \u2022 Updated \u2022 258k \u2022 4.78k\nText Generation \u2022 22B \u2022 Updated \u2022 6.54M \u2022 \u2022 4.71k\nText Generation \u2022 8B \u2022 Updated \u2022 1.33M \u2022 \u2022 4.59k\nText Generation \u2022 Updated \u2022 176 \u2022 4.5k\nText Generation \u2022 7B \u2022 Updated \u2022 404k \u2022 \u2022 4.11k\nText Generation \u2022 685B \u2022 Updated \u2022 999k \u2022 \u2022 4.09k\nText Generation \u2022 3B \u2022 Updated \u2022 438k \u2022 \u2022 3.47k\nText Generation \u2022 9B \u2022 Updated \u2022 26.2k \u2022 \u2022 3.35k\nText Generation \u2022 0.1B \u2022 Updated \u2022 13.2M \u2022 3.3k\nText Generation \u2022 7B \u2022 Updated \u2022 1.38M \u2022 \u2022 3.16k\nText Generation \u2022 685B \u2022 Updated \u2022 896k \u2022 \u2022 3.13k\nText Generation \u2022 16B \u2022 Updated \u2022 22.3k \u2022 2.96k\nText Generation \u2022 33B \u2022 Updated \u2022 50k \u2022 \u2022 2.93k\nText Generation \u2022 71B \u2022 Updated \u2022 658k \u2022 \u2022 2.82k\nText Generation \u2022 685B \u2022 Updated \u2022 6.81M \u2022 \u2022 2.45k\nText Generation \u2022 1B \u2022 Updated \u2022 2.13M \u2022 \u2022 2.45k\nText Generation \u2022 42B \u2022 Updated \u2022 29.2k \u2022 2.44k\nText Generation \u2022 Updated \u2022 253 \u2022 2.42k\nText Generation \u2022 1T \u2022 Updated \u2022 532k \u2022 \u2022 2.37k\nText Generation \u2022 7B \u2022 Updated \u2022 714k \u2022 2.32k\nText Generation \u2022 15B \u2022 Updated \u2022 814k \u2022 \u2022 2.25k\nText Generation \u2022 8B \u2022 Updated \u2022 1.3M \u2022 \u2022 2.25k\nText Generation \u2022 3B \u2022 Updated \u2022 1.44M \u2022 \u2022 2.22k\nText Generation \u2022 69B \u2022 Updated \u2022 72.9k \u2022 2.21k",
+  "actions": [
+    {
+      "turn": 1,
+      "actions": [
+        {
+          "type": "click",
+          "mark": 36
+        }
+      ],
+      "outcome": "ok"
+    },
+    {
+      "turn": 2,
+      "actions": [
+        {
+          "type": "click",
+          "mark": 80
+        }
+      ],
+      "outcome": "ok"
+    },
+    {
+      "turn": 3,
+      "actions": [
+        {
+          "type": "click",
+          "mark": 82
+        }
+      ],
+      "outcome": "ok"
+    },
+    {
+      "turn": 4,
+      "actions": [
+        {
+          "type": "done",
+          "success": true,
+          "value": "1. deepseek-ai/DeepSeek-R1: Text Generation, 5.59M likes. 2. openai/gpt-oss-20b: Text Generation, 6.54M likes. 3. deepseek-ai/DeepSeek-V4-Pro: Text Generation, 3.38M likes."
+        }
+      ],
+      "outcome": "done(True)"
+    }
+  ],
+  "final_url": "https://huggingface.co/models?pipeline_tag=text-generation&sort=likes"
+}

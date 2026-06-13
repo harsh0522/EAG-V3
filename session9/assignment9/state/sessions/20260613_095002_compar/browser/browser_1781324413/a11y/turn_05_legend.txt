@@ -1,0 +1,31 @@
+[1]<button>Search for Products, Brands and More</button>
+[2]<input>Search for Products, Brands and More</input>
+[3]<a>Login</a>
+[4]<a>More</a>
+[5]<a>Cart</a>
+[6]<a>For You</a>
+[7]<a>Fashion</a>
+[8]<a>Mobiles</a>
+[9]<a>Beauty</a>
+[10]<a>Electronics</a>
+[11]<a>Home</a>
+[12]<a>Appliances</a>
+[13]<a>Toys, baby..</a>
+[14]<a>Food & Health</a>
+[15]<a>Auto Accessories</a>
+[16]<a>2 Wheelers</a>
+[17]<a>Sports & Fitness</a>
+[18]<a>Books & Media</a>
+[19]<a>Furniture</a>
+[20]<a>New Collection Under ₹199</a>
+[21]<a>Top Collection Min. 80% Off</a>
+[22]<a>Widest Range Under ₹499</a>
+[23]<a>Don't Miss Special offer</a>
+[24]<a></a>
+[25]<a>Face Wash Min. 50% Off</a>
+[26]<a>Men’s Slippers & Flip Flops Min. 70% Off</a>
+[27]<a>Men’s Casual Shoes Min. 70% Off</a>
+[28]<a>Men’s Sports Shoes Min. 70% Off</a>
+[29]<a></a>
+[30]<a></a>
+[31]<a></a>
