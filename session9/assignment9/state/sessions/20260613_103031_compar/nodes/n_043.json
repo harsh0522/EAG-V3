@@ -1,0 +1,41 @@
+{
+  "node_id": "n:43",
+  "skill": "researcher",
+  "status": "complete",
+  "inputs": [
+    "USER_QUERY"
+  ],
+  "result": {
+    "success": true,
+    "agent_name": "researcher",
+    "output": {
+      "question": "Find a list of 5 reputable CNC/VMC training institutes in Bangalore with details on their courses.",
+      "sources": [
+        {
+          "url": "https://cnctechindia.com/trainings-old/",
+          "title": "Training Old – CNC Tech India"
+        },
+        {
+          "url": "https://www.imtmatraining.com/programme_details/2930/manufacturing-processes-and-programming-on-cnc-turning-centres",
+          "title": "IMTMA Training"
+        },
+        {
+          "url": "https://hi-techcadcamcnc.com/Diploma-CNC-VMC-Operating-Programming-course.html",
+          "title": "Diploma CNC & VCM Operating Programming Training Course"
+        }
+      ],
+      "findings": "Finding five distinct, highly reputable training centers specifically focused on CNC/VMC in Bangalore is challenging due to the fragmented nature of vocational training listings. However, several established entities provide such training. CNC Tech India is a prominent provider offering structured modules covering CNC turning and VMC, ranging from fundamental machine operations to advanced programming, process planning, and cycle time study. They cater to diverse demographics, including non-technical students, ITI/Diploma holders, and industry professionals.\n\nThe Indian Machine Tool Manufacturers’ Association (IMTMA) is a highly authoritative body that conducts intensive, industry-focused training programs on manufacturing processes, CNC turning, and VMC programming. Their courses are often aimed at professional upskilling and hands-on technical competency.\n\nOther providers include private vocational training centers like Hi-Tech CAD CAM CNC, which offers diploma-level courses in CNC and VMC operating and programming, designed to take students from basics to industrial readiness. Additionally, the Indian Institute of Skill Development Training (IISDT) provides online certificate courses for CNC operators, focusing on career advancement and skill development.\n\nWhile these institutes provide recognized training paths, prospective students are advised to verify the current availability of hands-on lab access, as many centers now offer a mix of theoretical online modules and physical shop-floor training. Due to limited public data, it is recommended that interested candidates contact these centers directly to confirm batch schedules and specific curriculum alignment with their career goals."
+    },
+    "artifacts": [],
+    "successors": [],
+    "cost": 0.0,
+    "elapsed_s": 32.166768074035645,
+    "provider": "gemini",
+    "error": null,
+    "error_code": null
+  },
+  "prompt_sent": "You are the Researcher skill. You go to the web for a specific question\nand bring back normalised text the rest of the DAG can work from.\n\nYour tool surface is two MCP tools: `web_search(query, max_results)` and\n`fetch_url(url)`. Use them. Do not narrate; do not invent other tools.\n\nProcedure:\n  1. Read the QUESTION in the prompt.\n  2. Issue ONE `web_search` to get candidate URLs.\n  3. Pick the 1–3 most authoritative-looking URLs and fetch them with\n     `fetch_url` in sequence. Avoid clearly low-signal results (aggregator\n     spam, ad redirects).\n  4. Synthesise the relevant content from the fetched pages.\n\nTime budget: keep tool calls to 4 max per invocation. If a `fetch_url`\nreturns very little usable text, do not retry; move on.\n\nOutput schema (JSON, no prose, no markdown fences):\n\n  {\n    \"question\": \"<the question this run answered>\",\n    \"sources\": [{\"url\": \"<url>\", \"title\": \"<title>\"}, ...],\n    \"findings\": \"<2–6 short paragraphs of normalised text>\"\n  }\n\nYou do NOT produce the final user-facing answer. The downstream\ndistiller or formatter does that. If the question cannot be answered\nfrom the web within your budget, return `\"findings\": \"(not found)\"`\nand let the next node decide.\n\nUSER_QUERY: Compare 5 CNC/VMC training institutes in Bangalore.\n\nQUESTION: Find a list of 5 reputable CNC/VMC training institutes in Bangalore with details on their courses.\n\nMEMORY HITS (8 from FAISS):\n  - [preference] Compare 3 laptops under ₹80,000\n      source: user_query\n      raw: Compare 3 laptops under ₹80,000.\n  - [preference] Compare 3 laptops under ₹80,000\n      source: user_query\n      raw: Compare 3 laptops under ₹80,000.\n  - [preference] Compare 3 laptops under ₹80,000\n      source: user_query\n      raw: Compare 3 laptops under ₹80,000.\n  - [preference] Compare 3 laptops under ₹80,000\n      source: user_query\n      raw: Compare 3 laptops under ₹80,000.\n  - [preference] Compare 3 laptops under ₹80,000\n      source: user_query\n      raw: Compare 3 laptops under ₹80,000.\n  - [preference] Compare 3 laptops under ₹80,000\n      source: user_query\n      raw: Compare 3 laptops under ₹80,000.\n  - [preference] Compare 3 laptops under ₹80,000\n      source: user_query\n      raw: Compare 3 laptops under ₹80,000.\n  - [preference] Compare top 3 Hugging Face text-generation models sorted by likes.\n      source: user_query\n      raw: Compare top 3 Hugging Face text-generation models sorted by likes.\n\nINPUTS:\n[\n  {\n    \"id\": \"USER_QUERY\",\n    \"kind\": \"query\",\n    \"value\": \"Compare 5 CNC/VMC training institutes in Bangalore.\"\n  }\n]",
+  "started_at": 1781327299.325116,
+  "completed_at": 1781327331.491884,
+  "retries": 0
+}

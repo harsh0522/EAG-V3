@@ -1,0 +1,9 @@
+[2026-06-13 10:27:48] [INFO] [run] run_id=20260613_102624_compar
+[2026-06-13 10:27:48] [INFO] [run] layer=a11y total_turns=4
+[2026-06-13 10:27:48] [INFO] [run] total_tokens=15526 (in=14456, out=1070)
+[2026-06-13 10:27:48] [INFO] [run] total_cost=$0.000174
+[2026-06-13 10:27:48] [INFO] [run] agent=browser provider=gemini calls=4 in_tok=7475 out_tok=369 dollars=0.0
+[2026-06-13 10:27:48] [INFO] [run] agent=critic provider=groq calls=1 in_tok=873 out_tok=57 dollars=0.000174
+[2026-06-13 10:27:48] [INFO] [run] agent=distiller provider=gemini calls=1 in_tok=2698 out_tok=240 dollars=0.0
+[2026-06-13 10:27:48] [INFO] [run] agent=formatter provider=gemini calls=1 in_tok=973 out_tok=138 dollars=0.0
+[2026-06-13 10:27:48] [INFO] [run] agent=planner provider=gemini calls=1 in_tok=2437 out_tok=266 dollars=0.0

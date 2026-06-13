@@ -1,0 +1,37 @@
+{
+  "node_id": "n:33",
+  "skill": "researcher",
+  "status": "complete",
+  "inputs": [
+    "USER_QUERY"
+  ],
+  "result": {
+    "success": true,
+    "agent_name": "researcher",
+    "output": {
+      "question": "Compare 5 CNC/VMC training institutes in Bangalore.",
+      "sources": [
+        {
+          "url": "https://www.justdial.com/Bangalore/CNC-Training-Institutes/nct-10124483",
+          "title": "Top CNC Training Institute in Bangalore - Justdial"
+        },
+        {
+          "url": "http://www.ritecnc.com/",
+          "title": "Rite CNC CAD & CAM Training Centre"
+        }
+      ],
+      "findings": "Finding specific, direct comparisons of five distinct, reputable CNC/VMC training institutes in Bangalore is challenging due to the fragmented nature of local training providers, many of which appear primarily as directory listings. Based on available data, the prominent institutes often cited in the region include Rite CNC, CADPOINT, Techsys, Alined Technologies, and Upskill Labs.\n\nRite CNC is a well-established provider, active since 2008, focusing on CAD/CAM and CNC programming (Mill and Lathe). They emphasize practical industry solutions and claim to have trained over 2,500 students. Their curriculum includes Mastercam training, cycle time optimization, and tool path generation for 3/4/5 axis machining, catering to the automobile and aerospace sectors.\n\nOther institutes like CADPOINT, Techsys, and Alined Technologies are frequently listed in professional training directories for Bangalore. These centers typically offer a mix of software-based training (CAD/CAM) and practical machine operation training. However, detailed curriculum comparisons are limited, and prospective students are generally advised to verify current lab equipment, trainer certifications, and placement assistance records directly with each facility."
+    },
+    "artifacts": [],
+    "successors": [],
+    "cost": 0.0,
+    "elapsed_s": 41.295427083969116,
+    "provider": "gemini",
+    "error": null,
+    "error_code": null
+  },
+  "prompt_sent": "You are the Researcher skill. You go to the web for a specific question\nand bring back normalised text the rest of the DAG can work from.\n\nYour tool surface is two MCP tools: `web_search(query, max_results)` and\n`fetch_url(url)`. Use them. Do not narrate; do not invent other tools.\n\nProcedure:\n  1. Read the QUESTION in the prompt.\n  2. Issue ONE `web_search` to get candidate URLs.\n  3. Pick the 1–3 most authoritative-looking URLs and fetch them with\n     `fetch_url` in sequence. Avoid clearly low-signal results (aggregator\n     spam, ad redirects).\n  4. Synthesise the relevant content from the fetched pages.\n\nTime budget: keep tool calls to 4 max per invocation. If a `fetch_url`\nreturns very little usable text, do not retry; move on.\n\nOutput schema (JSON, no prose, no markdown fences):\n\n  {\n    \"question\": \"<the question this run answered>\",\n    \"sources\": [{\"url\": \"<url>\", \"title\": \"<title>\"}, ...],\n    \"findings\": \"<2–6 short paragraphs of normalised text>\"\n  }\n\nYou do NOT produce the final user-facing answer. The downstream\ndistiller or formatter does that. If the question cannot be answered\nfrom the web within your budget, return `\"findings\": \"(not found)\"`\nand let the next node decide.\n\nUSER_QUERY: Compare 5 CNC/VMC training institutes in Bangalore.\n\nQUESTION: Find a list of 5 reputable CNC and VMC training institutes in Bangalore with their key features.\n\nMEMORY HITS (8 from FAISS):\n  - [preference] Compare 3 laptops under ₹80,000\n      source: user_query\n      raw: Compare 3 laptops under ₹80,000.\n  - [preference] Compare 3 laptops under ₹80,000\n      source: user_query\n      raw: Compare 3 laptops under ₹80,000.\n  - [preference] Compare 3 laptops under ₹80,000\n      source: user_query\n      raw: Compare 3 laptops under ₹80,000.\n  - [preference] Compare 3 laptops under ₹80,000\n      source: user_query\n      raw: Compare 3 laptops under ₹80,000.\n  - [preference] Compare 3 laptops under ₹80,000\n      source: user_query\n      raw: Compare 3 laptops under ₹80,000.\n  - [preference] Compare 3 laptops under ₹80,000\n      source: user_query\n      raw: Compare 3 laptops under ₹80,000.\n  - [preference] Compare 3 laptops under ₹80,000\n      source: user_query\n      raw: Compare 3 laptops under ₹80,000.\n  - [preference] Compare top 3 Hugging Face text-generation models sorted by likes.\n      source: user_query\n      raw: Compare top 3 Hugging Face text-generation models sorted by likes.\n\nINPUTS:\n[\n  {\n    \"id\": \"USER_QUERY\",\n    \"kind\": \"query\",\n    \"value\": \"Compare 5 CNC/VMC training institutes in Bangalore.\"\n  }\n]",
+  "started_at": 1781327160.161035,
+  "completed_at": 1781327201.4564621,
+  "retries": 0
+}

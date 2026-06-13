@@ -1,0 +1,41 @@
+{
+  "node_id": "n:7",
+  "skill": "researcher",
+  "status": "complete",
+  "inputs": [
+    "USER_QUERY"
+  ],
+  "result": {
+    "success": true,
+    "agent_name": "researcher",
+    "output": {
+      "question": "Find 5 reputable CNC/VMC training institutes in Bangalore and provide details on their course offerings, duration, and placement support.",
+      "sources": [
+        {
+          "url": "https://www.imtmatraining.com/pages/4/finishing-school",
+          "title": "IMTMA Training - Finishing School"
+        },
+        {
+          "url": "https://www.facebook.com/p/Universal-cnc-vmc-training-institute-100068878635597/",
+          "title": "Universal CNC VMC Training Institute - Facebook"
+        },
+        {
+          "url": "https://www.instagram.com/hindustaancnc/",
+          "title": "Hindustaan CNC Training Centre"
+        }
+      ],
+      "findings": "Finding comprehensive, structured data for five distinct, reputable CNC/VMC institutes in Bangalore is challenging as many operate through social media or local listings rather than centralized, detailed websites. The Indian Machine Tool Manufacturers' Association (IMTMA) is the most authoritative entity, offering a 'Finishing School' that provides hands-on training on production CNC machines, CAD/CAM, and metrology, primarily targeting engineers and industry professionals. Their programs are highly industry-oriented.\n\nOther local providers, such as Universal CNC VMC Training Institute and Hindustaan CNC Training Centre (located in the nearby industrial hub of Hosur, which serves the Bangalore manufacturing ecosystem), frequently advertise through social media. These smaller institutes typically emphasize short-term, intensive courses (often 2 months) and claim to offer job placement assistance, though specific placement records and formal syllabus details are often managed directly via contact rather than public documentation.\n\nDue to the fragmented nature of this training market in Bangalore, prospective students are advised to verify placement claims by requesting alumni references or visiting the training facility to inspect their machine maintenance and software availability (CAD/CAM tools). Many reputed programs focus on practical machine time and G-code/M-code programming, which are essential for employability in the Bangalore manufacturing sector."
+    },
+    "artifacts": [],
+    "successors": [],
+    "cost": 0.0,
+    "elapsed_s": 54.13767409324646,
+    "provider": "gemini",
+    "error": null,
+    "error_code": null
+  },
+  "prompt_sent": "You are the Researcher skill. You go to the web for a specific question\nand bring back normalised text the rest of the DAG can work from.\n\nYour tool surface is two MCP tools: `web_search(query, max_results)` and\n`fetch_url(url)`. Use them. Do not narrate; do not invent other tools.\n\nProcedure:\n  1. Read the QUESTION in the prompt.\n  2. Issue ONE `web_search` to get candidate URLs.\n  3. Pick the 1–3 most authoritative-looking URLs and fetch them with\n     `fetch_url` in sequence. Avoid clearly low-signal results (aggregator\n     spam, ad redirects).\n  4. Synthesise the relevant content from the fetched pages.\n\nTime budget: keep tool calls to 4 max per invocation. If a `fetch_url`\nreturns very little usable text, do not retry; move on.\n\nOutput schema (JSON, no prose, no markdown fences):\n\n  {\n    \"question\": \"<the question this run answered>\",\n    \"sources\": [{\"url\": \"<url>\", \"title\": \"<title>\"}, ...],\n    \"findings\": \"<2–6 short paragraphs of normalised text>\"\n  }\n\nYou do NOT produce the final user-facing answer. The downstream\ndistiller or formatter does that. If the question cannot be answered\nfrom the web within your budget, return `\"findings\": \"(not found)\"`\nand let the next node decide.\n\nUSER_QUERY: Compare 5 CNC/VMC training institutes in Bangalore.\n\nQUESTION: Find 5 reputable CNC/VMC training institutes in Bangalore and provide details on their course offerings, duration, and placement support.\n\nMEMORY HITS (8 from FAISS):\n  - [preference] Compare 3 laptops under ₹80,000\n      source: user_query\n      raw: Compare 3 laptops under ₹80,000.\n  - [preference] Compare 3 laptops under ₹80,000\n      source: user_query\n      raw: Compare 3 laptops under ₹80,000.\n  - [preference] Compare 3 laptops under ₹80,000\n      source: user_query\n      raw: Compare 3 laptops under ₹80,000.\n  - [preference] Compare 3 laptops under ₹80,000\n      source: user_query\n      raw: Compare 3 laptops under ₹80,000.\n  - [preference] Compare 3 laptops under ₹80,000\n      source: user_query\n      raw: Compare 3 laptops under ₹80,000.\n  - [preference] Compare 3 laptops under ₹80,000\n      source: user_query\n      raw: Compare 3 laptops under ₹80,000.\n  - [preference] Compare 3 laptops under ₹80,000\n      source: user_query\n      raw: Compare 3 laptops under ₹80,000.\n  - [preference] Compare top 3 Hugging Face text-generation models sorted by likes.\n      source: user_query\n      raw: Compare top 3 Hugging Face text-generation models sorted by likes.\n\nINPUTS:\n[\n  {\n    \"id\": \"USER_QUERY\",\n    \"kind\": \"query\",\n    \"value\": \"Compare 5 CNC/VMC training institutes in Bangalore.\"\n  }\n]",
+  "started_at": 1781326884.6396358,
+  "completed_at": 1781326938.77731,
+  "retries": 0
+}

@@ -1,0 +1,40 @@
+{
+  "node_id": "n:23",
+  "skill": "distiller",
+  "status": "complete",
+  "inputs": [
+    "n:22"
+  ],
+  "result": {
+    "success": true,
+    "agent_name": "distiller",
+    "output": {
+      "fields": {
+        "institutes": [
+          "IMTMA Technology Centre",
+          "Vijay CAD/CAMM Solutions",
+          "Rite CNC CAD & CAM Training Centre"
+        ],
+        "location": "Bangalore",
+        "key_evaluation_criteria": [
+          "Ratio of hands-on machine time to theory",
+          "Faculty technical expertise",
+          "Software packages taught",
+          "Curriculum relevance to modern industrial requirements"
+        ]
+      },
+      "rationale": "The findings identify three specific CNC/VMC training institutes in Bangalore and list the key features recommended for comparing them."
+    },
+    "artifacts": [],
+    "successors": [],
+    "cost": 0.0,
+    "elapsed_s": 6.3603479862213135,
+    "provider": "gemini",
+    "error": null,
+    "error_code": null
+  },
+  "prompt_sent": "You are the Distiller skill. You receive raw text (typically the\n`findings` of one or more Researcher nodes, or the `chunks` of a\nRetriever node) and produce a small structured record.\n\nYou make no tool calls. You do no web access. Everything you need is\nalready in the prompt under INPUTS.\n\nProcedure:\n  1. Identify what fields the user's question implies (people, dates,\n     numbers, comparisons, percentages, attributions).\n  2. Pull those fields out of the inputs.\n  3. Emit a compact JSON record. Fields with no evidence in the inputs\n     are omitted, not made up.\n\nOutput schema (JSON, no prose, no markdown fences):\n\n  {\n    \"fields\": { \"<field_name>\": \"<value>\", ... },\n    \"rationale\": \"<one short sentence saying which input supports each field>\"\n  }\n\nNotes:\n  - The fields dictionary is the load-bearing output; downstream\n    Formatter nodes read it.\n  - When the question is a comparison (`fastest growing`, `largest`),\n    emit a `comparison` key with `winner: <id>` and `reason: <short>`.\n  - When the question's evidence is missing, set `fields: {}` and put\n    the gap in `rationale`. Do not invent.\n\nA Critic node may run after you. Its evaluation will fail if you\ninvented fields or made claims unsupported by the inputs.\n\nMEMORY HITS (8 from FAISS):\n  - [preference] Compare 3 laptops under ₹80,000\n      source: user_query\n      raw: Compare 3 laptops under ₹80,000.\n  - [preference] Compare 3 laptops under ₹80,000\n      source: user_query\n      raw: Compare 3 laptops under ₹80,000.\n  - [preference] Compare 3 laptops under ₹80,000\n      source: user_query\n      raw: Compare 3 laptops under ₹80,000.\n  - [preference] Compare 3 laptops under ₹80,000\n      source: user_query\n      raw: Compare 3 laptops under ₹80,000.\n  - [preference] Compare 3 laptops under ₹80,000\n      source: user_query\n      raw: Compare 3 laptops under ₹80,000.\n  - [preference] Compare 3 laptops under ₹80,000\n      source: user_query\n      raw: Compare 3 laptops under ₹80,000.\n  - [preference] Compare 3 laptops under ₹80,000\n      source: user_query\n      raw: Compare 3 laptops under ₹80,000.\n  - [preference] Compare top 3 Hugging Face text-generation models sorted by likes.\n      source: user_query\n      raw: Compare top 3 Hugging Face text-generation models sorted by likes.\n\nINPUTS:\n[\n  {\n    \"id\": \"n:22\",\n    \"kind\": \"upstream\",\n    \"skill\": \"researcher\",\n    \"output\": {\n      \"question\": \"List 5 reputable CNC and VMC training institutes in Bangalore with their key features for comparison.\",\n      \"sources\": [\n        {\n          \"url\": \"https://www.imtmatraining.com/programme_details/2826/manufacturing-processes-and-programming-on-cnc-turning-centres\",\n          \"title\": \"IMTMA Training\"\n        },\n        {\n          \"url\": \"https://www.iconsofindianbusiness.com/article/vijay-cad-camm-solutions-is-emerging-as-a-top-training-institute-in-bangalore\",\n          \"title\": \"Vijay CAD/CAMM Solutions\"\n        },\n        {\n          \"url\": \"https://www.justdial.com/Bangalore/Cnc-Machine-Training-Centres/nct-12143445\",\n          \"title\": \"Justdial CNC Training Directory\"\n        },\n        {\n          \"url\": \"https://coursetakers.com/india/bangalore/professional/it/programming/cnc-programming\",\n          \"title\": \"CourseTakers CNC Training\"\n        }\n      ],\n      \"findings\": \"Finding reputable training institutes for CNC and VMC machining in Bangalore involves looking for organizations that provide hands-on industrial exposure. The Indian Machine Tool Manufacturers\\u2019 Association (IMTMA) Technology Centre is widely considered one of the most authoritative venues, offering structured, industry-focused programs for engineers and technicians. Their training emphasizes practical manufacturing practices, CNC programming, and operation, often leveraging their own industrial-grade technology facilities.\\n\\nOther notable institutes frequently cited in professional directories include Vijay CAD/CAMM Solutions, which focuses on a blend of software-based design (Mastercam, Creo) and manual programming for CNC and VMC machines. These institutes generally target a mix of fresh graduates and working professionals looking to upskill in specific machining operations or software workflows.\\n\\nWhile multiple smaller training centers are listed on platforms like Justdial and CourseTakers, prospective students are encouraged to verify the specific machine availability (e.g., VMC vs. Turning centers), the extent of hands-on hours provided versus theoretical classroom time, and whether the institute offers placement assistance or industry-recognized certification. Institutes like Rite CNC CAD & CAM Training Centre are also referenced in local educational listings as providers of specialized CNC programming courses.\\n\\nWhen comparing these options, key features to evaluate include the ratio of hands-on machine time to theory, the technical expertise of the faculty (industry experience vs. academic), the specific software packages taught (CAD/CAM integration), and the relevance of the curriculum to modern industrial requirements like GD&T or high-precision manufacturing. Always check if the facility houses the actual machinery for practice or relies on simulation software alone.\"\n    }\n  }\n]",
+  "started_at": 1781327077.032846,
+  "completed_at": 1781327083.393195,
+  "retries": 0
+}

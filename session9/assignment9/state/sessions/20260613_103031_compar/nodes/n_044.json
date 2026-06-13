@@ -1,0 +1,50 @@
+{
+  "node_id": "n:44",
+  "skill": "distiller",
+  "status": "complete",
+  "inputs": [
+    "n:43"
+  ],
+  "result": {
+    "success": true,
+    "agent_name": "distiller",
+    "output": {
+      "fields": {
+        "institutes": [
+          {
+            "name": "CNC Tech India",
+            "highlights": "Structured modules covering CNC turning and VMC",
+            "features": "Covers fundamental operations to advanced programming, process planning, and cycle time study; caters to non-technical students, ITI/Diploma holders, and professionals."
+          },
+          {
+            "name": "Indian Machine Tool Manufacturers’ Association (IMTMA)",
+            "highlights": "Intensive, industry-focused training programs",
+            "features": "Focuses on manufacturing processes, CNC turning, and VMC programming; emphasizes hands-on technical competency."
+          },
+          {
+            "name": "Hi-Tech CAD CAM CNC",
+            "highlights": "Diploma-level courses in CNC and VMC operating and programming",
+            "features": "Designed to take students from basics to industrial readiness."
+          },
+          {
+            "name": "Indian Institute of Skill Development Training (IISDT)",
+            "highlights": "Online certificate courses for CNC operators",
+            "features": "Focuses on career advancement and skill development."
+          }
+        ]
+      },
+      "rationale": "The provided researcher findings identify four CNC/VMC training institutes; a fifth institute was not found in the input text."
+    },
+    "artifacts": [],
+    "successors": [],
+    "cost": 0.0,
+    "elapsed_s": 6.714982986450195,
+    "provider": "gemini",
+    "error": null,
+    "error_code": null
+  },
+  "prompt_sent": "You are the Distiller skill. You receive raw text (typically the\n`findings` of one or more Researcher nodes, or the `chunks` of a\nRetriever node) and produce a small structured record.\n\nYou make no tool calls. You do no web access. Everything you need is\nalready in the prompt under INPUTS.\n\nProcedure:\n  1. Identify what fields the user's question implies (people, dates,\n     numbers, comparisons, percentages, attributions).\n  2. Pull those fields out of the inputs.\n  3. Emit a compact JSON record. Fields with no evidence in the inputs\n     are omitted, not made up.\n\nOutput schema (JSON, no prose, no markdown fences):\n\n  {\n    \"fields\": { \"<field_name>\": \"<value>\", ... },\n    \"rationale\": \"<one short sentence saying which input supports each field>\"\n  }\n\nNotes:\n  - The fields dictionary is the load-bearing output; downstream\n    Formatter nodes read it.\n  - When the question is a comparison (`fastest growing`, `largest`),\n    emit a `comparison` key with `winner: <id>` and `reason: <short>`.\n  - When the question's evidence is missing, set `fields: {}` and put\n    the gap in `rationale`. Do not invent.\n\nA Critic node may run after you. Its evaluation will fail if you\ninvented fields or made claims unsupported by the inputs.\n\nQUESTION: Extract the names, course highlights, and key features of 5 CNC/VMC training institutes from the provided text.\n\nMEMORY HITS (8 from FAISS):\n  - [preference] Compare 3 laptops under ₹80,000\n      source: user_query\n      raw: Compare 3 laptops under ₹80,000.\n  - [preference] Compare 3 laptops under ₹80,000\n      source: user_query\n      raw: Compare 3 laptops under ₹80,000.\n  - [preference] Compare 3 laptops under ₹80,000\n      source: user_query\n      raw: Compare 3 laptops under ₹80,000.\n  - [preference] Compare 3 laptops under ₹80,000\n      source: user_query\n      raw: Compare 3 laptops under ₹80,000.\n  - [preference] Compare 3 laptops under ₹80,000\n      source: user_query\n      raw: Compare 3 laptops under ₹80,000.\n  - [preference] Compare 3 laptops under ₹80,000\n      source: user_query\n      raw: Compare 3 laptops under ₹80,000.\n  - [preference] Compare 3 laptops under ₹80,000\n      source: user_query\n      raw: Compare 3 laptops under ₹80,000.\n  - [preference] Compare top 3 Hugging Face text-generation models sorted by likes.\n      source: user_query\n      raw: Compare top 3 Hugging Face text-generation models sorted by likes.\n\nINPUTS:\n[\n  {\n    \"id\": \"n:43\",\n    \"kind\": \"upstream\",\n    \"skill\": \"researcher\",\n    \"output\": {\n      \"question\": \"Find a list of 5 reputable CNC/VMC training institutes in Bangalore with details on their courses.\",\n      \"sources\": [\n        {\n          \"url\": \"https://cnctechindia.com/trainings-old/\",\n          \"title\": \"Training Old \\u2013 CNC Tech India\"\n        },\n        {\n          \"url\": \"https://www.imtmatraining.com/programme_details/2930/manufacturing-processes-and-programming-on-cnc-turning-centres\",\n          \"title\": \"IMTMA Training\"\n        },\n        {\n          \"url\": \"https://hi-techcadcamcnc.com/Diploma-CNC-VMC-Operating-Programming-course.html\",\n          \"title\": \"Diploma CNC & VCM Operating Programming Training Course\"\n        }\n      ],\n      \"findings\": \"Finding five distinct, highly reputable training centers specifically focused on CNC/VMC in Bangalore is challenging due to the fragmented nature of vocational training listings. However, several established entities provide such training. CNC Tech India is a prominent provider offering structured modules covering CNC turning and VMC, ranging from fundamental machine operations to advanced programming, process planning, and cycle time study. They cater to diverse demographics, including non-technical students, ITI/Diploma holders, and industry professionals.\\n\\nThe Indian Machine Tool Manufacturers\\u2019 Association (IMTMA) is a highly authoritative body that conducts intensive, industry-focused training programs on manufacturing processes, CNC turning, and VMC programming. Their courses are often aimed at professional upskilling and hands-on technical competency.\\n\\nOther providers include private vocational training centers like Hi-Tech CAD CAM CNC, which offers diploma-level courses in CNC and VMC operating and programming, designed to take students from basics to industrial readiness. Additionally, the Indian Institute of Skill Development Training (IISDT) provides online certificate courses for CNC operators, focusing on career advancement and skill development.\\n\\nWhile these institutes provide recognized training paths, prospective students are advised to verify the current availability of hands-on lab access, as many centers now offer a mix of theoretical online modules and physical shop-floor training. Due to limited public data, it is recommended that interested candidates contact these centers directly to confirm batch schedules and specific curriculum alignment with their career goals.\"\n    }\n  }\n]",
+  "started_at": 1781327331.496471,
+  "completed_at": 1781327338.211454,
+  "retries": 0
+}

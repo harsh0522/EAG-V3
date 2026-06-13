@@ -1,0 +1,43 @@
+{
+  "node_id": "n:22",
+  "skill": "researcher",
+  "status": "complete",
+  "inputs": [],
+  "result": {
+    "success": true,
+    "agent_name": "researcher",
+    "output": {
+      "question": "List 5 reputable CNC and VMC training institutes in Bangalore with their key features for comparison.",
+      "sources": [
+        {
+          "url": "https://www.imtmatraining.com/programme_details/2826/manufacturing-processes-and-programming-on-cnc-turning-centres",
+          "title": "IMTMA Training"
+        },
+        {
+          "url": "https://www.iconsofindianbusiness.com/article/vijay-cad-camm-solutions-is-emerging-as-a-top-training-institute-in-bangalore",
+          "title": "Vijay CAD/CAMM Solutions"
+        },
+        {
+          "url": "https://www.justdial.com/Bangalore/Cnc-Machine-Training-Centres/nct-12143445",
+          "title": "Justdial CNC Training Directory"
+        },
+        {
+          "url": "https://coursetakers.com/india/bangalore/professional/it/programming/cnc-programming",
+          "title": "CourseTakers CNC Training"
+        }
+      ],
+      "findings": "Finding reputable training institutes for CNC and VMC machining in Bangalore involves looking for organizations that provide hands-on industrial exposure. The Indian Machine Tool Manufacturers’ Association (IMTMA) Technology Centre is widely considered one of the most authoritative venues, offering structured, industry-focused programs for engineers and technicians. Their training emphasizes practical manufacturing practices, CNC programming, and operation, often leveraging their own industrial-grade technology facilities.\n\nOther notable institutes frequently cited in professional directories include Vijay CAD/CAMM Solutions, which focuses on a blend of software-based design (Mastercam, Creo) and manual programming for CNC and VMC machines. These institutes generally target a mix of fresh graduates and working professionals looking to upskill in specific machining operations or software workflows.\n\nWhile multiple smaller training centers are listed on platforms like Justdial and CourseTakers, prospective students are encouraged to verify the specific machine availability (e.g., VMC vs. Turning centers), the extent of hands-on hours provided versus theoretical classroom time, and whether the institute offers placement assistance or industry-recognized certification. Institutes like Rite CNC CAD & CAM Training Centre are also referenced in local educational listings as providers of specialized CNC programming courses.\n\nWhen comparing these options, key features to evaluate include the ratio of hands-on machine time to theory, the technical expertise of the faculty (industry experience vs. academic), the specific software packages taught (CAD/CAM integration), and the relevance of the curriculum to modern industrial requirements like GD&T or high-precision manufacturing. Always check if the facility houses the actual machinery for practice or relies on simulation software alone."
+    },
+    "artifacts": [],
+    "successors": [],
+    "cost": 0.0,
+    "elapsed_s": 30.46124291419983,
+    "provider": "gemini",
+    "error": null,
+    "error_code": null
+  },
+  "prompt_sent": "You are the Researcher skill. You go to the web for a specific question\nand bring back normalised text the rest of the DAG can work from.\n\nYour tool surface is two MCP tools: `web_search(query, max_results)` and\n`fetch_url(url)`. Use them. Do not narrate; do not invent other tools.\n\nProcedure:\n  1. Read the QUESTION in the prompt.\n  2. Issue ONE `web_search` to get candidate URLs.\n  3. Pick the 1–3 most authoritative-looking URLs and fetch them with\n     `fetch_url` in sequence. Avoid clearly low-signal results (aggregator\n     spam, ad redirects).\n  4. Synthesise the relevant content from the fetched pages.\n\nTime budget: keep tool calls to 4 max per invocation. If a `fetch_url`\nreturns very little usable text, do not retry; move on.\n\nOutput schema (JSON, no prose, no markdown fences):\n\n  {\n    \"question\": \"<the question this run answered>\",\n    \"sources\": [{\"url\": \"<url>\", \"title\": \"<title>\"}, ...],\n    \"findings\": \"<2–6 short paragraphs of normalised text>\"\n  }\n\nYou do NOT produce the final user-facing answer. The downstream\ndistiller or formatter does that. If the question cannot be answered\nfrom the web within your budget, return `\"findings\": \"(not found)\"`\nand let the next node decide.\n\nQUESTION: List 5 reputable CNC and VMC training institutes in Bangalore with their key features for comparison.\n\nMEMORY HITS (8 from FAISS):\n  - [preference] Compare 3 laptops under ₹80,000\n      source: user_query\n      raw: Compare 3 laptops under ₹80,000.\n  - [preference] Compare 3 laptops under ₹80,000\n      source: user_query\n      raw: Compare 3 laptops under ₹80,000.\n  - [preference] Compare 3 laptops under ₹80,000\n      source: user_query\n      raw: Compare 3 laptops under ₹80,000.\n  - [preference] Compare 3 laptops under ₹80,000\n      source: user_query\n      raw: Compare 3 laptops under ₹80,000.\n  - [preference] Compare 3 laptops under ₹80,000\n      source: user_query\n      raw: Compare 3 laptops under ₹80,000.\n  - [preference] Compare 3 laptops under ₹80,000\n      source: user_query\n      raw: Compare 3 laptops under ₹80,000.\n  - [preference] Compare 3 laptops under ₹80,000\n      source: user_query\n      raw: Compare 3 laptops under ₹80,000.\n  - [preference] Compare top 3 Hugging Face text-generation models sorted by likes.\n      source: user_query\n      raw: Compare top 3 Hugging Face text-generation models sorted by likes.\n\nINPUTS:\n[]",
+  "started_at": 1781327046.56847,
+  "completed_at": 1781327077.029713,
+  "retries": 0
+}

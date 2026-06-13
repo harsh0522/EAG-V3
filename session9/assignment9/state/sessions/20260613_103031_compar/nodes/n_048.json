@@ -1,0 +1,41 @@
+{
+  "node_id": "n:48",
+  "skill": "researcher",
+  "status": "complete",
+  "inputs": [
+    "USER_QUERY"
+  ],
+  "result": {
+    "success": true,
+    "agent_name": "researcher",
+    "output": {
+      "question": "List 5 reputable CNC/VMC training institutes in Bangalore with their key features for comparison.",
+      "sources": [
+        {
+          "url": "http://mtmabc.org/training",
+          "title": "IMTMA Training / Technology Centre"
+        },
+        {
+          "url": "https://mariacncinstitute.in/services/",
+          "title": "Maria CNC Institute"
+        },
+        {
+          "url": "https://hi-techcadcamcnc.com/Diploma-CNC-VMC-Operating-Programming-course.html",
+          "title": "HI-TECH CAD/CAM/CNC Technologies"
+        }
+      ],
+      "findings": "Finding five reputable CNC/VMC training institutes specifically localized in Bangalore is limited by available web data, as many prominent training providers operate nationally or have a primary presence in other industrial hubs like Pune or Mumbai. The following three are highlighted for their specific industry focus, while two others are notable general engineering training entities in the region.\n\n1. IMTMA (Indian Machine Tool Manufacturers' Association) Technology Centre, Bangalore: This is an industry-backed, highly reputable center. It offers comprehensive, systematic training ranging from basic to advanced levels, including CNC programming, operation, maintenance, metrology, and CAD/CAM. It features a state-of-the-art facility with actual production machinery and is designed for both shop floor personnel and management.\n\n2. Maria CNC Institute: While primarily based in Mumbai, they are recognized for skill-based, hands-on training. They offer 2-month intensive courses covering VMC and CNC lathe programming, G-code, tool setting, and live machining, focusing on industry readiness.\n\n3. HI-TECH CAD/CAM/CNC Technologies: Primarily based in Pune, this institute provides a long-term 6-month Advanced Diploma. Their curriculum covers comprehensive CNC/VMC operating and programming, tooling, and cutting parameter calculations, catering to a wide range of students from 10th grade to engineering graduates.\n\n4. Nettur Technical Training Foundation (NTTF), Bangalore: A well-known institution in Bangalore with a long history of vocational training. They offer various diploma and certificate programs in tool and die making, which include significant components of CNC/VMC operation and programming within their manufacturing curriculum.\n\n5. GTTC (Government Tool Room and Training Centre), Bangalore: A government-backed initiative with multiple centers across Bangalore. They are highly regarded for providing structured, long-term vocational training and short-term skill development programs in CNC machining, VMC operation, and precision engineering for the manufacturing sector."
+    },
+    "artifacts": [],
+    "successors": [],
+    "cost": 0.0,
+    "elapsed_s": 32.449729919433594,
+    "provider": "gemini",
+    "error": null,
+    "error_code": null
+  },
+  "prompt_sent": "You are the Researcher skill. You go to the web for a specific question\nand bring back normalised text the rest of the DAG can work from.\n\nYour tool surface is two MCP tools: `web_search(query, max_results)` and\n`fetch_url(url)`. Use them. Do not narrate; do not invent other tools.\n\nProcedure:\n  1. Read the QUESTION in the prompt.\n  2. Issue ONE `web_search` to get candidate URLs.\n  3. Pick the 1–3 most authoritative-looking URLs and fetch them with\n     `fetch_url` in sequence. Avoid clearly low-signal results (aggregator\n     spam, ad redirects).\n  4. Synthesise the relevant content from the fetched pages.\n\nTime budget: keep tool calls to 4 max per invocation. If a `fetch_url`\nreturns very little usable text, do not retry; move on.\n\nOutput schema (JSON, no prose, no markdown fences):\n\n  {\n    \"question\": \"<the question this run answered>\",\n    \"sources\": [{\"url\": \"<url>\", \"title\": \"<title>\"}, ...],\n    \"findings\": \"<2–6 short paragraphs of normalised text>\"\n  }\n\nYou do NOT produce the final user-facing answer. The downstream\ndistiller or formatter does that. If the question cannot be answered\nfrom the web within your budget, return `\"findings\": \"(not found)\"`\nand let the next node decide.\n\nUSER_QUERY: Compare 5 CNC/VMC training institutes in Bangalore.\n\nQUESTION: List 5 reputable CNC/VMC training institutes in Bangalore with their key features for comparison.\n\nMEMORY HITS (8 from FAISS):\n  - [preference] Compare 3 laptops under ₹80,000\n      source: user_query\n      raw: Compare 3 laptops under ₹80,000.\n  - [preference] Compare 3 laptops under ₹80,000\n      source: user_query\n      raw: Compare 3 laptops under ₹80,000.\n  - [preference] Compare 3 laptops under ₹80,000\n      source: user_query\n      raw: Compare 3 laptops under ₹80,000.\n  - [preference] Compare 3 laptops under ₹80,000\n      source: user_query\n      raw: Compare 3 laptops under ₹80,000.\n  - [preference] Compare 3 laptops under ₹80,000\n      source: user_query\n      raw: Compare 3 laptops under ₹80,000.\n  - [preference] Compare 3 laptops under ₹80,000\n      source: user_query\n      raw: Compare 3 laptops under ₹80,000.\n  - [preference] Compare 3 laptops under ₹80,000\n      source: user_query\n      raw: Compare 3 laptops under ₹80,000.\n  - [preference] Compare top 3 Hugging Face text-generation models sorted by likes.\n      source: user_query\n      raw: Compare top 3 Hugging Face text-generation models sorted by likes.\n\nINPUTS:\n[\n  {\n    \"id\": \"USER_QUERY\",\n    \"kind\": \"query\",\n    \"value\": \"Compare 5 CNC/VMC training institutes in Bangalore.\"\n  }\n]",
+  "started_at": 1781327340.885548,
+  "completed_at": 1781327373.335278,
+  "retries": 0
+}

@@ -1,0 +1,45 @@
+{
+  "node_id": "n:2",
+  "skill": "researcher",
+  "status": "complete",
+  "inputs": [
+    "USER_QUERY"
+  ],
+  "result": {
+    "success": true,
+    "agent_name": "researcher",
+    "output": {
+      "question": "Find 5 highly-rated CNC/VMC training institutes in Bangalore with details on their courses and reputation.",
+      "sources": [
+        {
+          "url": "https://www.sulekha.com/cnc-programming-training/bangalore",
+          "title": "CNC Programming Training in Bangalore, Classes, Courses, Institutes | Sulekha Bangalore"
+        },
+        {
+          "url": "https://www.justdial.com/Bangalore/CNC-Training-Institutes/nct-10124483",
+          "title": "Top CNC Training Institute in Bangalore - Best CNC Programming Training - Justdial"
+        },
+        {
+          "url": "https://www.cnctechengineers.com/",
+          "title": "CNC TECH ENGINEERS - CNC PROGRAMMING COURSE - VMC PROGRAMMING COURSE - CAD MASTERCAM"
+        },
+        {
+          "url": "http://www.startautomation.in/cnc-machine-program-training-bangalore.html",
+          "title": "CNC Program Training Courses, Diploma in CNC Machine Program"
+        }
+      ],
+      "findings": "Finding specific, highly-rated individual institutes for CNC/VMC training in Bangalore via web search reveals a fragmented landscape. Aggregator platforms like Sulekha and Justdial host listings for over 100 centers, but these lack qualitative, verified rankings. Users typically navigate these lists based on location, proximity to industrial hubs, and direct inquiries about hands-on machine availability.\n\nTechnologics (Start Automation) is a notable entity in Bangalore providing industrial automation and mechanical design training, including courses relevant to CNC/VMC operations. Their focus is on placement-oriented industrial training, targeting both students and professionals looking to bridge the skill gap in manufacturing and automation sectors.\n\nCNC Tech Engineers is another prominent specialized training provider. While their primary center is based in Thane (Mumbai), they are frequently cited in discussions regarding comprehensive CNC/VMC training. They emphasize hands-on practice on actual live machines, offering courses in CNC Lathe, VMC Milling, and CAD/CAM software like Mastercam and AutoCAD, with a curriculum that covers machine operation, G-code/M-code programming, and tool setting.\n\nWhen evaluating institutes in Bangalore, prospective students are generally advised to prioritize centers that offer 'live machine' training rather than purely theoretical or simulation-based courses. Key criteria for evaluation include the age and type of CNC/VMC machines available for practice, the experience of the instructors (often retired industry professionals), and the inclusion of CAD/CAM software training which is essential for modern CNC programming roles.\n\nDue to the lack of a centralized, objective rating system for these technical training centers, it is recommended that interested candidates visit the facilities in person. Key questions to ask include the ratio of students to machines, the duration of hands-on practice hours included in the fee, and the nature of placement support provided, as many local institutes utilize their proximity to local manufacturing clusters to facilitate job placement."
+    },
+    "artifacts": [],
+    "successors": [],
+    "cost": 0.0,
+    "elapsed_s": 22.29304599761963,
+    "provider": "gemini",
+    "error": null,
+    "error_code": null
+  },
+  "prompt_sent": "You are the Researcher skill. You go to the web for a specific question\nand bring back normalised text the rest of the DAG can work from.\n\nYour tool surface is two MCP tools: `web_search(query, max_results)` and\n`fetch_url(url)`. Use them. Do not narrate; do not invent other tools.\n\nProcedure:\n  1. Read the QUESTION in the prompt.\n  2. Issue ONE `web_search` to get candidate URLs.\n  3. Pick the 1–3 most authoritative-looking URLs and fetch them with\n     `fetch_url` in sequence. Avoid clearly low-signal results (aggregator\n     spam, ad redirects).\n  4. Synthesise the relevant content from the fetched pages.\n\nTime budget: keep tool calls to 4 max per invocation. If a `fetch_url`\nreturns very little usable text, do not retry; move on.\n\nOutput schema (JSON, no prose, no markdown fences):\n\n  {\n    \"question\": \"<the question this run answered>\",\n    \"sources\": [{\"url\": \"<url>\", \"title\": \"<title>\"}, ...],\n    \"findings\": \"<2–6 short paragraphs of normalised text>\"\n  }\n\nYou do NOT produce the final user-facing answer. The downstream\ndistiller or formatter does that. If the question cannot be answered\nfrom the web within your budget, return `\"findings\": \"(not found)\"`\nand let the next node decide.\n\nUSER_QUERY: Compare 5 CNC/VMC training institutes in Bangalore.\n\nQUESTION: Find 5 highly-rated CNC/VMC training institutes in Bangalore with details on their courses and reputation.\n\nMEMORY HITS (8 from FAISS):\n  - [preference] Compare 3 laptops under ₹80,000\n      source: user_query\n      raw: Compare 3 laptops under ₹80,000.\n  - [preference] Compare 3 laptops under ₹80,000\n      source: user_query\n      raw: Compare 3 laptops under ₹80,000.\n  - [preference] Compare 3 laptops under ₹80,000\n      source: user_query\n      raw: Compare 3 laptops under ₹80,000.\n  - [preference] Compare 3 laptops under ₹80,000\n      source: user_query\n      raw: Compare 3 laptops under ₹80,000.\n  - [preference] Compare 3 laptops under ₹80,000\n      source: user_query\n      raw: Compare 3 laptops under ₹80,000.\n  - [preference] Compare 3 laptops under ₹80,000\n      source: user_query\n      raw: Compare 3 laptops under ₹80,000.\n  - [preference] Compare 3 laptops under ₹80,000\n      source: user_query\n      raw: Compare 3 laptops under ₹80,000.\n  - [preference] Compare top 3 Hugging Face text-generation models sorted by likes.\n      source: user_query\n      raw: Compare top 3 Hugging Face text-generation models sorted by likes.\n\nINPUTS:\n[\n  {\n    \"id\": \"USER_QUERY\",\n    \"kind\": \"query\",\n    \"value\": \"Compare 5 CNC/VMC training institutes in Bangalore.\"\n  }\n]",
+  "started_at": 1781326847.639317,
+  "completed_at": 1781326869.932364,
+  "retries": 0
+}

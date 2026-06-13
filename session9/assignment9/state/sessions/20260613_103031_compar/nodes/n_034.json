@@ -1,0 +1,55 @@
+{
+  "node_id": "n:34",
+  "skill": "distiller",
+  "status": "complete",
+  "inputs": [
+    "n:33"
+  ],
+  "result": {
+    "success": true,
+    "agent_name": "distiller",
+    "output": {
+      "fields": {
+        "institutes": [
+          {
+            "name": "Rite CNC",
+            "highlights": "CAD/CAM, CNC programming (Mill and Lathe), Mastercam, cycle time optimization, 3/4/5 axis machining",
+            "location": "Bangalore"
+          },
+          {
+            "name": "CADPOINT",
+            "highlights": "Software-based training (CAD/CAM) and practical machine operation",
+            "location": "Bangalore"
+          },
+          {
+            "name": "Techsys",
+            "highlights": "Software-based training (CAD/CAM) and practical machine operation",
+            "location": "Bangalore"
+          },
+          {
+            "name": "Alined Technologies",
+            "highlights": "Software-based training (CAD/CAM) and practical machine operation",
+            "location": "Bangalore"
+          },
+          {
+            "name": "Upskill Labs",
+            "highlights": "Not specified",
+            "location": "Bangalore"
+          }
+        ]
+      },
+      "rationale": "The findings from the researcher node (n:33) provide the names of five Bangalore-based institutes and general curriculum details for them."
+    },
+    "artifacts": [],
+    "successors": [],
+    "cost": 0.0,
+    "elapsed_s": 7.0873188972473145,
+    "provider": "gemini",
+    "error": null,
+    "error_code": null
+  },
+  "prompt_sent": "You are the Distiller skill. You receive raw text (typically the\n`findings` of one or more Researcher nodes, or the `chunks` of a\nRetriever node) and produce a small structured record.\n\nYou make no tool calls. You do no web access. Everything you need is\nalready in the prompt under INPUTS.\n\nProcedure:\n  1. Identify what fields the user's question implies (people, dates,\n     numbers, comparisons, percentages, attributions).\n  2. Pull those fields out of the inputs.\n  3. Emit a compact JSON record. Fields with no evidence in the inputs\n     are omitted, not made up.\n\nOutput schema (JSON, no prose, no markdown fences):\n\n  {\n    \"fields\": { \"<field_name>\": \"<value>\", ... },\n    \"rationale\": \"<one short sentence saying which input supports each field>\"\n  }\n\nNotes:\n  - The fields dictionary is the load-bearing output; downstream\n    Formatter nodes read it.\n  - When the question is a comparison (`fastest growing`, `largest`),\n    emit a `comparison` key with `winner: <id>` and `reason: <short>`.\n  - When the question's evidence is missing, set `fields: {}` and put\n    the gap in `rationale`. Do not invent.\n\nA Critic node may run after you. Its evaluation will fail if you\ninvented fields or made claims unsupported by the inputs.\n\nQUESTION: Extract the names, course highlights, and location for 5 CNC/VMC training institutes from the search results.\n\nMEMORY HITS (8 from FAISS):\n  - [preference] Compare 3 laptops under ₹80,000\n      source: user_query\n      raw: Compare 3 laptops under ₹80,000.\n  - [preference] Compare 3 laptops under ₹80,000\n      source: user_query\n      raw: Compare 3 laptops under ₹80,000.\n  - [preference] Compare 3 laptops under ₹80,000\n      source: user_query\n      raw: Compare 3 laptops under ₹80,000.\n  - [preference] Compare 3 laptops under ₹80,000\n      source: user_query\n      raw: Compare 3 laptops under ₹80,000.\n  - [preference] Compare 3 laptops under ₹80,000\n      source: user_query\n      raw: Compare 3 laptops under ₹80,000.\n  - [preference] Compare 3 laptops under ₹80,000\n      source: user_query\n      raw: Compare 3 laptops under ₹80,000.\n  - [preference] Compare 3 laptops under ₹80,000\n      source: user_query\n      raw: Compare 3 laptops under ₹80,000.\n  - [preference] Compare top 3 Hugging Face text-generation models sorted by likes.\n      source: user_query\n      raw: Compare top 3 Hugging Face text-generation models sorted by likes.\n\nINPUTS:\n[\n  {\n    \"id\": \"n:33\",\n    \"kind\": \"upstream\",\n    \"skill\": \"researcher\",\n    \"output\": {\n      \"question\": \"Compare 5 CNC/VMC training institutes in Bangalore.\",\n      \"sources\": [\n        {\n          \"url\": \"https://www.justdial.com/Bangalore/CNC-Training-Institutes/nct-10124483\",\n          \"title\": \"Top CNC Training Institute in Bangalore - Justdial\"\n        },\n        {\n          \"url\": \"http://www.ritecnc.com/\",\n          \"title\": \"Rite CNC CAD & CAM Training Centre\"\n        }\n      ],\n      \"findings\": \"Finding specific, direct comparisons of five distinct, reputable CNC/VMC training institutes in Bangalore is challenging due to the fragmented nature of local training providers, many of which appear primarily as directory listings. Based on available data, the prominent institutes often cited in the region include Rite CNC, CADPOINT, Techsys, Alined Technologies, and Upskill Labs.\\n\\nRite CNC is a well-established provider, active since 2008, focusing on CAD/CAM and CNC programming (Mill and Lathe). They emphasize practical industry solutions and claim to have trained over 2,500 students. Their curriculum includes Mastercam training, cycle time optimization, and tool path generation for 3/4/5 axis machining, catering to the automobile and aerospace sectors.\\n\\nOther institutes like CADPOINT, Techsys, and Alined Technologies are frequently listed in professional training directories for Bangalore. These centers typically offer a mix of software-based training (CAD/CAM) and practical machine operation training. However, detailed curriculum comparisons are limited, and prospective students are generally advised to verify current lab equipment, trainer certifications, and placement assistance records directly with each facility.\"\n    }\n  }\n]",
+  "started_at": 1781327201.45994,
+  "completed_at": 1781327208.5472598,
+  "retries": 0
+}

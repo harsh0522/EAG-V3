@@ -1,0 +1,27 @@
+{
+  "node_id": "n:28",
+  "skill": "distiller",
+  "status": "complete",
+  "inputs": [
+    "n:27"
+  ],
+  "result": {
+    "success": true,
+    "agent_name": "distiller",
+    "output": {
+      "fields": {},
+      "rationale": "The provided input only identifies one specific institute (IMTMA Technology Centre) and explicitly states that data on four other specific, highly reputable individual private institutes in Bangalore is limited or unavailable."
+    },
+    "artifacts": [],
+    "successors": [],
+    "cost": 0.0,
+    "elapsed_s": 5.8170318603515625,
+    "provider": "gemini",
+    "error": null,
+    "error_code": null
+  },
+  "prompt_sent": "You are the Distiller skill. You receive raw text (typically the\n`findings` of one or more Researcher nodes, or the `chunks` of a\nRetriever node) and produce a small structured record.\n\nYou make no tool calls. You do no web access. Everything you need is\nalready in the prompt under INPUTS.\n\nProcedure:\n  1. Identify what fields the user's question implies (people, dates,\n     numbers, comparisons, percentages, attributions).\n  2. Pull those fields out of the inputs.\n  3. Emit a compact JSON record. Fields with no evidence in the inputs\n     are omitted, not made up.\n\nOutput schema (JSON, no prose, no markdown fences):\n\n  {\n    \"fields\": { \"<field_name>\": \"<value>\", ... },\n    \"rationale\": \"<one short sentence saying which input supports each field>\"\n  }\n\nNotes:\n  - The fields dictionary is the load-bearing output; downstream\n    Formatter nodes read it.\n  - When the question is a comparison (`fastest growing`, `largest`),\n    emit a `comparison` key with `winner: <id>` and `reason: <short>`.\n  - When the question's evidence is missing, set `fields: {}` and put\n    the gap in `rationale`. Do not invent.\n\nA Critic node may run after you. Its evaluation will fail if you\ninvented fields or made claims unsupported by the inputs.\n\nQUESTION: Extract exactly 5 CNC/VMC training institutes from the provided text, including their name and key training focus.\n\nMEMORY HITS (8 from FAISS):\n  - [preference] Compare 3 laptops under ₹80,000\n      source: user_query\n      raw: Compare 3 laptops under ₹80,000.\n  - [preference] Compare 3 laptops under ₹80,000\n      source: user_query\n      raw: Compare 3 laptops under ₹80,000.\n  - [preference] Compare 3 laptops under ₹80,000\n      source: user_query\n      raw: Compare 3 laptops under ₹80,000.\n  - [preference] Compare 3 laptops under ₹80,000\n      source: user_query\n      raw: Compare 3 laptops under ₹80,000.\n  - [preference] Compare 3 laptops under ₹80,000\n      source: user_query\n      raw: Compare 3 laptops under ₹80,000.\n  - [preference] Compare 3 laptops under ₹80,000\n      source: user_query\n      raw: Compare 3 laptops under ₹80,000.\n  - [preference] Compare 3 laptops under ₹80,000\n      source: user_query\n      raw: Compare 3 laptops under ₹80,000.\n  - [preference] Compare top 3 Hugging Face text-generation models sorted by likes.\n      source: user_query\n      raw: Compare top 3 Hugging Face text-generation models sorted by likes.\n\nINPUTS:\n[\n  {\n    \"id\": \"n:27\",\n    \"kind\": \"upstream\",\n    \"skill\": \"researcher\",\n    \"output\": {\n      \"question\": \"List 5 reputable CNC/VMC training institutes in Bangalore with their key features.\",\n      \"sources\": [\n        {\n          \"url\": \"http://mtmabc.org/training\",\n          \"title\": \"IMTMA Training / Technology Centre\"\n        },\n        {\n          \"url\": \"https://www.justdial.com/Bangalore/VMC-Training-Institutes-in-Lido-Shopping-Mall-Ulsoor/nct-11279795\",\n          \"title\": \"Justdial Listing for VMC Training in Bangalore\"\n        }\n      ],\n      \"findings\": \"The Indian Machine Tool Manufacturers' Association (IMTMA) Technology Centre in Bangalore is a primary, industry-backed facility for CNC and VMC training. It provides comprehensive hands-on training, covering CNC programming, operation, maintenance, and CAD/CAM software. The facility is equipped with industrial-grade machines from BFW and Jyoti, and it offers programs ranging from basic to advanced levels, including specialized modules on tooling, metrology, and productivity improvement.\\n\\nWhile IMTMA is the most prominent industry-standard institute, Bangalore hosts various private vocational training centers specializing in CNC/VMC operations. Other institutions often listed in local directories include private technical training providers such as those found near industrial hubs like Peenya or central areas, which focus on practical shop-floor skills, G-code programming, and machine setup. Potential students are advised to verify that any chosen institute provides significant hours of 'live' machine time rather than purely theoretical instruction.\\n\\n(Note: Maria CNC Institute, while appearing in search results for CNC training, is primarily based in Mumbai and is not a Bangalore-based institute. Data on four other specific, highly reputable individual private institutes in Bangalore is limited to regional aggregator listings, which often fluctuate in reliability. It is recommended to contact local industrial associations like the Peenya Industries Association for updated lists of verified local training partners.)\"\n    }\n  }\n]",
+  "started_at": 1781327143.2501802,
+  "completed_at": 1781327149.067212,
+  "retries": 0
+}

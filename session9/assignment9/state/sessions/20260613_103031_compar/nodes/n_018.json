@@ -1,0 +1,39 @@
+{
+  "node_id": "n:18",
+  "skill": "distiller",
+  "status": "complete",
+  "inputs": [
+    "n:17"
+  ],
+  "result": {
+    "success": true,
+    "agent_name": "distiller",
+    "output": {
+      "fields": {
+        "institutes": [
+          {
+            "name": "IMTMA (Indian Machine Tool Manufacturers' Association)",
+            "key_features": "Industry-recognized, instructor-led, emphasizes industry-standard tools and virtual hands-on experience."
+          },
+          {
+            "name": "Vijay CAD/CAMM Solutions",
+            "courses": "Mastercam Mill, Mastercam Lathe, manual programming for CNC and VMC",
+            "key_features": "Caters to both academic and corporate training needs."
+          }
+        ]
+      },
+      "rationale": "The input provided detailed information for only two institutes; data for five institutes, specific course durations, and standardized features for other centers are missing."
+    },
+    "artifacts": [],
+    "successors": [],
+    "cost": 0.0,
+    "elapsed_s": 2.6069061756134033,
+    "provider": "gemini",
+    "error": null,
+    "error_code": null
+  },
+  "prompt_sent": "You are the Distiller skill. You receive raw text (typically the\n`findings` of one or more Researcher nodes, or the `chunks` of a\nRetriever node) and produce a small structured record.\n\nYou make no tool calls. You do no web access. Everything you need is\nalready in the prompt under INPUTS.\n\nProcedure:\n  1. Identify what fields the user's question implies (people, dates,\n     numbers, comparisons, percentages, attributions).\n  2. Pull those fields out of the inputs.\n  3. Emit a compact JSON record. Fields with no evidence in the inputs\n     are omitted, not made up.\n\nOutput schema (JSON, no prose, no markdown fences):\n\n  {\n    \"fields\": { \"<field_name>\": \"<value>\", ... },\n    \"rationale\": \"<one short sentence saying which input supports each field>\"\n  }\n\nNotes:\n  - The fields dictionary is the load-bearing output; downstream\n    Formatter nodes read it.\n  - When the question is a comparison (`fastest growing`, `largest`),\n    emit a `comparison` key with `winner: <id>` and `reason: <short>`.\n  - When the question's evidence is missing, set `fields: {}` and put\n    the gap in `rationale`. Do not invent.\n\nA Critic node may run after you. Its evaluation will fail if you\ninvented fields or made claims unsupported by the inputs.\n\nQUESTION: Extract a structured list of 5 CNC/VMC training institutes in Bangalore with their course names, duration, and key features.\n\nMEMORY HITS (8 from FAISS):\n  - [preference] Compare 3 laptops under ₹80,000\n      source: user_query\n      raw: Compare 3 laptops under ₹80,000.\n  - [preference] Compare 3 laptops under ₹80,000\n      source: user_query\n      raw: Compare 3 laptops under ₹80,000.\n  - [preference] Compare 3 laptops under ₹80,000\n      source: user_query\n      raw: Compare 3 laptops under ₹80,000.\n  - [preference] Compare 3 laptops under ₹80,000\n      source: user_query\n      raw: Compare 3 laptops under ₹80,000.\n  - [preference] Compare 3 laptops under ₹80,000\n      source: user_query\n      raw: Compare 3 laptops under ₹80,000.\n  - [preference] Compare 3 laptops under ₹80,000\n      source: user_query\n      raw: Compare 3 laptops under ₹80,000.\n  - [preference] Compare 3 laptops under ₹80,000\n      source: user_query\n      raw: Compare 3 laptops under ₹80,000.\n  - [preference] Compare top 3 Hugging Face text-generation models sorted by likes.\n      source: user_query\n      raw: Compare top 3 Hugging Face text-generation models sorted by likes.\n\nINPUTS:\n[\n  {\n    \"id\": \"n:17\",\n    \"kind\": \"upstream\",\n    \"skill\": \"researcher\",\n    \"output\": {\n      \"question\": \"Find 5 reputable CNC/VMC training institutes in Bangalore and provide details on their courses, duration, and key features.\",\n      \"sources\": [\n        {\n          \"url\": \"https://www.imtmatraining.com/Facilities\",\n          \"title\": \"IMTMA Training\"\n        },\n        {\n          \"url\": \"https://www.iconsofindianbusiness.com/article/vijay-cad-camm-solutions-is-emerging-as-a-top-training-institute-in-bangalore\",\n          \"title\": \"Vijay CAD/CAMM Solutions\"\n        }\n      ],\n      \"findings\": \"Finding specific, consolidated details for 5 reputable CNC/VMC training institutes in Bangalore is challenging due to the fragmented nature of vocational training listings on local directory sites like Sulekha and Justdial. These platforms list over 100 institutes, but rarely provide standardized, comparable data on duration or specific curriculum depth.\\n\\nIMTMA (Indian Machine Tool Manufacturers' Association) is a highly reputable entity in the sector, offering structured, instructor-led training programs that emphasize industry-standard tools and techniques, including virtual hands-on experience. Their training is recognized for its connection to the manufacturing industry.\\n\\nVijay CAD/CAMM Solutions is noted for offering specific technical courses including Mastercam Mill, Mastercam Lathe, and manual programming for both CNC and VMC machines. They cater to both academic and corporate training needs, positioning themselves as a specialized technical training provider.\\n\\nMost other institutes found via local search directories function as small, independent vocational centers. These centers typically offer flexible, short-term courses focusing on machine operation and basic programming, but standardized information regarding course duration and certification accreditation is often only available by contacting the institutes directly.\"\n    }\n  }\n]",
+  "started_at": 1781327038.6762037,
+  "completed_at": 1781327041.28311,
+  "retries": 0
+}

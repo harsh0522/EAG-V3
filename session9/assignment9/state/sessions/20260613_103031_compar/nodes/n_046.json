@@ -1,0 +1,28 @@
+{
+  "node_id": "n:46",
+  "skill": "critic",
+  "status": "complete",
+  "inputs": [
+    "USER_QUERY",
+    "n:44"
+  ],
+  "result": {
+    "success": true,
+    "agent_name": "critic",
+    "output": {
+      "verdict": "fail",
+      "rationale": "The output only lists 4 CNC/VMC training institutes, whereas the user query requested comparison of 5 institutes in Bangalore."
+    },
+    "artifacts": [],
+    "successors": [],
+    "cost": 0.0,
+    "elapsed_s": 0.5983078479766846,
+    "provider": "groq",
+    "error": null,
+    "error_code": null
+  },
+  "prompt_sent": "You are the Critic skill. You evaluate one upstream node's output and\nreturn pass-or-fail with a short rationale.\n\nYou make no tool calls. The upstream output and (when the orchestrator\nhas it) the inputs that node received both appear in the prompt.\n\nProcedure:\n  1. Read the UPSTREAM_OUTPUT.\n  2. Check it against the INPUTS that produced it.\n  3. Look for: fabricated fields, claims unsupported by the input,\n     contradictions, missing fields the input clearly contained.\n  4. Emit pass or fail.\n\nOutput schema (JSON, no prose, no markdown fences):\n\n  {\n    \"verdict\": \"pass\" | \"fail\",\n    \"rationale\": \"<one or two short sentences>\"\n  }\n\nWhen you emit `fail`, the orchestrator may invoke the Planner to\nrecover. Be specific in your rationale so the recovery plan can be\ntargeted. Do not fail for stylistic reasons; only fail when the\nupstream output is wrong, missing, or unsupported.\n\nUSER_QUERY: Compare 5 CNC/VMC training institutes in Bangalore.\n\nMEMORY HITS (8 from FAISS):\n  - [preference] Compare 3 laptops under ₹80,000\n      source: user_query\n      raw: Compare 3 laptops under ₹80,000.\n  - [preference] Compare 3 laptops under ₹80,000\n      source: user_query\n      raw: Compare 3 laptops under ₹80,000.\n  - [preference] Compare 3 laptops under ₹80,000\n      source: user_query\n      raw: Compare 3 laptops under ₹80,000.\n  - [preference] Compare 3 laptops under ₹80,000\n      source: user_query\n      raw: Compare 3 laptops under ₹80,000.\n  - [preference] Compare 3 laptops under ₹80,000\n      source: user_query\n      raw: Compare 3 laptops under ₹80,000.\n  - [preference] Compare 3 laptops under ₹80,000\n      source: user_query\n      raw: Compare 3 laptops under ₹80,000.\n  - [preference] Compare 3 laptops under ₹80,000\n      source: user_query\n      raw: Compare 3 laptops under ₹80,000.\n  - [preference] Compare top 3 Hugging Face text-generation models sorted by likes.\n      source: user_query\n      raw: Compare top 3 Hugging Face text-generation models sorted by likes.\n\nINPUTS:\n[\n  {\n    \"id\": \"USER_QUERY\",\n    \"kind\": \"query\",\n    \"value\": \"Compare 5 CNC/VMC training institutes in Bangalore.\"\n  },\n  {\n    \"id\": \"n:44\",\n    \"kind\": \"upstream\",\n    \"skill\": \"distiller\",\n    \"output\": {\n      \"fields\": {\n        \"institutes\": [\n          {\n            \"name\": \"CNC Tech India\",\n            \"highlights\": \"Structured modules covering CNC turning and VMC\",\n            \"features\": \"Covers fundamental operations to advanced programming, process planning, and cycle time study; caters to non-technical students, ITI/Diploma holders, and professionals.\"\n          },\n          {\n            \"name\": \"Indian Machine Tool Manufacturers\\u2019 Association (IMTMA)\",\n            \"highlights\": \"Intensive, industry-focused training programs\",\n            \"features\": \"Focuses on manufacturing processes, CNC turning, and VMC programming; emphasizes hands-on technical competency.\"\n          },\n          {\n            \"name\": \"Hi-Tech CAD CAM CNC\",\n            \"highlights\": \"Diploma-level courses in CNC and VMC operating and programming\",\n            \"features\": \"Designed to take students from basics to industrial readiness.\"\n          },\n          {\n            \"name\": \"Indian Institute of Skill Development Training (IISDT)\",\n            \"highlights\": \"Online certificate courses for CNC operators\",\n            \"features\": \"Focuses on career advancement and skill development.\"\n          }\n        ]\n      },\n      \"rationale\": \"The provided researcher findings identify four CNC/VMC training institutes; a fifth institute was not found in the input text.\"\n    }\n  }\n]",
+  "started_at": 1781327338.225326,
+  "completed_at": 1781327338.823634,
+  "retries": 0
+}
